@@ -35,13 +35,22 @@ setup:
   api: POST /space/strategy/tci/create
   extract:
     lessonStrategyId: $.content.id
-  purpose: 创建TCI策略
+  purpose: 创建TCI策略（已有同名策略则直接复用，不重新创建）
   request:
     body:
       name: ${param.strategy_name}
-  idempotent: recreate
-  delete_api: /space/strategy/tci/delete
-  delete_param: id
+  idempotent: reuse
+  reuse_query:
+    api: POST /space/strategy/tci/list
+    body:
+      page: 0
+      limit: 20
+      matchArr:
+      - fieldName: strategyName
+        matchType: EQUAL
+        value: ${param.strategy_name}
+    extract:
+      lessonStrategyId: $.content.itemArr[0].id
 - name: list_lesson_image
   api: POST /spacetci/lessonImage/getLessonImageList
   extract:
@@ -54,12 +63,6 @@ setup:
       - fieldName: imageName
         matchType: EQUAL
         value: ${param.teacher_image_name}
-- name: assign_teacher_image
-  api: POST /spacetci/lessonImage/teacher/create
-  purpose: 分配教师机课程镜像
-  idempotent: recreate
-  delete_api: /spacetci/lessonImage/teacher/delete
-  delete_param: id
 - name: get_cluster
   api: POST /space/cluster/obtainComputeClusterList
   extract:

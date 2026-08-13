@@ -114,6 +114,12 @@ class Executor:
             ctx["context"] = {"token": ctx["token"]}
             return {"status": "SUCCESS", "content": {"token": ctx["token"]}}
 
+        # 幂等 reuse：存在同名直接复用、跳过创建（用于策略/镜像等环境已有资源）
+        if step.get("idempotent") == "reuse" and step.get("reuse_query"):
+            reused = self._try_reuse(step, ctx)
+            if reused is not None:
+                return reused
+
         # 幂等 recreate：先删同名再建
         if step.get("idempotent") == "recreate" and step.get("delete_api"):
             self._recreate(step, path, body, ctx)
@@ -147,6 +153,38 @@ class Executor:
         if found_id:
             self.log("info", "[recreate] 存在同名资源 %s，先删除" % found_id)
             self.http_request("POST", del_path, {"id": found_id}, ctx.get("token"))
+
+    def _try_reuse(self, step, ctx):
+        """幂等 reuse：按 reuse_query 查已有资源；命中则把产出写入
+        ctx.steps[<本步骤>] 供 ${prev.<step>.output.<field>} 引用并跳过创建；
+        未命中返回 None，走正常创建流程"""
+        rq = step.get("reuse_query") or {}
+        raw = rq.get("api", "")
+        if not raw:
+            return None
+        path = raw.split(" ", 1)[-1] if " " in raw else raw
+        method = raw.split(" ", 1)[0] if " " in raw else "POST"
+        qbody = resolve_body(rq.get("body", {}), ctx)
+        status, data = self.http_request(method, path, qbody or None, ctx.get("token"))
+        if jsonpath_get(data, "$.status") != "SUCCESS":
+            self.log("warning", "[reuse] 查询未成功，回退正常创建")
+            return None
+        extract = rq.get("extract") or {}
+        if not isinstance(extract, dict) or not extract:
+            return None
+        vals = {}
+        for var, jp in extract.items():
+            vals[var] = jsonpath_get(data, jp) if isinstance(jp, str) and jp.startswith("$") else None
+        if all(v is None for v in vals.values()):
+            self.log("info", "[reuse] 未找到已有资源，走正常创建流程")
+            return None
+        sname = step.get("step_name") or step.get("name") or "default"
+        bucket = ctx.setdefault("steps", {}).setdefault(sname, {})
+        for var, v in vals.items():
+            if v is not None:
+                bucket[var] = v
+                self.log("info", "[reuse] 复用已有资源 %s.%s=%s，跳过创建" % (sname, var, v))
+        return data
 
     def _extract(self, step, data, ctx):
         """提取产出变量到 ctx.steps[step_name]（供 ${prev.<step>.output.<field>} 解析）"""

@@ -113,7 +113,9 @@ def resolve_value(val, ctx):
             return "" if raw is None else str(raw)
         return re.sub(r"\$\{(param|prev|context)\.([\w.]+)(?:\[\d+\])?\}", repl, val)
     if isinstance(val, dict):
-        if "value" in val:
+        # 仅字段描述符（含 type）折叠取 value；
+        # 业务对象自带的 value 字段（如 matchArr 的 Match.value）须保留结构
+        if "value" in val and "type" in val:
             return resolve_value(val["value"], ctx)
         return {k: resolve_value(v, ctx) for k, v in val.items()}
     if isinstance(val, list):

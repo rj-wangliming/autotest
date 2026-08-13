@@ -19,9 +19,16 @@ setup:
   purpose: 被测接口本身（造策略数据）
   extract:
     classroomStrategyName: auto_strategy_<ts>
-  idempotent: recreate
-  delete_api: /rcc/classroom/strategy/delete
-  delete_param: id
+  idempotent: reuse
+  reuse_query:
+    api: POST /rcc/classroom/strategy/list
+    body:
+      matchArr:
+      - fieldName: classroomStrategyName
+        matchType: EQUAL
+        value: ${param.classroom_strategy_name}
+    extract:
+      classroomStrategyId: $.content.itemArr[0].classroomStrategyId
 request:
   dto: CreateClassroomStrategyRequest（继承 ClassroomStrategyRequest）
   body:

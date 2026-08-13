@@ -20,9 +20,18 @@ setup:
   request:
     body:
       name: ${param.strategy_name}
-  idempotent: recreate
-  delete_api: /space/strategy/tci/delete
-  delete_param: id
+  idempotent: reuse
+  reuse_query:
+    api: POST /space/strategy/tci/list
+    body:
+      page: 0
+      limit: 20
+      matchArr:
+      - fieldName: strategyName
+        matchType: EQUAL
+        value: ${param.strategy_name}
+    extract:
+      lessonStrategyId: $.content.itemArr[0].id
 request:
   dto: PageQueryRequest（框架类，matchArr 支持 lessonImageId/imageId 特殊字段）
   body:

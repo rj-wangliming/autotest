@@ -145,7 +145,10 @@ class Orchestrator:
         for item in (meta.get("setup") or []):
             raw = item.get("api", "")
             dep = raw.split(" ", 1)[-1] if " " in raw else raw
-            if "loginAdmin" in dep or not self.index.get(dep) or dep in seen:
+            # dep in _stack：自引用 setup 项（被测接口声明自身以携带幂等信息），
+            # 不作为独立步骤注入，避免消费方流程被依赖文档的自我声明覆盖
+            if ("loginAdmin" in dep or not self.index.get(dep)
+                    or dep in seen or dep in _stack):
                 continue
             self._expand_setup(dep, steps, seen, _stack)   # 先展开依赖的依赖
             if dep not in seen:                            # 递归内可能已加入
@@ -170,6 +173,8 @@ class Orchestrator:
             step["idempotent"] = item["idempotent"]
             if item.get("delete_api"):
                 step["delete_api"] = item["delete_api"]
+            if item.get("reuse_query"):
+                step["reuse_query"] = item["reuse_query"]
         return step
 
     def _build_step_named(self, api, sname, reason, section="action",
@@ -272,11 +277,19 @@ class Orchestrator:
         # polling：接口 polling 配置
         poll = meta.get("polling") or None
         step = {"name": item[:20], "api": api, "body": body, "extract": extract, "poll": poll}
-        # 幂等：接口 setup 中若有该接口的创建步骤带 idempotent，继承
+        # 幂等：接口 setup 中若有【该接口自身】的步骤带 idempotent，继承
+        # （仅 api 匹配，避免 create_classroom 等前置项泄漏给主接口造成重复调用）
         for s in meta.get("setup") or []:
-            if s.get("idempotent") and s.get("delete_api"):
+            sraw = s.get("api", "")
+            sdep = sraw.split(" ", 1)[-1] if " " in sraw else sraw
+            if sdep != api:
+                continue
+            if s.get("idempotent") and (s.get("delete_api") or s.get("reuse_query")):
                 step["idempotent"] = s["idempotent"]
-                step["delete_api"] = s["delete_api"]
+                if s.get("delete_api"):
+                    step["delete_api"] = s["delete_api"]
+                if s.get("reuse_query"):
+                    step["reuse_query"] = s["reuse_query"]
                 break
         return step
 

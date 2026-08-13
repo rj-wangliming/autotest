@@ -19,9 +19,16 @@ setup:
   purpose: 创建教室策略作为重名校验样本
   extract:
     classroomStrategyName: auto_strategy_<ts>
-  idempotent: recreate
-  delete_api: /rcc/classroom/strategy/delete
-  delete_param: id
+  idempotent: reuse
+  reuse_query:
+    api: POST /rcc/classroom/strategy/list
+    body:
+      matchArr:
+      - fieldName: classroomStrategyName
+        matchType: EQUAL
+        value: ${param.classroom_strategy_name}
+    extract:
+      classroomStrategyId: $.content.itemArr[0].classroomStrategyId
 - name: listStrategy
   api: POST /rcc/classroom/strategy/list
   purpose: 按策略名精确过滤（matchArr.fieldName=classroomStrategyName）
