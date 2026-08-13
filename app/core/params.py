@@ -4,17 +4,28 @@ import re
 
 
 # ---------- 参数解析 ----------
-def _lookup(kind, name, ctx):
-    """取引用原始值（保留类型：数组/数字/布尔），整值引用时直接返回"""
+def _lookup(kind, name, ctx, idx=None):
+    """取引用原始值（保留类型）；idx 支持 ${param.x[N]} / ${prev.step.output.y[N]} 显式索引；
+    param 值为列表且 ctx 有 _batch_index 时，隐式取当前批量索引（批量展开用）"""
     if kind == "param":
-        return ctx.get("params", {}).get(name, "")
+        v = ctx.get("params", {}).get(name, "")
+        if idx is not None:
+            return v[idx] if isinstance(v, list) and idx < len(v) else None
+        if isinstance(v, list) and "_batch_index" in ctx:
+            i = ctx["_batch_index"]
+            return v[i] if i < len(v) else None
+        return v
     if kind == "prev":
         # 嵌套 ${prev.<step>.output.<field>}（接口文档 body 标准格式）
         # 兼容单层 ${prev.<field>}（旧格式 / setup 扁平引用）
         if ".output." in name:
             sname, fld = name.split(".output.", 1)
-            return (ctx.get("steps") or {}).get(sname, {}).get(fld, "")
-        return ctx.get(name, "")
+            v = (ctx.get("steps") or {}).get(sname, {}).get(fld, "")
+        else:
+            v = ctx.get(name, "")
+        if idx is not None and isinstance(v, list):
+            return v[idx] if idx < len(v) else None
+        return v
     if kind == "context":
         return ctx.get("context", {}).get(name, "")
     return None
@@ -22,17 +33,20 @@ def _lookup(kind, name, ctx):
 
 def resolve_value(val, ctx):
     """解析 ${param.x} / ${prev.y} / ${context.z} / 固定值
-    整值为单个引用时返回原始类型（数组/数字/布尔），字符串内插值则做 str 替换"""
+    整值引用返回原始类型（数组/数字/布尔）；支持 ${param.x[N]} 索引；
+    param 列表在批量上下文（ctx._batch_index）取当前索引"""
     if isinstance(val, str):
-        # 整值是单个 ${...} → 返回原始类型（不 str 化，避免数组/数字变字符串）
-        m = re.fullmatch(r"\$\{(param|prev|context)\.([\w.]+)\}", val)
+        # 整值是单个 ${...}[N]? → 返回原始类型
+        m = re.fullmatch(r"\$\{(param|prev|context)\.([\w.]+)(?:\[(\d+)\])?\}", val)
         if m:
-            return _lookup(m.group(1), m.group(2), ctx)
+            idx = int(m.group(3)) if m.group(3) else None
+            return _lookup(m.group(1), m.group(2), ctx, idx)
         # 字符串内插值 → str 替换
         def repl(mm):
-            raw = _lookup(mm.group(1), mm.group(2), ctx)
+            idx = int(mm.group(3)) if mm.group(3) else None
+            raw = _lookup(mm.group(1), mm.group(2), ctx, idx)
             return "" if raw is None else str(raw)
-        return re.sub(r"\$\{(param|prev|context)\.([\w.]+)\}", repl, val)
+        return re.sub(r"\$\{(param|prev|context)\.([\w.]+)(?:\[\d+\])?\}", repl, val)
     if isinstance(val, dict):
         if "value" in val:
             return resolve_value(val["value"], ctx)

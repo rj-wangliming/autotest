@@ -8,6 +8,7 @@
 """
 import json
 import os
+import re
 import sys
 import time
 
@@ -154,10 +155,18 @@ class Executor:
             return
         sname = step.get("step_name") or step.get("name") or "default"
         bucket = ctx.setdefault("steps", {}).setdefault(sname, {})
+        bi = ctx.get("_batch_index")
         for var, jp in ex.items():
             if isinstance(jp, str) and jp.startswith("$"):
-                bucket[var] = jsonpath_get(data, jp)
-                self.log("info", "[extract] %s.%s=%s" % (sname, var, bucket[var]))
+                val = jsonpath_get(data, jp)
+                if bi is not None:
+                    arr = bucket.setdefault(var, [])
+                    while len(arr) <= bi:
+                        arr.append(None)
+                    arr[bi] = val
+                else:
+                    bucket[var] = val
+                self.log("info", "[extract] %s.%s=%s" % (sname, var, val))
 
     def _poll(self, poll, ctx):
         """轮询异步任务至终态"""
@@ -212,6 +221,26 @@ class Executor:
                 if not ok:
                     raise AssertionError("断言失败: %s 期望 %s 实际 %s" % (path, expected, actual))
 
+    def _collect_param_refs(self, obj, refs):
+        """递归收集 body 里的 ${param.xxx} 引用名（用于批量展开检测）"""
+        if isinstance(obj, str):
+            for m in re.finditer(r"\$\{param\.([\w.]+)(?:\[\d+\])?\}", obj):
+                refs.add(m.group(1))
+        elif isinstance(obj, dict):
+            for v in obj.values():
+                self._collect_param_refs(v, refs)
+        elif isinstance(obj, list):
+            for v in obj:
+                self._collect_param_refs(v, refs)
+
+    def _batch_size(self, step, ctx):
+        """扫描 step body 的 ${param.xxx} 引用，返回最长列表长度（0=无批量）"""
+        refs = set()
+        self._collect_param_refs(step.get("body", {}), refs)
+        sizes = [len(ctx["params"][r]) for r in refs
+                 if r in ctx.get("params", {}) and isinstance(ctx["params"][r], list)]
+        return max(sizes) if sizes else 0
+
     # ---------- 完整执行 ----------
     def execute(self, plan, params=None, timeout=120):
         """执行完整用例计划（真实方法调用）"""
@@ -224,7 +253,18 @@ class Executor:
             for i, step in enumerate(steps, 1):
                 self.log("step", "[Step%d] %s %s" % (i, step.get("name", ""), step.get("api", "")))
                 st = time.time()
-                data = self.execute_step(step, ctx)
+                bs = self._batch_size(step, ctx)
+                if bs > 1:
+                    self.log("info", "[batch] 参数含列表，展开 %d 次" % bs)
+                    last = None
+                    for bi in range(bs):
+                        ctx["_batch_index"] = bi
+                        self.log("info", "[batch] 第 %d/%d 次" % (bi + 1, bs))
+                        last = self.execute_step(step, ctx)
+                    ctx.pop("_batch_index", None)
+                    data = last
+                else:
+                    data = self.execute_step(step, ctx)
                 ctx["_last_data"] = data
                 results.append({"step": i, "name": step.get("name", ""),
                                 "api": step.get("api", ""), "status": "PASS",

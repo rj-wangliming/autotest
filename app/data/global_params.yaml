@@ -1,14 +1,48 @@
-# 全局参数（所有用例共享的基线参数；用例输入页的「用例参数 JSON」会覆盖同名项）
-# 用例文本中不写 ${param.xxx}，参数统一在此维护；接口请求体字段在接口文档中声明 ${param.xxx} 引用
-# 登录凭据：勿在此写明文。用环境变量 TEST_ADMIN_USER / TEST_ADMIN_PASSWORD 注入（executor.login 优先读环境变量）
-# admin_user: admin
-# admin_password: admin123
+# 全局参数（所有用例共享基线；cases/*.yaml 的 params / web 用例参数 JSON 覆盖同名项）
+# 用例文本不含 ${param.xxx}；接口文档 body 声明 ${param.xxx} 引用，值由此注入
+# 登录凭据走环境变量：export TEST_ADMIN_USER=... TEST_ADMIN_PASSWORD=...（executor.login 优先读）
+#
+# 资源类参数支持「多个」：值填列表时（如 classroom_name: [c1, c2]），
+#   执行器自动按最长列表展开批量创建（同一步骤执行 N 次，列表参数取第 i 个，标量参数每次相同）；
+#   也可用 ${param.x[N]} 显式取第 N 个。配置规格类保持单个不展开。
 
-# 测试环境（BASE_URL 也可由 --base-url 或环境变量 BASE_URL 注入）
-base_url: http://127.0.0.1:8080
+# ── 测试环境 ──
+base_url: http://127.0.0.1:8080      # 目标环境地址（也可 --base-url 或环境变量 BASE_URL 注入）
 
-# 常用测试资源（按实际环境填写）
-# classroom_name: test_classroom
-# strategy_name: test_strategy
-# student_image_name: WIN10_VDI
-# teacherIp: 10.10.10.10
+# ── 教室（可多个：值填列表）──
+classroom_name:                      # 教室名，多个: [c1, c2]
+classroomStrategyName:               # 教室策略名
+
+# ── 策略（可多个）──
+strategy_name:                       # VDI 策略名
+initial_strategy_name:               # 初始策略名（镜像分配关联）
+
+# ── 镜像（可多个）──
+student_image_name:                  # 学生镜像名
+
+# ── 桌面/座位 ──
+desktop_name:                        # 桌面名（可多个）
+desktopName:                         # 桌面主机名（可多个）
+desktopPreName:                      # 桌面名前缀
+desktopNameStartNum:                 # 桌面名起始值
+seatNum:                             # 座位数
+
+# ── IP（可多个，与教室/桌面列表索引对应）──
+teacherIp:                           # 教师机 IP
+start_ip:                            # 起始 IP
+endIp:                               # 结束 IP
+startIp:                             # 起始 IP（驼峰命名接口用）
+studentStartIp:                      # 学生起始 IP
+studentEndIp:                        # 学生结束 IP
+
+# ── 集群/空间/外设（可多个）──
+cluster_name:                        # 集群名
+space_name:                          # 空间名
+usbTypeIdArr:                        # USB 类型 ID 数组
+
+# ── 配置规格（单个，不展开批量）──
+cpu:                                 # CPU 核数
+memory:                              # 内存 MB
+systemSize:                          # 系统盘 GB
+expected_cpu:                        # 期望 CPU（一致性断言用）
+expected_memory:                     # 期望内存（一致性断言用）
