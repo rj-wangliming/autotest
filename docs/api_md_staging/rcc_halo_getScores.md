@@ -10,6 +10,7 @@ api:
   exec_mode: sync
   async: false
   description: 获取Halo体检分数
+request: {}
 setup:
 - name: up_1
   api: 内部调用:RccHaloCheckAPI
@@ -35,7 +36,10 @@ assertions:
   success:
   - scenario: 正常查询
     expect: $.status==SUCCESS；$.content.scores 非空（HaloScoresDTO.scores，int）
-  failure: []
+  failure:
+  - scenario: 系统异常
+    trigger: 后端处理异常
+    expect: status==ERROR（系统异常类 msgKey）
 cleanup:
 - api: 无对应 HTTP 清理接口
   purpose: 本接口为纯查询接口，不创建可清理资源；无对应 HTTP 删除接口

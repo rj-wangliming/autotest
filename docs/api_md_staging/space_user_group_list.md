@@ -146,7 +146,10 @@ assertions:
     expect: $.status==SUCCESS 且 $.content.itemArr 为空
   - scenario: 有用户组且有权限
     expect: $.content.itemArr 非空
-  failure: []
+  failure:
+  - scenario: 系统异常
+    trigger: 后端处理异常
+    expect: status==ERROR（系统异常类 msgKey）
 cleanup: []
 idempotency:
   level: non_idempotent

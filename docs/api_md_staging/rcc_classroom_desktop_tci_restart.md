@@ -82,6 +82,20 @@ response:
     content:
       type: BatchTaskSubmitResult
       description: 批量任务提交结果
+polling:
+  api: common_get_msgct_detail_info
+  method: POST
+  params:
+    msgrelationid: ${content.taskId}
+  interval_ms: 2000
+  timeout_ms: 120000
+  terminal_states:
+    success:
+    - SUCCESS
+    failure:
+    - FAILURE
+    - PARTIAL_SUCCESS
+
 upstream:
 - api: POST /rcc/classroom/desktop/list
   produces: $.content.itemArr[*].desktopId
@@ -109,7 +123,7 @@ assertions:
   failure:
   - scenario: 桌面不存在或重启失败
     trigger: 桌面已删除或终端离线
-    expect: $.status=="SUCCESS"；content.taskId 非空；轮询终态对应项 batchTaskItemStatus==FAILURE；msgKey==rcdc_rcc_tci_desktop_restart_fail_log
+    expect: $.status=="SUCCESS"；content.taskId 非空；轮询终态对应项 batchTaskItemStatus==FAILURE；对应项 msgKey==rcdc_rcc_tci_desktop_restart_item_fail_desc（单条任务时 finish msgKey==rcdc_rcc_tci_desktop_restart_single_fail）；rcdc_rcc_tci_desktop_restart_fail_log 仅为审计日志 key，不是响应 msgKey
 cleanup: []
 idempotency:
   level: data_level
@@ -237,7 +251,7 @@ graph LR
 
 | 场景 | 触发条件 | 断言点 |
 |---|---|---|
-| 桌面不存在或重启失败 | 桌面已删除或终端离线 | $.status=="SUCCESS"；content.taskId 非空；轮询终态对应项 batchTaskItemStatus==FAILURE；msgKey==rcdc_rcc_tci_desktop_restart_fail_log |
+| 桌面不存在或重启失败 | 桌面已删除或终端离线 | $.status=="SUCCESS"；content.taskId 非空；轮询终态对应项 batchTaskItemStatus==FAILURE；对应项 msgKey==rcdc_rcc_tci_desktop_restart_item_fail_desc（单条任务时 finish msgKey==rcdc_rcc_tci_desktop_restart_single_fail）；rcdc_rcc_tci_desktop_restart_fail_log 仅为审计日志 key，不是响应 msgKey |
 
 ## 环境清理机制
 

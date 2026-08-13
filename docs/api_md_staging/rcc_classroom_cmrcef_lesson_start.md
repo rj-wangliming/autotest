@@ -58,6 +58,20 @@ response:
     lessonTaskId:
       type: UUID
       description: 上课批处理任务ID
+polling:
+  api: common_get_msgct_detail_info
+  method: POST
+  params:
+    msgrelationid: ${content.lessonTaskId}
+  interval_ms: 2000
+  timeout_ms: 120000
+  terminal_states:
+    success:
+    - SUCCESS
+    failure:
+    - FAILURE
+    - PARTIAL_SUCCESS
+
 upstream:
 - api: 内部调用:classroomLessonStatusAPI
   purpose: 校验教室是否有其他上课操作进行中

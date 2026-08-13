@@ -53,6 +53,20 @@ response:
     content:
       type: BatchTaskSubmitResult
       description: 批量场景下的任务提交结果
+polling:
+  api: common_get_msgct_detail_info
+  method: POST
+  params:
+    msgrelationid: ${content.taskId}
+  interval_ms: 2000
+  timeout_ms: 120000
+  terminal_states:
+    success:
+    - SUCCESS
+    failure:
+    - FAILURE
+    - PARTIAL_SUCCESS
+
 upstream:
 - api: POST /rcc/classroom/terminal/list
   produces: $.content.itemArr[*].classroomId

@@ -10,6 +10,7 @@ api:
   exec_mode: sync
   async: false
   description: 获取全部授权信息（License 列表）
+request: {}
 setup:
 - name: login
   api: POST /rco/admin/loginAdmin
@@ -60,7 +61,10 @@ assertions:
   success:
   - scenario: 正常查询
     expect: $.content.itemArr 非空
-  failure: []
+  failure:
+  - scenario: 无权限
+    trigger: 非管理员调用
+    expect: status==ERROR（权限类 msgKey）
 cleanup: []
 idempotency:
   level: non_idempotent

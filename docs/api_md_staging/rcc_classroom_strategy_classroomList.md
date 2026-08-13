@@ -83,7 +83,10 @@ assertions:
     expect: $.content.itemArr 非空
   - scenario: 非全权限管理员无可见终端组
     expect: $.content.itemArr 为空
-  failure: []
+  failure:
+  - scenario: 系统异常
+    trigger: 后端处理异常
+    expect: status==ERROR（系统异常类 msgKey）
 cleanup: []
 idempotency:
   level: non_idempotent

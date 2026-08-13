@@ -284,6 +284,22 @@ def api_model_test():
         return jsonify({"ok": False, "error": str(e)}), 400
 
 
+@app.route("/api/model-chat", methods=["POST"])
+def api_model_chat():
+    """配置页对话验证：用表单当前填写的配置多轮对话（无需先保存）"""
+    body = request.get_json() or {}
+    cfg = body.get("config") or {}
+    messages = body.get("messages") or []
+    if not messages:
+        return jsonify({"ok": False, "error": "messages 为空"}), 400
+    try:
+        from app.core.llm import LlmClient
+        reply = LlmClient(cfg).chat_messages(messages)
+        return jsonify({"ok": True, "reply": reply})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 400
+
+
 if __name__ == "__main__":
     print("加载接口索引...")
     n = len(index.load())

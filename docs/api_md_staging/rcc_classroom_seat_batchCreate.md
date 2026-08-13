@@ -177,7 +177,9 @@ assertions:
   - scenario: 座位数量超过网络地址池
     trigger: seatNum 超池
     expect: 抛 RCDC_RCC_SEAT_NUM_OVER_NETWORK_POOL / NETWORK_NOT_ENOUGH
-cleanup: []
+cleanup:
+- api: POST /rcc/classroom/seat/delete
+  purpose: 批量删除本接口创建的座位/桌面（先经 seat/list 查询取 seatIdArr；异步批任务轮询完成后执行）
 idempotency:
   level: data_level
   note: 重复提交会重复创建座位与桌面；无幂等键，依靠全局锁串行化但不去重

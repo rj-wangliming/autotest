@@ -107,6 +107,20 @@ response:
     content:
       type: BatchTaskSubmitResult
       description: 批量任务提交结果（还原由后台异步执行）
+polling:
+  api: common_get_msgct_detail_info
+  method: POST
+  params:
+    msgrelationid: ${content.taskId}
+  interval_ms: 2000
+  timeout_ms: 120000
+  terminal_states:
+    success:
+    - SUCCESS
+    failure:
+    - FAILURE
+    - PARTIAL_SUCCESS
+
 upstream:
 - api: POST /rcc/classroom/image/list
   produces: $.content.itemArr[0].imageId

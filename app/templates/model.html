@@ -38,6 +38,16 @@
 </div>
 
 <div class="panel">
+    <div class="panel-head"><span>💬 对话验证（用上方表单当前填写的配置，无需先保存；可多轮）</span></div>
+    <div id="chat-log" style="height:260px;overflow-y:auto;border:1px solid #e3e3e3;border-radius:6px;padding:10px;background:#fafafa;font-size:13px;"></div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+        <input id="chat-input" style="flex:1" placeholder="输入消息发给模型，如：用一句话介绍你自己（回车发送）" onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="btn btn-primary" onclick="sendChat()">📨 发送</button>
+        <button class="btn" onclick="clearChat()">🧹 清空</button>
+    </div>
+</div>
+
+<div class="panel">
     <div class="panel-head"><span>AI 介入边界（方案约束）</span></div>
     <table class="table">
         <thead><tr><th>环节</th><th>AI 使用</th><th>说明</th></tr></thead>
@@ -53,6 +63,16 @@
 {% endblock %}
 {% block scripts %}
 <script>
+function readCfg() {
+    return {
+        provider: document.getElementById('cfg-provider').value,
+        base_url: document.getElementById('cfg-base-url').value,
+        api_key: document.getElementById('cfg-api-key').value,
+        model: document.getElementById('cfg-model').value,
+        temperature: parseFloat(document.getElementById('cfg-temperature').value) || 0.1,
+        max_tokens: parseInt(document.getElementById('cfg-max-tokens').value) || 2048,
+    };
+}
 async function loadConfig() {
     const r = await fetch('/api/model-config');
     const d = await r.json();
@@ -64,35 +84,59 @@ async function loadConfig() {
     document.getElementById('cfg-max-tokens').value = d.max_tokens ?? 2048;
 }
 async function saveConfig() {
-    const cfg = {
-        provider: document.getElementById('cfg-provider').value,
-        base_url: document.getElementById('cfg-base-url').value,
-        api_key: document.getElementById('cfg-api-key').value,
-        model: document.getElementById('cfg-model').value,
-        temperature: parseFloat(document.getElementById('cfg-temperature').value),
-        max_tokens: parseInt(document.getElementById('cfg-max-tokens').value),
-    };
-    await fetch('/api/model-config', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(cfg)});
+    await fetch('/api/model-config', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(readCfg())});
     document.getElementById('cfg-status').textContent = '✅ 已保存';
 }
 async function testConnection() {
-    const cfg = {
-        provider: document.getElementById('cfg-provider').value,
-        base_url: document.getElementById('cfg-base-url').value,
-        api_key: document.getElementById('cfg-api-key').value,
-        model: document.getElementById('cfg-model').value,
-        temperature: parseFloat(document.getElementById('cfg-temperature').value) || 0.1,
-        max_tokens: parseInt(document.getElementById('cfg-max-tokens').value) || 2048,
-    };
     const st = document.getElementById('cfg-status');
     st.textContent = '测试中...';
     try {
-        const r = await fetch('/api/model-test', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(cfg)});
+        const r = await fetch('/api/model-test', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(readCfg())});
         const d = await r.json();
         st.textContent = d.ok ? ('✅ 连接成功：' + (d.reply || '')) : ('❌ ' + d.error);
     } catch(e) {
         st.textContent = '❌ ' + e.message;
     }
+}
+
+// ---------- 对话验证 ----------
+let chatHistory = [];
+function addLine(role, text) {
+    const log = document.getElementById('chat-log');
+    const div = document.createElement('div');
+    div.style.margin = '4px 0';
+    div.style.whiteSpace = 'pre-wrap';
+    const b = document.createElement('b');
+    b.textContent = (role === 'user' ? '🧑 你' : (role === 'assistant' ? '🤖 模型' : '⚠️ 错误')) + '：';
+    div.appendChild(b);
+    div.appendChild(document.createTextNode(text));
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+}
+async function sendChat() {
+    const inp = document.getElementById('chat-input');
+    const text = inp.value.trim();
+    if (!text) return;
+    inp.value = '';
+    addLine('user', text);
+    chatHistory.push({role: 'user', content: text});
+    try {
+        const r = await fetch('/api/model-chat', {method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({config: readCfg(), messages: chatHistory})});
+        const d = await r.json();
+        if (d.ok) {
+            addLine('assistant', d.reply || '（空回复）');
+            chatHistory.push({role: 'assistant', content: d.reply || ''});
+        } else {
+            addLine('error', d.error || '未知错误');
+        }
+    } catch(e) {
+        addLine('error', e.message);
+    }
+}
+function clearChat() {
+    chatHistory = [];
+    document.getElementById('chat-log').innerHTML = '';
 }
 loadConfig();
 </script>

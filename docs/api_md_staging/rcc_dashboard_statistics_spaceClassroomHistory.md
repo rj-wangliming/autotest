@@ -88,7 +88,10 @@ assertions:
   success:
   - scenario: 正常统计
     expect: $.status==SUCCESS；$.content.maxUseRateList 非空（RccSpaceAndClassroomHistoryDTO.maxUseRateList）
-  failure: []
+  failure:
+  - scenario: 必填参数缺失
+    trigger: timeQueryType 未传或非法
+    expect: status==ERROR（参数校验类 msgKey）
 cleanup:
 - api: POST /rcc/classroom/delete
   purpose: 清理 setup 阶段创建用于造统计数据的教室（需先经 /rcc/classroom/list 获取 classroomId）；接口本身不创建资源

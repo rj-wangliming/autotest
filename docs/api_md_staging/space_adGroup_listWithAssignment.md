@@ -113,7 +113,10 @@ assertions:
   success:
   - scenario: 正常查询
     expect: $.content.itemArr 非空
-  failure: []
+  failure:
+  - scenario: 必填参数缺失
+    trigger: page/limit/matchArr 未传或非法
+    expect: status==ERROR（参数校验类 msgKey）
 cleanup: []
 idempotency:
   level: non_idempotent

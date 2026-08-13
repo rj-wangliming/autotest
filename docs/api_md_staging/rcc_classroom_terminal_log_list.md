@@ -92,7 +92,10 @@ assertions:
   success:
   - scenario: 正常查询
     expect: $.status==SUCCESS && $.content.itemArr 非空（DefaultPageResponse 分页框架字段为 itemArr/total，按时间倒序）
-  failure: []
+  failure:
+  - scenario: 系统异常
+    trigger: 后端处理异常
+    expect: status==ERROR（系统异常类 msgKey）
 cleanup: []
 idempotency:
   level: non_idempotent

@@ -82,6 +82,20 @@ response:
     content:
       type: BatchTaskSubmitResult
       description: 批量任务提交结果
+polling:
+  api: common_get_msgct_detail_info
+  method: POST
+  params:
+    msgrelationid: ${content.taskId}
+  interval_ms: 2000
+  timeout_ms: 120000
+  terminal_states:
+    success:
+    - SUCCESS
+    failure:
+    - FAILURE
+    - PARTIAL_SUCCESS
+
 upstream:
 - api: POST /rcc/classroom/desktop/list
   produces: $.content.itemArr[*].desktopId
@@ -117,7 +131,7 @@ assertions:
     expect: 提交前失败：status==ERROR（BusinessException，任务未提交）
   - scenario: 单台关机失败
     trigger: 终端离线/平台异常（shutdownDesktop 抛 BusinessException）
-    expect: 任务已提交：status==SUCCESS；content.taskId 非空；轮询 taskId 终态 batchTaskItemStatus==FAILURE；审计 RCDC_RCC_TCI_DESKTOP_SHUTDOWN_FAIL_LOG
+    expect: 任务已提交：status==SUCCESS；content.taskId 非空；轮询 taskId 终态 batchTaskItemStatus==FAILURE；对应项 msgKey==rcdc_rcc_tci_desktop_shutdown_item_fail_desc（单条任务时 finish msgKey==rcdc_rcc_tci_desktop_shutdown_single_fail）；审计 RCDC_RCC_TCI_DESKTOP_SHUTDOWN_FAIL_LOG
 cleanup: []
 idempotency:
   level: data_level
@@ -252,7 +266,7 @@ graph LR
 |---|---|---|
 | 无终端组权限 | 非管理员且无对应教室终端组权限 | 请求阶段拒绝：status==ERROR（checkTerminalGroupPermissionByDeskId 抛出权限类异常） |
 | 单台桌面不存在 | idArr 长度=1 且 getDeskIDV(id) 查无此 IDV 桌面 | 提交前失败：status==ERROR（BusinessException，任务未提交，无 taskId） |
-| 单台关机指令失败 | 终端离线/平台异常（shutdownDesktop 抛 BusinessException） | 任务已提交：status==SUCCESS；content.taskId 非空；轮询 taskId 终态 batchTaskItemStatus==FAILURE；审计记录 RCDC_RCC_TCI_DESKTOP_SHUTDOWN_FAIL_LOG |
+| 单台关机指令失败 | 终端离线/平台异常（shutdownDesktop 抛 BusinessException） | 任务已提交：status==SUCCESS；content.taskId 非空；轮询 taskId 终态 batchTaskItemStatus==FAILURE；对应项 msgKey==rcdc_rcc_tci_desktop_shutdown_item_fail_desc（单条任务时 finish msgKey==rcdc_rcc_tci_desktop_shutdown_single_fail）；审计记录 RCDC_RCC_TCI_DESKTOP_SHUTDOWN_FAIL_LOG |
 | 参数校验 | idArr 为空 | status==ERROR（参数校验 @NotEmpty） |
 
 ## 环境清理机制

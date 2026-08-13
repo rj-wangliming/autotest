@@ -77,7 +77,10 @@ assertions:
   success:
   - scenario: 正常统计
     expect: $.status==SUCCESS；$.content.maxUseRateList 非空（RccSpaceAndClassroomHistoryDTO.maxUseRateList）
-  failure: []
+  failure:
+  - scenario: 必填参数缺失
+    trigger: timeQueryType 未传或非法
+    expect: status==ERROR（参数校验类 msgKey）
 cleanup:
 - api: 无对应 HTTP 清理接口
   purpose: 本接口为纯统计查询接口，不创建可清理资源；无对应 HTTP 删除接口

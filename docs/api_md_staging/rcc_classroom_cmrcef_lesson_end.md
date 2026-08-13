@@ -48,6 +48,20 @@ response:
     lessonTaskId:
       type: UUID
       description: 下课批处理任务ID
+polling:
+  api: common_get_msgct_detail_info
+  method: POST
+  params:
+    msgrelationid: ${content.lessonTaskId}
+  interval_ms: 2000
+  timeout_ms: 120000
+  terminal_states:
+    success:
+    - SUCCESS
+    failure:
+    - FAILURE
+    - PARTIAL_SUCCESS
+
 upstream:
 - api: 内部调用:lessonService
   purpose: 执行下课校验、准备与批处理下发

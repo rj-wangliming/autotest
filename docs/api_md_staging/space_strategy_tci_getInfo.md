@@ -61,6 +61,10 @@ assertions:
 idempotency:
   level: fully_idempotent
   note: 只读查询，可安全重试
+upstream: []
+downstream: []
+cleanup: []
+
 setup:
 - name: login
   api: POST /rco/admin/loginAdmin
@@ -68,7 +72,7 @@ setup:
 ---
 # POST /space/strategy/tci/getInfo
 
-> 获取课程策略详情（**别名**）
+> 获取课程策略详情（**别名**） ｜ SpaceDeskStrategyGroupTCIController ｜ @EnableAuthority ｜ 同步
 
 ## 入参详情
 

@@ -77,6 +77,10 @@ assertions:
 idempotency:
   level: fully_idempotent
   note: 只读查询，可安全重试
+upstream: []
+downstream: []
+cleanup: []
+
 setup:
 - name: login
   api: POST /rco/admin/loginAdmin
@@ -84,7 +88,7 @@ setup:
 ---
 # POST /space/strategygroup/vdi/getInfo
 
-> 获取课程云桌面策略详情（**别名**）
+> 获取课程云桌面策略详情（**别名**） ｜ SpaceDeskStrategyGroupVDIController ｜ @EnableAuthority ｜ 同步
 
 ## 入参详情
 

@@ -48,6 +48,20 @@ response:
     taskId:
       type: UUID
       description: 最后镜像时返回删除教师机云桌面批处理任务ID
+polling:
+  api: common_get_msgct_detail_info
+  method: POST
+  params:
+    msgrelationid: ${content.taskId}
+  interval_ms: 2000
+  timeout_ms: 120000
+  terminal_states:
+    success:
+    - SUCCESS
+    failure:
+    - FAILURE
+    - PARTIAL_SUCCESS
+
 upstream:
 - api: POST /spacetci/lessonImage/getLessonImageList
   produces: $.content.itemArr[*].id

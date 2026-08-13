@@ -10,6 +10,7 @@ api:
   exec_mode: sync
   async: false
   description: 统计教室使用情况（上课中教室数、教室总数）
+request: {}
 setup:
 - name: login
   api: POST /rco/admin/loginAdmin
@@ -52,7 +53,10 @@ assertions:
   success:
   - scenario: 正常统计
     expect: $.status==SUCCESS；$.content.classroomTotalNum 非空（>=0，StatisticsClassroomInfoResponse.classroomTotalNum）
-  failure: []
+  failure:
+  - scenario: 系统异常
+    trigger: 后端处理异常
+    expect: status==ERROR（系统异常类 msgKey）
 cleanup:
 - api: POST /rcc/classroom/delete
   purpose: 清理 setup 阶段创建用于造统计数据的教室（需先经 /rcc/classroom/list 获取 classroomId）；接口本身不创建资源

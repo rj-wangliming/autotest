@@ -10,6 +10,7 @@ api:
   exec_mode: sync
   async: false
   description: 获取实训桌面所在计算集群列表（教室集群+桌面池集群合并去重）
+request: {}
 setup:
 - name: login
   api: POST /rco/admin/loginAdmin
@@ -56,7 +57,10 @@ assertions:
     expect: $.status==SUCCESS；$.content.itemArr 非空（DefaultPageResponse.itemArr）
   - scenario: 无任何集群
     expect: $.status==SUCCESS（content 为空，Builder.success() 无参）
-  failure: []
+  failure:
+  - scenario: 系统异常
+    trigger: 后端处理异常
+    expect: status==ERROR（系统异常类 msgKey）
 cleanup:
 - api: 无对应 HTTP 清理接口
   purpose: 本接口为纯查询接口，不创建可清理资源；无对应 HTTP 删除接口

@@ -10,6 +10,7 @@ api:
   exec_mode: sync
   async: false
   description: 查询IDV MINI服务器的全局策略配置（终端日志保留天数）
+request: {}
 setup:
 - name: login
   api: POST /rco/admin/loginAdmin

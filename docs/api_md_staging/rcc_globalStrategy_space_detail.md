@@ -10,6 +10,7 @@ api:
   exec_mode: sync
   async: false
   description: 查询VDI服务器全局策略（清理闲置桌面、亲和启动策略、还原镜像发布更新、终端日志保留）
+request: {}
 setup:
 - name: login
   api: POST /rco/admin/loginAdmin

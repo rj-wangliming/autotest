@@ -85,6 +85,20 @@ response:
     content:
       type: BatchTaskSubmitResult
       description: 批量任务提交结果（taskId等），实际取消报障由后台批任务异步执行
+polling:
+  api: common_get_msgct_detail_info
+  method: POST
+  params:
+    msgrelationid: ${content.taskId}
+  interval_ms: 2000
+  timeout_ms: 120000
+  terminal_states:
+    success:
+    - SUCCESS
+    failure:
+    - FAILURE
+    - PARTIAL_SUCCESS
+
 upstream:
 - api: POST /rcc/classroom/desktop/list
   purpose: 推断：桌面ID数组（报障中的桌面）来自桌面列表查询出参（ViewDesktopResultDTO.desktopId）

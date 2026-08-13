@@ -233,7 +233,10 @@ assertions:
     expect: $.status==SUCCESS；$.content.itemArr 为空且 total=0
   - scenario: 管理员有部分权限
     expect: $.status==SUCCESS；$.content 含 classroomId/terminalTotalNum（数据权限过滤后）
-  failure: []
+  failure:
+  - scenario: 必填参数缺失
+    trigger: matchArr/sortArr 未传或格式非法
+    expect: status==ERROR（参数校验类 msgKey）
 cleanup: []
 idempotency:
   level: non_idempotent

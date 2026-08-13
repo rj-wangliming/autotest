@@ -28,6 +28,13 @@ class LlmClient:
 
     def chat(self, system, user):
         """调用 chat/completions，返回文本"""
+        return self.chat_messages([
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ])
+
+    def chat_messages(self, messages):
+        """原始多轮调用（messages 为完整 role/content 列表）；配置页对话验证用"""
         if not self.configured:
             raise RuntimeError("LLM 未配置：请在「模型配置」页填写 provider/base_url/api_key/model")
         import requests  # 延迟导入，与 executor.py 一致（不阻塞模块加载）
@@ -36,10 +43,7 @@ class LlmClient:
             "model": self.model,
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
-            "messages": [
-                {"role": "system", "content": system},
-                {"role": "user", "content": user},
-            ],
+            "messages": messages,
         }
         headers = {"Content-Type": "application/json"}
         if self.api_key:

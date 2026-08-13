@@ -55,7 +55,13 @@ assertions:
     expect: $.status==SUCCESS
   - scenario: 保留天数无变化
     expect: $.status==SUCCESS
-  failure: []
+  failure:
+  - scenario: 无权限
+    trigger: 非管理员调用
+    expect: status==ERROR（权限类 msgKey）
+  - scenario: 必填参数缺失
+    trigger: expireCleanDay 未传或非法
+    expect: status==ERROR（参数校验类 msgKey）
 cleanup: []
 idempotency:
   level: non_idempotent
