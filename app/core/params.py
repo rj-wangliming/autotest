@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """参数解析与配置生成"""
+import random
 import re
+import string
 
 
 def to_snake(name):
@@ -8,6 +10,62 @@ def to_snake(name):
     已是 snake/全小写的原样返回。yaml 因此「一个语义只留一个键」，
     文档里 ${param.startIp} 这类驼峰引用归一后命中同一键"""
     return re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
+
+
+def _random_prefix():
+    """随机桌面名前缀：字母开头、8 位小写字母数字（命名规则范围）"""
+    return "vd" + "".join(random.choices(string.ascii_lowercase + string.digits, k=6))
+
+
+def materialize_naming(params, log=None):
+    """命名参数物化（原地改 params），规则：
+    - desktop_pre_name 为空 → 随机生成前缀；
+    - desktop_name 按 seat_num 补齐：已填的保留（多座位只填一个时其余按命名规则 pre+序号 生成），
+      完整列表存 desktop_name_arr，desktop_name 保留第一个（兼容标量消费方）；
+    - desktop_name_start_num 为空默认 1；desktop_name 带尾数字时从中推导前缀和起始值；
+    - computer_name 为空 → 用前缀（LIKE 前缀匹配命中全部桌面）。
+    """
+    log = log or (lambda level, msg: None)
+
+    def to_int(v, d):
+        try:
+            return int(v)
+        except (TypeError, ValueError):
+            return d
+
+    n = to_int(params.get("seat_num"), 1)
+    pre = (params.get("desktop_pre_name") or "").strip()
+    start = to_int(params.get("desktop_name_start_num"), 0)
+
+    raw = params.get("desktop_name")
+    names = [] if raw in (None, "") else (
+        [raw] if isinstance(raw, str) else [x for x in raw if x])
+
+    # 前缀/起始值没填时，从已填名字推导（尾数字解析：vditest1 → vditest + 1）
+    if names and (not pre or not start):
+        m = re.match(r"^([A-Za-z][A-Za-z0-9]*?)(\d+)$", names[0])
+        if m:
+            pre = pre or m.group(1)
+            start = start or int(m.group(2))
+    if not pre:
+        pre = _random_prefix()
+        log("info", "[params] desktop_pre_name 未填，随机生成前缀: %s" % pre)
+    if not start:
+        start = 1
+
+    while len(names) < n:
+        names.append("%s%d" % (pre, start + len(names)))
+    if len(names) > 1:
+        log("info", "[params] seat_num=%s，desktop_name 补齐 %d 个: %s"
+            % (params.get("seat_num"), len(names), names))
+
+    params["desktop_pre_name"] = pre
+    params["desktop_name_start_num"] = start
+    params["desktop_name"] = names[0]
+    params["desktop_name_arr"] = names
+    if not (params.get("computer_name") or "").strip():
+        params["computer_name"] = pre
+        log("info", "[params] computer_name 未填，用前缀做 LIKE 匹配: %s" % pre)
 
 
 # ---------- 参数解析 ----------

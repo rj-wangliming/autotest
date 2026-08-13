@@ -13,7 +13,7 @@ import sys
 import time
 
 from .jsonpath import jsonpath_get
-from .params import resolve_body, gen_config_value, to_snake
+from .params import resolve_body, gen_config_value, to_snake, materialize_naming
 
 
 class Executor:
@@ -246,6 +246,7 @@ class Executor:
         """执行完整用例计划（真实方法调用）"""
         ctx = {"params": {to_snake(k): v for k, v in (params or {}).items()},
                "token": None, "context": {}, "steps": {}, "_last_data": None}
+        materialize_naming(ctx["params"], self.log)
         results = []
         start = time.time()
         try:

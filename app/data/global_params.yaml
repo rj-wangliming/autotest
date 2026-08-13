@@ -25,11 +25,14 @@ teacher_image_name:                  # 教师镜像名
 image_name:                          # 镜像名（matchArr.fieldName=imageName，精确匹配）
 
 # ── 桌面/座位 ──
-desktop_name:                        # 桌面主机名（可多个；创建赋值与操作过滤共用）
-desktop_pre_name:                    # 桌面名前缀
-desktop_name_start_num:              # 桌面名起始值
-computer_name:                       # 计算机名（matchArr.fieldName=computerName，桌面操作过滤）
-seat_num:                            # 座位数
+# 命名规则：desktop_pre_name 为空随机生成（字母开头8位小写字母数字）；
+#   desktop_name 按 seat_num 补齐（多座位只填一个时其余按 pre+序号 生成），完整列表见 desktop_name_arr；
+#   computer_name 为空用前缀做 LIKE 匹配，一次命中全部桌面
+desktop_name:                        # 桌面主机名（可空；带尾数字时推导前缀+起始值）
+desktop_pre_name:                    # 桌面名前缀（可空→随机）
+desktop_name_start_num:              # 桌面名起始值（可空→1）
+computer_name:                       # 计算机名（matchArr.fieldName=computerName；可空→前缀）
+seat_num:                            # 座位数（决定桌面名补齐个数）
 
 # ── IP（可多个，与教室/桌面列表索引对应）──
 teacher_ip:                          # 教师机 IP
