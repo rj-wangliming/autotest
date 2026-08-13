@@ -1,0 +1,278 @@
+# -*- coding: utf-8 -*-
+"""用例执行器（真实方法调用，无字符串拼装）
+
+业务执行全部是方法调用：http_request / extract / poll / recreate / skip / assert / cleanup。
+支持两种运行模式：
+- 进程内：Executor.execute(plan, params) 直接执行
+- 隔离：run_plan() 供 subprocess 固定入口调用（script_runner 传 plan JSON）
+"""
+import json
+import os
+import sys
+import time
+
+from .jsonpath import jsonpath_get
+from .params import resolve_body, gen_config_value
+
+
+class Executor:
+    """进程内执行器（完整业务方法）"""
+
+    # 资源变量名 → 删除接口（cleanup 用）
+    CLEANUP_MAP = {
+        "classroomId": "/rcc/classroom/delete",
+        "deskStrategyId": "/space/strategygroup/vdi/delete",
+        "strategyId": "/rcc/classroom/strategy/delete",
+        "seatIdArr": "/rcc/classroom/seat/delete",
+    }
+
+    def __init__(self, base_url=None, log_cb=None):
+        self.base_url = (base_url or os.environ.get("TEST_BASE_URL", "http://127.0.0.1:8080")).rstrip("/")
+        self.log_cb = log_cb or (lambda level, msg: None)
+
+    # 敏感字段（日志脱敏，避免凭据落盘/落库）
+    SENSITIVE_KEYS = {"token", "password", "apikey", "api_key", "admin_password",
+                      "studentaccountpassword", "authorization", "secret"}
+
+    # ---------- 基础 ----------
+    def log(self, level, msg):
+        self.log_cb(level, msg)
+
+    def _mask(self, obj):
+        """递归脱敏 dict/list 中的敏感字段（值替换为 ****）"""
+        if isinstance(obj, dict):
+            return {k: ("****" if k.lower() in self.SENSITIVE_KEYS else self._mask(v))
+                    for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [self._mask(x) for x in obj]
+        return obj
+
+    def http_request(self, method, path, body=None, token=None):
+        """发送 HTTP 请求（真实方法调用）"""
+        import requests
+        headers = {"Content-Type": "application/json"}
+        if token:
+            headers["Authorization"] = "Bearer " + token
+        url = self.base_url + path
+        self.log("req", "%s %s" % (method, path))
+        if body:
+            self.log("req", "body: %s" % json.dumps(self._mask(body), ensure_ascii=False))
+        try:
+            resp = requests.request(method, url, json=body, headers=headers, timeout=30)
+            try:
+                data = resp.json()
+            except Exception:
+                data = {"raw": resp.text}
+            self.log("resp", "HTTP %s: %s" % (resp.status_code, json.dumps(self._mask(data), ensure_ascii=False)))
+            # 401 自动重登一次再重试（会话过期自愈）
+            if resp.status_code == 401 and token and "/loginAdmin" not in path:
+                self.log("auth", "401 → 重新登录")
+                token = self.login()
+                headers["Authorization"] = "Bearer " + token
+                resp = requests.request(method, url, json=body, headers=headers, timeout=30)
+                try:
+                    data = resp.json()
+                except Exception:
+                    data = {"raw": resp.text}
+                self.log("resp", "HTTP %s（重试）" % resp.status_code)
+            return resp.status_code, data
+        except Exception as e:
+            self.log("error", "请求失败: %s" % e)
+            return 0, {"status": "ERROR", "message": str(e)}
+
+    def login(self, admin_user=None, admin_password=None):
+        """框架内置登录（loginAdmin）。凭据优先参数传入，其次环境变量，缺失则报错（不留明文默认）。"""
+        admin_user = admin_user or os.environ.get("TEST_ADMIN_USER")
+        admin_password = admin_password or os.environ.get("TEST_ADMIN_PASSWORD")
+        if not admin_user or not admin_password:
+            raise RuntimeError(
+                "缺少登录凭据：请在用例参数 admin_user/admin_password 或环境变量 "
+                "TEST_ADMIN_USER/TEST_ADMIN_PASSWORD 中提供"
+            )
+        body = {"userName": admin_user, "password": admin_password}
+        status, data = self.http_request("POST", "/rco/admin/loginAdmin", body, None)
+        token = jsonpath_get(data, "$.content.token") or jsonpath_get(data, "$.data.token")
+        self.log("info", "[登录] token=%s..." % str(token)[:12])
+        return token
+
+    # ---------- 步骤执行 ----------
+    def execute_step(self, step, ctx):
+        """执行单个步骤（真实方法调用）"""
+        api = step.get("api", "")
+        path = api.split(" ", 1)[-1] if " " in api else api
+        method = step.get("method", "POST")
+        body = resolve_body(step.get("body", {}), ctx)
+        self.log("info", "[step] %s resolved body: %s" % (
+            step.get("step_name") or step.get("name") or "",
+            json.dumps(self._mask(body), ensure_ascii=False)))
+
+        # 登录内置
+        if "loginAdmin" in api:
+            ctx["token"] = self.login(ctx["params"].get("admin_user"),
+                                      ctx["params"].get("admin_password"))
+            ctx["context"] = {"token": ctx["token"]}
+            return {"status": "SUCCESS", "content": {"token": ctx["token"]}}
+
+        # 幂等 recreate：先删同名再建
+        if step.get("idempotent") == "recreate" and step.get("delete_api"):
+            self._recreate(step, path, body, ctx)
+
+        # 幂等 true：先尝试创建（存在则幂等通过）
+        if step.get("idempotent") is True:
+            status, data = self.http_request(method, path, body or None, ctx.get("token"))
+            if jsonpath_get(data, "$.status") == "SUCCESS":
+                self.log("info", "[idempotent] 创建成功或已存在")
+            return data
+
+        status, data = self.http_request(method, path, body or None, ctx.get("token"))
+
+        # extract 产出（多变量）
+        self._extract(step, data, ctx)
+
+        # polling 异步任务
+        if step.get("poll") and status in (200, 201):
+            self._poll(step["poll"], ctx)
+
+        # 断言
+        self._assert_step(step, data)
+        return data
+
+    def _recreate(self, step, path, body, ctx):
+        """幂等 recreate：存在同名先调 delete_api 删除再创建"""
+        del_api = step["delete_api"]
+        del_path = del_api.split(" ", 1)[-1] if " " in del_api else del_api
+        status, data = self.http_request("POST", path, body or None, ctx.get("token"))
+        found_id = jsonpath_get(data, "$.content.id") or jsonpath_get(data, "$.content.classroomId")
+        if found_id:
+            self.log("info", "[recreate] 存在同名资源 %s，先删除" % found_id)
+            self.http_request("POST", del_path, {"id": found_id}, ctx.get("token"))
+
+    def _extract(self, step, data, ctx):
+        """提取产出变量到 ctx.steps[step_name]（供 ${prev.<step>.output.<field>} 解析）"""
+        ex = step.get("extract", {})
+        if not isinstance(ex, dict) or not ex:
+            return
+        sname = step.get("step_name") or step.get("name") or "default"
+        bucket = ctx.setdefault("steps", {}).setdefault(sname, {})
+        for var, jp in ex.items():
+            if isinstance(jp, str) and jp.startswith("$"):
+                bucket[var] = jsonpath_get(data, jp)
+                self.log("info", "[extract] %s.%s=%s" % (sname, var, bucket[var]))
+
+    def _poll(self, poll, ctx):
+        """轮询异步任务至终态"""
+        api = poll.get("api", "common_get_msgct_detail_info")
+        path = api if api.startswith("/") else "/" + api
+        task_id = ctx.get("taskId") or jsonpath_get(ctx.get("_last_data") or {}, "$.content.taskId")
+        interval = poll.get("interval_ms", 2000) / 1000.0
+        timeout = poll.get("timeout_ms", 120000) / 1000.0
+        ok_states = poll.get("terminal_states", {}).get("success", ["SUCCESS"])
+        fail_states = poll.get("terminal_states", {}).get("fail", ["FAILURE"])
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            status, data = self.http_request("POST", path, {"msgrelationid": task_id}, ctx.get("token"))
+            st = jsonpath_get(data, "$.content.taskStatus") or jsonpath_get(data, "$.content.status")
+            self.log("info", "[poll] taskStatus=%s" % st)
+            if st in ok_states:
+                self.log("info", "[poll] 任务成功")
+                return True
+            if st in fail_states:
+                raise AssertionError("轮询任务失败: taskId=%s" % task_id)
+            time.sleep(interval)
+        raise AssertionError("轮询超时: taskId=%s" % task_id)
+
+    def _assert_step(self, step, data):
+        """步骤断言（eq/not_empty/contains 三态），逐条记录 PASS/FAIL 到日志"""
+        asserts = step.get("assert", [])
+        if not asserts:
+            s = jsonpath_get(data, "$.status")
+            ok = (s is None or s == "SUCCESS")
+            self.log("assert", "$.status == SUCCESS → %s (实际 %s)" % ("PASS" if ok else "FAIL", s))
+            if not ok:
+                raise AssertionError("业务失败: %s" % json.dumps(self._mask(data), ensure_ascii=False))
+            return
+        for a in asserts:
+            path = a.get("path", "$.status")
+            op = a.get("op", "eq")
+            expected = a.get("value", "SUCCESS")
+            actual = jsonpath_get(data, path)
+            if op == "not_empty":
+                ok = bool(actual)
+                self.log("assert", "%s not_empty → %s (实际 %s)" % (path, "PASS" if ok else "FAIL", actual))
+                if not ok:
+                    raise AssertionError("断言失败: %s 应非空，实际 %s" % (path, actual))
+            elif op == "contains":
+                ok = expected in str(actual)
+                self.log("assert", "%s contains %s → %s (实际 %s)" % (path, expected, "PASS" if ok else "FAIL", actual))
+                if not ok:
+                    raise AssertionError("断言失败: %s 应含 %s，实际 %s" % (path, expected, actual))
+            else:  # eq
+                ok = (actual == expected)
+                self.log("assert", "%s == %s → %s (实际 %s)" % (path, expected, "PASS" if ok else "FAIL", actual))
+                if not ok:
+                    raise AssertionError("断言失败: %s 期望 %s 实际 %s" % (path, expected, actual))
+
+    # ---------- 完整执行 ----------
+    def execute(self, plan, params=None, timeout=120):
+        """执行完整用例计划（真实方法调用）"""
+        ctx = {"params": params or {}, "token": None, "context": {},
+               "steps": {}, "_last_data": None}
+        results = []
+        start = time.time()
+        try:
+            steps = plan.get("steps", [])
+            for i, step in enumerate(steps, 1):
+                self.log("step", "[Step%d] %s %s" % (i, step.get("name", ""), step.get("api", "")))
+                st = time.time()
+                data = self.execute_step(step, ctx)
+                ctx["_last_data"] = data
+                results.append({"step": i, "name": step.get("name", ""),
+                                "api": step.get("api", ""), "status": "PASS",
+                                "duration_ms": int((time.time() - st) * 1000)})
+            return {"status": "PASS", "duration_ms": int((time.time() - start) * 1000),
+                    "steps": results, "cleanup": "PASS"}
+        except Exception as e:
+            import traceback
+            self.log("error", "步骤失败: %s\n%s" % (e, traceback.format_exc()))
+            self._cleanup(ctx)
+            return {"status": "FAIL", "duration_ms": int((time.time() - start) * 1000),
+                    "steps": results, "error": str(e), "cleanup": "DONE"}
+
+    def _cleanup(self, ctx):
+        """finally 清理已创建资源（从 ctx.steps 各 step 产出提取 *Id）"""
+        created = []
+        for sname, outs in (ctx.get("steps") or {}).items():
+            for k, v in outs.items():
+                if k.endswith("Id") and k != "taskId" and isinstance(v, str) and v:
+                    created.append((k, v))
+        for name, rid in reversed(created):
+            del_path = self.CLEANUP_MAP.get(name)
+            if del_path:
+                self.log("info", "[cleanup] 删除 %s=%s" % (name, rid))
+                try:
+                    self.http_request("POST", del_path, {"id": rid}, ctx.get("token"))
+                except Exception as e:
+                    self.log("error", "[cleanup] 删除失败: %s" % e)
+
+
+def run_plan(plan_json, params_json, base_url):
+    """隔离入口：subprocess 固定入口调用（无字符串拼装）"""
+    plan = json.loads(plan_json) if isinstance(plan_json, str) else plan_json
+    params = json.loads(params_json) if isinstance(params_json, str) else params_json
+
+    def log(level, msg):
+        print("[%s] %s" % (level, msg))
+
+    ex = Executor(base_url=base_url, log_cb=log)
+    result = ex.execute(plan, params)
+    print("[result] %s" % result["status"])
+    return result
+
+
+if __name__ == "__main__":
+    # 供 subprocess 调用：python executor.py <plan.json> <params.json> <base_url>
+    plan = json.load(open(sys.argv[1]))
+    params = json.load(open(sys.argv[2])) if len(sys.argv) > 2 and os.path.exists(sys.argv[2]) else {}
+    base_url = sys.argv[3] if len(sys.argv) > 3 else "http://127.0.0.1:8080"
+    result = run_plan(plan, params, base_url)
+    sys.exit(0 if result.get("status") == "PASS" else 1)

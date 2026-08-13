@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>📚 接口列表</h2>
+<div class="toolbar">
+    <input id="search" placeholder="搜索接口（名称/路径）" oninput="doSearch(this.value)">
+    <select id="filter-async" onchange="render()">
+        <option value="">全部类型</option>
+        <option value="true">异步</option>
+        <option value="false">同步</option>
+    </select>
+</div>
+<table class="table" id="api-table">
+    <thead>
+        <tr><th>方法</th><th>接口路径</th><th>名称</th><th>类型</th><th>操作</th></tr>
+    </thead>
+    <tbody id="api-body"></tbody>
+</table>
+
+<!-- 接口详情 -->
+<div id="detail-modal" class="modal" style="display:none">
+    <div class="modal-content">
+        <div class="modal-head">
+            <span id="detail-title"></span>
+            <button onclick="closeDetail()" class="btn btn-sm">✕</button>
+        </div>
+        <div id="detail-body" class="modal-body"></div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+let allApis = [];
+fetch('/api/index').then(r=>r.json()).then(d => { allApis = d.apis; render(); });
+
+function render() {
+    const q = (document.getElementById('search').value||'').toLowerCase();
+    const fa = document.getElementById('filter-async').value;
+    const list = allApis.filter(a =>
+        (a.url.toLowerCase().includes(q) || (a.name||'').toLowerCase().includes(q)) &&
+        (fa === '' || String(a.async) === fa));
+    const tbody = document.getElementById('api-body');
+    tbody.innerHTML = list.map(a => `<tr>
+        <td><span class="badge">${a.method}</span></td>
+        <td><code>${a.url}</code></td>
+        <td>${a.name||''}</td>
+        <td>${a.async ? '<span class="badge badge-orange">异步</span>' : '<span class="badge badge-gray">同步</span>'}</td>
+        <td><button class="btn btn-sm" onclick="showDetail('${a.url}')">详情</button></td>
+    </tr>`).join('');
+    document.getElementById('stat-apis').textContent = list.length;
+}
+function doSearch() { render(); }
+
+async function showDetail(url) {
+    const resp = await fetch('/api/apis/' + encodeURIComponent(url));
+    const d = await resp.json();
+    document.getElementById('detail-title').textContent = d.method + ' ' + d.url;
+    document.getElementById('detail-body').innerHTML = renderDetail(d);
+    document.getElementById('detail-modal').style.display = 'flex';
+}
+function renderDetail(d) {
+    const req = d.request && d.request.body || {};
+    const resp = d.response && d.response.body || {};
+    const asserts = d.assertions || {};
+    let html = `<div class="detail-section"><h4>基本信息</h4>
+        <table class="table"><tbody>
+        <tr><td>名称</td><td>${d.name||'-'}</td></tr>
+        <tr><td>异步</td><td>${d.async?'是':'否'}</td></tr>
+        <tr><td>执行模式</td><td>${d.exec_mode||'-'}</td></tr>
+        <tr><td>描述</td><td>${d.description||'-'}</td></tr>
+        </tbody></table></div>`;
+    html += `<div class="detail-section"><h4>入参（${Object.keys(req).length}）</h4><table class="table"><thead><tr><th>字段</th><th>类型</th><th>必填</th><th>值</th><th>说明</th></tr></thead><tbody>`;
+    for (const [k,v] of Object.entries(req)) {
+        if (typeof v === 'object') {
+            html += `<tr><td><code>${k}</code></td><td>${v.type||''}</td><td>${v.required?'✅':'❌'}</td><td>${v.value||v.generated_by||'-'}</td><td>${v.description||v.constraint||''}</td></tr>`;
+        }
+    }
+    html += `</tbody></table></div>`;
+    html += `<div class="detail-section"><h4>出参</h4><pre>${JSON.stringify(resp, null, 1).substring(0, 1500)}</pre></div>`;
+    html += `<div class="detail-section"><h4>断言</h4><pre>${JSON.stringify(asserts, null, 1)}</pre></div>`;
+    return html;
+}
+function closeDetail() { document.getElementById('detail-modal').style.display = 'none'; }
+</script>
+{% endblock %}

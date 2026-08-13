@@ -1,0 +1,243 @@
+# RCC-Space 接口文档
+
+> 由源码自动生成的接口文档（224 个接口，深度版 12 章节 + front-matter 契约）
+
+| # | 接口 | Controller | 方法 | 权限 |
+|---|---|---|---|---|
+| 1 | [/rcc/admin/dataPermission/edit](rcc_admin_dataPermission_edit.md) | RccAdminDataPermissionController | editDataPermission | @EnableAuthority |
+| 2 | [/rcc/admin/dataPermission/query](rcc_admin_dataPermission_query.md) | RccAdminDataPermissionController | queryPermission | 无 |
+| 3 | [/rcc/classroom/batchCheckDesktopNameDuplicate](rcc_classroom_batchCheckDesktopNameDuplicate.md) | RccClassroomConfigController | batchCheckDesktopNameDuplicate | 无 |
+| 4 | [/rcc/classroom/checkClassroomNameDuplicate](rcc_classroom_checkClassroomNameDuplicate.md) | RccClassroomConfigController | checkClassroomNameDuplicate | 无 |
+| 5 | [/rcc/classroom/checkStudentIpDuplicate](rcc_classroom_checkStudentIpDuplicate.md) | RccClassroomConfigController | checkStudentIpDuplicate | 无 |
+| 6 | [/rcc/classroom/checkTeacherIpDuplicate](rcc_classroom_checkTeacherIpDuplicate.md) | RccClassroomConfigController | checkTeacherIpDuplicate | 无 |
+| 7 | [/rcc/classroom/cmr/download/getUrl](rcc_classroom_cmr_download_getUrl.md) | CmrDownloadController | getDownloadUrl | 无 |
+| 8 | [/rcc/classroom/cmr/freeClassroom/list](rcc_classroom_cmr_freeClassroom_list.md) | RccFreeClassroomController | getFreeClassroomPage | 无 |
+| 9 | [/rcc/classroom/cmr/version/getRpmAndSubsystemVersion](rcc_classroom_cmr_version_getRpmAndSubsystemVersion.md) | CmrVersionController | getRpmAndSubsystemVersion | 无 |
+| 10 | [/rcc/classroom/cmrcef/lesson/closeTerminal](rcc_classroom_cmrcef_lesson_closeTerminal.md) | RccClassroomCmrcefController | closeTerminalForCef | 无 |
+| 11 | [/rcc/classroom/cmrcef/lesson/end](rcc_classroom_cmrcef_lesson_end.md) | RccClassroomCmrcefController | endLessonForCef | 无 |
+| 12 | [/rcc/classroom/cmrcef/lesson/isShowCloseServerButton](rcc_classroom_cmrcef_lesson_isShowCloseServerButton.md) | RccClassroomCmrcefController | isShowCloseServerButton | 无 |
+| 13 | [/rcc/classroom/cmrcef/lesson/list](rcc_classroom_cmrcef_lesson_list.md) | RccClassroomCmrcefController | getCefLessonList | 无 |
+| 14 | [/rcc/classroom/cmrcef/lesson/progress](rcc_classroom_cmrcef_lesson_progress.md) | RccClassroomCmrcefController | getCefLessonProgress | 无 |
+| 15 | [/rcc/classroom/cmrcef/lesson/start](rcc_classroom_cmrcef_lesson_start.md) | RccClassroomCmrcefController | startLessonForCef | 无 |
+| 16 | [/rcc/classroom/create](rcc_classroom_create.md) | RccClassroomConfigController | createNewClassroom | @EnableAuthority |
+| 17 | [/rcc/classroom/delete](rcc_classroom_delete.md) | RccClassroomConfigController | deleteClassroom | @EnableAuthority |
+| 18 | [/rcc/classroom/desktop/cancelFault](rcc_classroom_desktop_cancelFault.md) | RccClassroomDesktopController | cancelFault | @EnableAuthority |
+| 19 | [/rcc/classroom/desktop/forceWakeUp](rcc_classroom_desktop_forceWakeUp.md) | RccClassroomDesktopController | forceWakeUp | @EnableAuthority |
+| 20 | [/rcc/classroom/desktop/gtlog/collectLog](rcc_classroom_desktop_gtlog_collectLog.md) | RccClassroomDesktopController | collect | @EnableAuthority |
+| 21 | [/rcc/classroom/desktop/gtlog/download](rcc_classroom_desktop_gtlog_download.md) | RccClassroomDesktopController | download | 无 |
+| 22 | [/rcc/classroom/desktop/gtlog/getState](rcc_classroom_desktop_gtlog_getState.md) | RccClassroomDesktopController | getState | 无 |
+| 23 | [/rcc/classroom/desktop/list](rcc_classroom_desktop_list.md) | RccClassroomDesktopController | list | 无 |
+| 24 | [/rcc/classroom/desktop/powerOff](rcc_classroom_desktop_powerOff.md) | RccClassroomDesktopController | powerOff | @EnableAuthority |
+| 25 | [/rcc/classroom/desktop/remoteAssist/assistRequest](rcc_classroom_desktop_remoteAssist_assistRequest.md) | RccClassroomDesktopController | assistRequest | @EnableAuthority |
+| 26 | [/rcc/classroom/desktop/restart](rcc_classroom_desktop_restart.md) | RccClassroomDesktopController | restart | @EnableAuthority |
+| 27 | [/rcc/classroom/desktop/restoreVDIImage](rcc_classroom_desktop_restoreVDIImage.md) | RccClassroomDesktopController | restoreVDIImage | @EnableAuthority |
+| 28 | [/rcc/classroom/desktop/shutdown](rcc_classroom_desktop_shutdown.md) | RccClassroomDesktopController | shutdown | @EnableAuthority |
+| 29 | [/rcc/classroom/desktop/tci/collectLog](rcc_classroom_desktop_tci_collectLog.md) | TCIDesktopOperateController | collectTCIDesktopLog | @EnableAuthority |
+| 30 | [/rcc/classroom/desktop/tci/collectLog/download](rcc_classroom_desktop_tci_collectLog_download.md) | TCIDesktopOperateController | download | 无 |
+| 31 | [/rcc/classroom/desktop/tci/collectLog/getState](rcc_classroom_desktop_tci_collectLog_getState.md) | TCIDesktopOperateController | getCollectTCIDesktopLogState | @EnableAuthority |
+| 32 | [/rcc/classroom/desktop/tci/list](rcc_classroom_desktop_tci_list.md) | RccClassroomTCIDesktopController | list | @EnableAuthority |
+| 33 | [/rcc/classroom/desktop/tci/remoteAssist/assistRequest](rcc_classroom_desktop_tci_remoteAssist_assistRequest.md) | TCIDesktopOperateController | tciRemoteAssistance | @EnableAuthority |
+| 34 | [/rcc/classroom/desktop/tci/restart](rcc_classroom_desktop_tci_restart.md) | TCIDesktopOperateController | restartTCIDesktop | @EnableAuthority |
+| 35 | [/rcc/classroom/desktop/tci/shutdown](rcc_classroom_desktop_tci_shutdown.md) | TCIDesktopOperateController | shutdownTCIDesktop | @EnableAuthority |
+| 36 | [/rcc/classroom/editClassroomBasicInfo](rcc_classroom_editClassroomBasicInfo.md) | RccClassroomConfigController | editClassroomBasicInfo | 无 |
+| 37 | [/rcc/classroom/editStudentInfo](rcc_classroom_editStudentInfo.md) | RccClassroomConfigController | editStudentInfo | 无 |
+| 38 | [/rcc/classroom/editTeacherInfo](rcc_classroom_editTeacherInfo.md) | RccClassroomConfigController | editTeacherInfo | 无 |
+| 39 | [/rcc/classroom/editTeacherInfoCheckDesktopPreName](rcc_classroom_editTeacherInfoCheckDesktopPreName.md) | RccClassroomConfigController | editTeacherInfoCheckDesktopPreName | 无 |
+| 40 | [/rcc/classroom/getClassroomBasicInfo](rcc_classroom_getClassroomBasicInfo.md) | RccClassroomConfigController | getClassroomBasicInfo | 无 |
+| 41 | [/rcc/classroom/getClassroomVdiDiskStorage](rcc_classroom_getClassroomVdiDiskStorage.md) | RccClassroomConfigController | getClassroomTeacherVdiDiskStorage | 无 |
+| 42 | [/rcc/classroom/getInfo](rcc_classroom_getInfo.md) | RccClassroomConfigController | getClassroomDetailInfo | 无 |
+| 43 | [/rcc/classroom/getStudentConfig](rcc_classroom_getStudentConfig.md) | RccClassroomConfigController | getStudentConfig | 无 |
+| 44 | [/rcc/classroom/getTeacherConfig](rcc_classroom_getTeacherConfig.md) | RccClassroomConfigController | getTeacherConfig | 无 |
+| 45 | [/rcc/classroom/image/assignImage/stuImage/detail](rcc_classroom_image_assignImage_stuImage_detail.md) | RccClassroomImageController | getClassroomConfig | 无 |
+| 46 | [/rcc/classroom/image/assignImage/teaImage/detail](rcc_classroom_image_assignImage_teaImage_detail.md) | RccClassroomImageController | getTeacherDetail | 无 |
+| 47 | [/rcc/classroom/image/assignImage/yetAssign/list](rcc_classroom_image_assignImage_yetAssign_list.md) | RccClassroomImageController | getYetAssignImageList | 无 |
+| 48 | [/rcc/classroom/image/getAssignedClusterAndNetwork](rcc_classroom_image_getAssignedClusterAndNetwork.md) | RccClassroomImageController | getNetworkStrategy | @EnableAuthority |
+| 49 | [/rcc/classroom/image/getAssignedClusters](rcc_classroom_image_getAssignedClusters.md) | RccClassroomImageController | getAssignedClusters | 无 |
+| 50 | [/rcc/classroom/image/getInfo](rcc_classroom_image_getInfo.md) | RccClassroomImageController | getImageDetail | 无 |
+| 51 | [/rcc/classroom/image/getInfoStoragePoolList](rcc_classroom_image_getInfoStoragePoolList.md) | RccClassroomImageController | getInfoStoragePoolList | 无 |
+| 52 | [/rcc/classroom/image/getStrategy](rcc_classroom_image_getStrategy.md) | RccClassroomImageController | getStrategy | @EnableAuthority |
+| 53 | [/rcc/classroom/image/getVDIDesktopCount](rcc_classroom_image_getVDIDesktopCount.md) | RccClassroomImageController | getVDIDesktopCount | 无 |
+| 54 | [/rcc/classroom/image/getVDILessonImageCount](rcc_classroom_image_getVDILessonImageCount.md) | RccClassroomImageController | getVDILessonImageCount | 无 |
+| 55 | [/rcc/classroom/image/list](rcc_classroom_image_list.md) | RccClassroomImageController | getClassroomImage | 无 |
+| 56 | [/rcc/classroom/image/student/create](rcc_classroom_image_student_create.md) | RccClassroomImageController | assignNewStudentImage | @EnableAuthority |
+| 57 | [/rcc/classroom/image/student/delete](rcc_classroom_image_student_delete.md) | RccClassroomImageController | studentDoDelete | @EnableAuthority |
+| 58 | [/rcc/classroom/image/student/hide](rcc_classroom_image_student_hide.md) | RccClassroomImageController | studentDoHide | @EnableAuthority |
+| 59 | [/rcc/classroom/image/student/network/edit](rcc_classroom_image_student_network_edit.md) | RccClassroomImageController | editStudentNetwork | @EnableAuthority |
+| 60 | [/rcc/classroom/image/student/show](rcc_classroom_image_student_show.md) | RccClassroomImageController | studentDoShow | @EnableAuthority |
+| 61 | [/rcc/classroom/image/student/strategy/edit](rcc_classroom_image_student_strategy_edit.md) | RccClassroomImageController | editStudentStrategy | @EnableAuthority |
+| 62 | [/rcc/classroom/image/student/update](rcc_classroom_image_student_update.md) | RccClassroomImageController | studentDoUpdate | @EnableAuthority |
+| 63 | [/rcc/classroom/image/teacher/create](rcc_classroom_image_teacher_create.md) | RccClassroomImageController | assignNewTeacherImage | @EnableAuthority |
+| 64 | [/rcc/classroom/image/teacher/delete](rcc_classroom_image_teacher_delete.md) | RccClassroomImageController | teacherDoDelete | @EnableAuthority |
+| 65 | [/rcc/classroom/image/teacher/hide](rcc_classroom_image_teacher_hide.md) | RccClassroomImageController | teacherDoHide | @EnableAuthority |
+| 66 | [/rcc/classroom/image/teacher/network/edit](rcc_classroom_image_teacher_network_edit.md) | RccClassroomImageController | editTeacherNetwork | @EnableAuthority |
+| 67 | [/rcc/classroom/image/teacher/show](rcc_classroom_image_teacher_show.md) | RccClassroomImageController | teacherDoShow | @EnableAuthority |
+| 68 | [/rcc/classroom/image/teacher/strategy/edit](rcc_classroom_image_teacher_strategy_edit.md) | RccClassroomImageController | editTeacherStrategy | @EnableAuthority |
+| 69 | [/rcc/classroom/image/teacher/update](rcc_classroom_image_teacher_update.md) | RccClassroomImageController | teacherDoUpdate | @EnableAuthority |
+| 70 | [/rcc/classroom/lesson/end](rcc_classroom_lesson_end.md) | RccClassroomLessonController | endLesson | @EnableAuthority |
+| 71 | [/rcc/classroom/lesson/restart](rcc_classroom_lesson_restart.md) | RccClassroomLessonController | restartLesson | @EnableAuthority |
+| 72 | [/rcc/classroom/lesson/start](rcc_classroom_lesson_start.md) | RccClassroomLessonController | startLesson | @EnableAuthority |
+| 73 | [/rcc/classroom/list](rcc_classroom_list.md) | RccClassroomConfigController | getClassroomDetailInfoList | 无 |
+| 74 | [/rcc/classroom/networkWhitelist/create](rcc_classroom_networkWhitelist_create.md) | RccClassroomManageController | createNetworkWhiteList | @EnableAuthority |
+| 75 | [/rcc/classroom/networkWhitelist/delete](rcc_classroom_networkWhitelist_delete.md) | RccClassroomManageController | editNetworkWhiteList | @EnableAuthority |
+| 76 | [/rcc/classroom/networkWhitelist/edit](rcc_classroom_networkWhitelist_edit.md) | RccClassroomManageController | editNetworkWhiteList | @EnableAuthority |
+| 77 | [/rcc/classroom/networkWhitelist/getWhiteList](rcc_classroom_networkWhitelist_getWhiteList.md) | RccClassroomManageController | getWhiteList | 无 |
+| 78 | [/rcc/classroom/networkWhitelist/list](rcc_classroom_networkWhitelist_list.md) | RccClassroomManageController | getNetworkWhiteList | 无 |
+| 79 | [/rcc/classroom/network/cancelDisable](rcc_classroom_network_cancelDisable.md) | RccClassroomManageController | batchCancelDisableNetwork | @EnableAuthority |
+| 80 | [/rcc/classroom/network/deliverIPForTeacherEditNetwork](rcc_classroom_network_deliverIPForTeacherEditNetwork.md) | RccClassroomNetworkController | deliverIPForTeacherEditNetwork | 无 |
+| 81 | [/rcc/classroom/network/deliverIPForVDIClassroom](rcc_classroom_network_deliverIPForVDIClassroom.md) | RccClassroomNetworkController | deliverIPForVDIClassroom | 无 |
+| 82 | [/rcc/classroom/network/deliverIPForVDISeat](rcc_classroom_network_deliverIPForVDISeat.md) | RccClassroomNetworkController | getIPForVDIWhenCreateSeat | 无 |
+| 83 | [/rcc/classroom/network/deliverIPForVDISeatEdit](rcc_classroom_network_deliverIPForVDISeatEdit.md) | RccClassroomNetworkController | getIPForVDIWhenEditSeat | 无 |
+| 84 | [/rcc/classroom/network/disable](rcc_classroom_network_disable.md) | RccClassroomManageController | batchDisableNetwork | @EnableAuthority |
+| 85 | [/rcc/classroom/oneclickshutdown](rcc_classroom_oneclickshutdown.md) | RccClassroomTerminalController | shutdownTerminal | @EnableAuthority |
+| 86 | [/rcc/classroom/seat/batchCheckDesktopIpDuplicate](rcc_classroom_seat_batchCheckDesktopIpDuplicate.md) | RccSeatConfigController | batchCheckDesktopIpDuplicate | 无 |
+| 87 | [/rcc/classroom/seat/batchConfig](rcc_classroom_seat_batchConfig.md) | RccSeatConfigController | batchConfigSeat | @EnableAuthority |
+| 88 | [/rcc/classroom/seat/batchCreate](rcc_classroom_seat_batchCreate.md) | RccSeatConfigController | batchCreateSeat | @EnableAuthority |
+| 89 | [/rcc/classroom/seat/checkStudentDesktopIpDuplicate](rcc_classroom_seat_checkStudentDesktopIpDuplicate.md) | RccSeatConfigController | checkStudentDesktopIpDuplicate | 无 |
+| 90 | [/rcc/classroom/seat/checkStudentDesktopNameDuplicate](rcc_classroom_seat_checkStudentDesktopNameDuplicate.md) | RccSeatConfigController | checkStudentDesktopNameDuplicate | 无 |
+| 91 | [/rcc/classroom/seat/clearTciLocalDisk](rcc_classroom_seat_clearTciLocalDisk.md) | RccSeatManageController | clearTciLocalDisk | @EnableAuthority |
+| 92 | [/rcc/classroom/seat/create](rcc_classroom_seat_create.md) | RccSeatConfigController | createSeat | @EnableAuthority |
+| 93 | [/rcc/classroom/seat/delete](rcc_classroom_seat_delete.md) | RccSeatConfigController | deleteSeat | @EnableAuthority |
+| 94 | [/rcc/classroom/seat/disk/list](rcc_classroom_seat_disk_list.md) | RccSeatManageController | getSeatDiskList | 无 |
+| 95 | [/rcc/classroom/seat/edit](rcc_classroom_seat_edit.md) | RccSeatConfigController | editSeat | @EnableAuthority |
+| 96 | [/rcc/classroom/seat/getInfo](rcc_classroom_seat_getInfo.md) | RccSeatConfigController | getSeatInfo | 无 |
+| 97 | [/rcc/classroom/seat/getSeat](rcc_classroom_seat_getSeat.md) | RccSeatConfigController | getSeat | 无 |
+| 98 | [/rcc/classroom/seat/getStudentTerminalType](rcc_classroom_seat_getStudentTerminalType.md) | RccSeatConfigController | getStudentTerminalType | 无 |
+| 99 | [/rcc/classroom/seat/list](rcc_classroom_seat_list.md) | RccSeatConfigController | getSeatList | 无 |
+| 100 | [/rcc/classroom/seat/networkWhitelist/getClassroomDesktopIpRange](rcc_classroom_seat_networkWhitelist_getClassroomDesktopIpRange.md) | RccSeatManageController | getClassroomDesktopIpRange | 无 |
+| 101 | [/rcc/classroom/seat/network/cancelDisable](rcc_classroom_seat_network_cancelDisable.md) | RccSeatManageController | cancelDisableSeatNetwork | @EnableAuthority |
+| 102 | [/rcc/classroom/seat/network/disable](rcc_classroom_seat_network_disable.md) | RccSeatManageController | disableSeatNetwork | @EnableAuthority |
+| 103 | [/rcc/classroom/seat/networkcard/list](rcc_classroom_seat_networkcard_list.md) | RccSeatManageController | getSeatNetworkCardList | 无 |
+| 104 | [/rcc/classroom/seat/terminal/collectLog](rcc_classroom_seat_terminal_collectLog.md) | RccSeatManageController | collectLog | @EnableAuthority |
+| 105 | [/rcc/classroom/seat/terminal/collectLog/download](rcc_classroom_seat_terminal_collectLog_download.md) | RccSeatManageController | downloadLog | 无 |
+| 106 | [/rcc/classroom/seat/terminal/collectLog/get](rcc_classroom_seat_terminal_collectLog_get.md) | RccSeatManageController | getCollectLog | 无 |
+| 107 | [/rcc/classroom/seat/terminal/init](rcc_classroom_seat_terminal_init.md) | RccSeatManageController | idvInit | @EnableAuthority |
+| 108 | [/rcc/classroom/seat/terminal/kickout](rcc_classroom_seat_terminal_kickout.md) | RccSeatManageController | kickOutTerminal | @EnableAuthority |
+| 109 | [/rcc/classroom/seat/terminal/refresh](rcc_classroom_seat_terminal_refresh.md) | RccSeatManageController | refreshTerminal | @EnableAuthority |
+| 110 | [/rcc/classroom/seat/terminal/restart](rcc_classroom_seat_terminal_restart.md) | RccSeatManageController | restartTerminal | @EnableAuthority |
+| 111 | [/rcc/classroom/seat/terminal/shutdown](rcc_classroom_seat_terminal_shutdown.md) | RccSeatManageController | shutdownTerminal | @EnableAuthority |
+| 112 | [/rcc/classroom/seat/terminal/unlock](rcc_classroom_seat_terminal_unlock.md) | RccSeatManageController | unlockSeat | @EnableAuthority |
+| 113 | [/rcc/classroom/seat/terminal/wake](rcc_classroom_seat_terminal_wake.md) | RccSeatManageController | wakeTerminal | @EnableAuthority |
+| 114 | [/rcc/classroom/seat/vdiLocalDisk/clear](rcc_classroom_seat_vdiLocalDisk_clear.md) | RccSeatManageController | clearLocalDisk | @EnableAuthority |
+| 115 | [/rcc/classroom/select](rcc_classroom_select.md) | RccClassroomConfigController | getClassroomByName | @EnableAuthority |
+| 116 | [/rcc/classroom/strategy/checkDuplication](rcc_classroom_strategy_checkDuplication.md) | RccClassroomStrategyController | checkStrategyNameDuplication | 无 |
+| 117 | [/rcc/classroom/strategy/classroomList](rcc_classroom_strategy_classroomList.md) | RccClassroomStrategyController | getClassroomList | 无 |
+| 118 | [/rcc/classroom/strategy/create](rcc_classroom_strategy_create.md) | RccClassroomStrategyController | createClassroomStrategy | 无 |
+| 119 | [/rcc/classroom/strategy/delete](rcc_classroom_strategy_delete.md) | RccClassroomStrategyController | batchDeleteClassroomStrategy | 无 |
+| 120 | [/rcc/classroom/strategy/edit](rcc_classroom_strategy_edit.md) | RccClassroomStrategyController | editClassroomStrategy | 无 |
+| 121 | [/rcc/classroom/strategy/getInfo](rcc_classroom_strategy_getInfo.md) | RccClassroomStrategyController | getDeskStrategy | 无 |
+| 122 | [/rcc/classroom/strategy/list](rcc_classroom_strategy_list.md) | RccClassroomStrategyController | getPageDeskStrategy | 无 |
+| 123 | [/rcc/classroom/teacher/clearTeacherTciLocalDisk](rcc_classroom_teacher_clearTeacherTciLocalDisk.md) | RccTeacherManageController | clearTeacherTciLocalDisk | @EnableAuthority |
+| 124 | [/rcc/classroom/teacher/disk/list](rcc_classroom_teacher_disk_list.md) | RccClassroomConfigController | getTeacherTerminalDiskList | 无 |
+| 125 | [/rcc/classroom/teacher/end](rcc_classroom_teacher_end.md) | RccClassroomLessonController | shutdownTeacherDesktop | @EnableAuthority |
+| 126 | [/rcc/classroom/teacher/getInfo](rcc_classroom_teacher_getInfo.md) | RccClassroomConfigController | getTeacherDetailInfo | 无 |
+| 127 | [/rcc/classroom/teacher/networkcard/list](rcc_classroom_teacher_networkcard_list.md) | RccClassroomConfigController | getTeacherTerminalNetworkCardList | 无 |
+| 128 | [/rcc/classroom/teacher/start](rcc_classroom_teacher_start.md) | RccClassroomLessonController | startTeacherDesktop | @EnableAuthority |
+| 129 | [/rcc/classroom/teacher/terminal/collectLog](rcc_classroom_teacher_terminal_collectLog.md) | RccTeacherManageController | collectTeacherTerminalLog | @EnableAuthority |
+| 130 | [/rcc/classroom/teacher/terminal/collectLog/download](rcc_classroom_teacher_terminal_collectLog_download.md) | RccTeacherManageController | downloadLog | 无 |
+| 131 | [/rcc/classroom/teacher/terminal/collectLog/get](rcc_classroom_teacher_terminal_collectLog_get.md) | RccTeacherManageController | getCollectLog | 无 |
+| 132 | [/rcc/classroom/teacher/terminal/init](rcc_classroom_teacher_terminal_init.md) | RccTeacherManageController | idvInit | @EnableAuthority |
+| 133 | [/rcc/classroom/teacher/terminal/restart](rcc_classroom_teacher_terminal_restart.md) | RccTeacherManageController | restartTeacherTerminal | @EnableAuthority |
+| 134 | [/rcc/classroom/teacher/terminal/shutdown](rcc_classroom_teacher_terminal_shutdown.md) | RccTeacherManageController | shutdownTeacherTerminal | @EnableAuthority |
+| 135 | [/rcc/classroom/teacher/terminal/unlock](rcc_classroom_teacher_terminal_unlock.md) | RccTeacherManageController | unlockTeacherTerminal | @EnableAuthority |
+| 136 | [/rcc/classroom/teacher/terminal/wake](rcc_classroom_teacher_terminal_wake.md) | RccTeacherManageController | wakeTerminalByClassroom | @EnableAuthority |
+| 137 | [/rcc/classroom/teacher/vdiLocalDisk/clear](rcc_classroom_teacher_vdiLocalDisk_clear.md) | RccTeacherManageController | clearTeacherLocalDisk | @EnableAuthority |
+| 138 | [/rcc/classroom/terminal/list](rcc_classroom_terminal_list.md) | RccClassroomTerminalController | getClassroomDetailInfoList | 无 |
+| 139 | [/rcc/classroom/terminal/log/delete](rcc_classroom_terminal_log_delete.md) | RccClassroomManageController | deleteTerminalLog | 无 |
+| 140 | [/rcc/classroom/terminal/log/download](rcc_classroom_terminal_log_download.md) | RccClassroomManageController | downloadLog | 无 |
+| 141 | [/rcc/classroom/terminal/log/list](rcc_classroom_terminal_log_list.md) | RccClassroomManageController | getTerminalLogList | 无 |
+| 142 | [/rcc/dashboard/statistics/classroomInfo](rcc_dashboard_statistics_classroomInfo.md) | RccDashboardStatisticsController | statisticsClassroomInfo | 无 |
+| 143 | [/rcc/dashboard/statistics/classroomTerminalInfo](rcc_dashboard_statistics_classroomTerminalInfo.md) | RccDashboardStatisticsController | statisticsclassroomTerminalInfo | 无 |
+| 144 | [/rcc/dashboard/statistics/computeClusterHistory](rcc_dashboard_statistics_computeClusterHistory.md) | RccDashboardStatisticsController | statisticsComputeClusterHistory | 无 |
+| 145 | [/rcc/dashboard/statistics/getTrainingSpaceClusterList](rcc_dashboard_statistics_getTrainingSpaceClusterList.md) | RccDashboardStatisticsController | statisticsGetTrainingSpaceClusterList | 无 |
+| 146 | [/rcc/dashboard/statistics/spaceClassroomHistory](rcc_dashboard_statistics_spaceClassroomHistory.md) | RccDashboardStatisticsController | statisticsSpaceClassroomHistory | 无 |
+| 147 | [/rcc/dashboard/statistics/spaceHistory](rcc_dashboard_statistics_spaceHistory.md) | RccDashboardStatisticsController | statisticsSpaceHistory | 无 |
+| 148 | [/rcc/dashboard/statistics/spaceInfo](rcc_dashboard_statistics_spaceInfo.md) | RccDashboardStatisticsController | statisticsSpaceInfo | 无 |
+| 149 | [/rcc/deskStrategy/getClassroomImageList](rcc_deskStrategy_getClassroomImageList.md) | RccDeskStrategyController | getClassroomImageList | 无 |
+| 150 | [/rcc/deskStrategy/getClusterSupportEnablePersonalConfig](rcc_deskStrategy_getClusterSupportEnablePersonalConfig.md) | RccDeskStrategyController | getClusterSupportEnablePersonalConfig | 无 |
+| 151 | [/rcc/globalStrategy/authInfo/list](rcc_globalStrategy_authInfo_list.md) | RccGlobalStrategyController | obtainAuthInfoList | @EnableAuthority |
+| 152 | [/rcc/globalStrategy/idvMiniConfig/detail](rcc_globalStrategy_idvMiniConfig_detail.md) | RccGlobalStrategyController | getIdvMiniConfigDetail | 无 |
+| 153 | [/rcc/globalStrategy/idvMiniConfig/edit](rcc_globalStrategy_idvMiniConfig_edit.md) | RccGlobalStrategyController | editIdvMiniConfig | @EnableAuthority |
+| 154 | [/rcc/globalStrategy/space/detail](rcc_globalStrategy_space_detail.md) | RccGlobalStrategyController | getVdiConfigDetail | 无 |
+| 155 | [/rcc/globalStrategy/space/edit](rcc_globalStrategy_space_edit.md) | RccGlobalStrategyController | editVdiConfig | @EnableAuthority |
+| 156 | [/rcc/halo/getReport](rcc_halo_getReport.md) | RccHaloController | receiveHaloReport | 无 |
+| 157 | [/rcc/halo/getScores](rcc_halo_getScores.md) | RccHaloController | getHaloScores | 无 |
+| 158 | [/rcc/halo/setCheck](rcc_halo_setCheck.md) | RccHaloController | disableHaloCheck | 无 |
+| 159 | [/rcc/space/checkNameDuplication](rcc_space_checkNameDuplication.md) | RccSpaceController | checkPoolNameDuplication | 无 |
+| 160 | [/rcc/space/classroom/cloudDesktop/list](rcc_space_classroom_cloudDesktop_list.md) | RccSpaceController | classroomCloudDesktopList | 无 |
+| 161 | [/rcc/space/classroom/cloudDesktop/powerOff](rcc_space_classroom_cloudDesktop_powerOff.md) | RccSpaceController | powerOff | @EnableAuthority |
+| 162 | [/rcc/space/classroom/cloudDesktop/restart](rcc_space_classroom_cloudDesktop_restart.md) | RccSpaceController | restart | @EnableAuthority |
+| 163 | [/rcc/space/classroom/cloudDesktop/shutdown](rcc_space_classroom_cloudDesktop_shutdown.md) | RccSpaceController | shutdown | @EnableAuthority |
+| 164 | [/rcc/space/delete](rcc_space_delete.md) | RccSpaceController | deleteRccSpace | @EnableAuthority |
+| 165 | [/rcc/space/desktop/detail](rcc_space_desktop_detail.md) | RccSpaceController | desktopDetail | 无 |
+| 166 | [/rcc/space/detail](rcc_space_detail.md) | RccSpaceController | detail | 无 |
+| 167 | [/rcc/space/edit](rcc_space_edit.md) | RccSpaceController | edit | @EnableAuthority |
+| 168 | [/rcc/space/forceWakeUp](rcc_space_forceWakeUp.md) | RccSpaceController | desktopPoolForceWakeUp | @EnableAuthority |
+| 169 | [/rcc/space/getDesignateSpaceInfo](rcc_space_getDesignateSpaceInfo.md) | RccSpaceController | getDesignateSpaceInfo | 无 |
+| 170 | [/rcc/space/image/list](rcc_space_image_list.md) | RccSpaceController | listImageTemplate | 无 |
+| 171 | [/rcc/space/list](rcc_space_list.md) | RccSpaceController | list | 无 |
+| 172 | [/rcc/space/overview/getTeaTerminalList](rcc_space_overview_getTeaTerminalList.md) | RccSpaceOverviewController | listTeaTerminal | 无 |
+| 173 | [/rcc/space/overview/seatList](rcc_space_overview_seatList.md) | RccSpaceOverviewController | listSeat | 无 |
+| 174 | [/rcc/space/overview/tciDesktopList](rcc_space_overview_tciDesktopList.md) | RccSpaceOverviewController | listTCIDesktop | 无 |
+| 175 | [/rcc/space/overview/vdiDesktopList](rcc_space_overview_vdiDesktopList.md) | RccSpaceOverviewController | listVDIDesktop | 无 |
+| 176 | [/rcc/space/publish](rcc_space_publish.md) | RccSpaceController | publish | @EnableAuthority |
+| 177 | [/rcc/space/user/update](rcc_space_user_update.md) | RccSpaceController | updatePoolBindObject | @EnableAuthority |
+| 178 | [/rcc/spacetci/desktop/restore](rcc_spacetci_desktop_restore.md) | RccSpaceTCIDesktopController | restoreTCIDesktop | @EnableAuthority |
+| 179 | [/space/adGroup/listWithAssignment](space_adGroup_listWithAssignment.md) | SpaceAdUserController | getUserWithAssignmentList | 无 |
+| 180 | [/space/adGroup/pool/realBindAdGroup/page](space_adGroup_pool_realBindAdGroup_page.md) | SpaceAdUserController | pageDesktopPoolRealBindUser | 无 |
+| 181 | [/space/clouddesktop/deskNetwork/list](space_clouddesktop_deskNetwork_list.md) | SpaceDeskNetworkController | listDeskNetwork | 无 |
+| 182 | [/space/cluster/obtainComputeClusterList](space_cluster_obtainComputeClusterList.md) | SpaceClusterController | obtainComputeClusterList | 无 |
+| 183 | [/space/deskStrategy/agreement/template/list](space_deskStrategy_agreement_template_list.md) | SpaceUsbStrategyController | getAgreementTemplate | 无 |
+| 184 | [/space/deskStrategy/getSupportUsbTyp](space_deskStrategy_getSupportUsbTyp.md) | SpaceUsbStrategyController | getSupportUsbTyp | 无 |
+| 185 | [/space/deskStrategy/vgpu/list](space_deskStrategy_vgpu_list.md) | SpaceUsbStrategyController | getVGpuList | 无 |
+| 186 | [/space/platform/list](space_platform_list.md) | SpacePlatformController | listPlatform | 无 |
+| 187 | [/space/serverModel/getServerModel](space_serverModel_getServerModel.md) | SpaceServerModelController | getServerModel | 无 |
+| 188 | [/space/storagePool/list](space_storagePool_list.md) | SpaceStoragePoolController | listStoragePool | 无 |
+| 189 | [/space/strategy/tci/checkDuplication](space_strategy_tci_checkDuplication.md) | SpaceDeskStrategyGroupTCIController | checkNameDuplication | @EnableAuthority |
+| 190 | [/space/strategy/tci/condition/list](space_strategy_tci_condition_list.md) | SpaceDeskStrategyGroupTCIController | getPageLessonStrategyWithUsed | @EnableAuthority |
+| 191 | [/space/strategy/tci/create](space_strategy_tci_create.md) | SpaceDeskStrategyGroupTCIController | create | @EnableAuthority |
+| 192 | [/space/strategy/tci/delete](space_strategy_tci_delete.md) | SpaceDeskStrategyGroupTCIController | batchDelete | @EnableAuthority |
+| 193 | [/space/strategy/tci/edit](space_strategy_tci_edit.md) | SpaceDeskStrategyGroupTCIController | edit | @EnableAuthority |
+| 194 | [/space/strategy/tci/list](space_strategy_tci_list.md) | SpaceDeskStrategyGroupTCIController | pageQuery | 无 |
+| 195 | [/space/strategygroup/vdi/checkDuplication](space_strategygroup_vdi_checkDuplication.md) | SpaceDeskStrategyGroupVDIController | checkNameDuplication | 无 |
+| 196 | [/space/strategygroup/vdi/condition/list](space_strategygroup_vdi_condition_list.md) | SpaceDeskStrategyGroupVDIController | getPageDeskStrategyWithUsed | 无 |
+| 197 | [/space/strategygroup/vdi/delete](space_strategygroup_vdi_delete.md) | SpaceDeskStrategyGroupVDIController | batchDelete | @EnableAuthority |
+| 198 | [/space/strategygroup/vdi/edit](space_strategygroup_vdi_edit.md) | SpaceDeskStrategyGroupVDIController | edit | @EnableAuthority |
+| 199 | [/space/strategygroup/vdi/list](space_strategygroup_vdi_list.md) | SpaceDeskStrategyGroupVDIController | pageQuery | 无 |
+| 200 | [/space/user/group/list](space_user_group_list.md) | SpaceUserController | listUserGroupWidthTree | 无 |
+| 201 | [/space/user/listWithAssignment](space_user_listWithAssignment.md) | SpaceUserController | getUserWithAssignmentList | 无 |
+| 202 | [/space/user/realBindUser/page](space_user_realBindUser_page.md) | SpaceUserController | pageRealBindUser | 无 |
+| 203 | [/spacetci/lessonImage/getInfo](spacetci_lessonImage_getInfo.md) | TCILessonImageController | getLessonImage | @EnableAuthority |
+| 204 | [/spacetci/lessonImage/getLessonImageList](spacetci_lessonImage_getLessonImageList.md) | TCILessonImageController | getLessonImageList | @EnableAuthority |
+| 205 | [/spacetci/lessonImage/getStrategy](spacetci_lessonImage_getStrategy.md) | TCILessonImageController | getStrategy | @EnableAuthority |
+| 206 | [/spacetci/lessonImage/student/create](spacetci_lessonImage_student_create.md) | TCILessonImageController | assignStudentImage | @EnableAuthority |
+| 207 | [/spacetci/lessonImage/student/delete](spacetci_lessonImage_student_delete.md) | TCILessonImageController | deleteStudentLessonImage | @EnableAuthority |
+| 208 | [/spacetci/lessonImage/student/getDownloadInfo](spacetci_lessonImage_student_getDownloadInfo.md) | TCILessonImageDownloadController | getStudentLessonImageDownloadInfo | @EnableAuthority |
+| 209 | [/spacetci/lessonImage/student/hide](spacetci_lessonImage_student_hide.md) | TCILessonImageController | hideStudentLessonImage | @EnableAuthority |
+| 210 | [/spacetci/lessonImage/student/show](spacetci_lessonImage_student_show.md) | TCILessonImageController | showStudentLessonImage | @EnableAuthority |
+| 211 | [/spacetci/lessonImage/student/strategy/edit](spacetci_lessonImage_student_strategy_edit.md) | TCILessonImageController | editStudentStrategy | @EnableAuthority |
+| 212 | [/spacetci/lessonImage/student/update](spacetci_lessonImage_student_update.md) | TCILessonImageController | updateStudentLessonImage | @EnableAuthority |
+| 213 | [/spacetci/lessonImage/teacher/create](spacetci_lessonImage_teacher_create.md) | TCILessonImageController | assignTeacherImage | @EnableAuthority |
+| 214 | [/spacetci/lessonImage/teacher/delete](spacetci_lessonImage_teacher_delete.md) | TCILessonImageController | deleteTearcherLessonImage | @EnableAuthority |
+| 215 | [/spacetci/lessonImage/teacher/getDownloadInfo](spacetci_lessonImage_teacher_getDownloadInfo.md) | TCILessonImageDownloadController | getTeacherLessonImageDownloadInfo | @EnableAuthority |
+| 216 | [/spacetci/lessonImage/teacher/hide](spacetci_lessonImage_teacher_hide.md) | TCILessonImageController | hideTeacherLessonImage | @EnableAuthority |
+| 217 | [/spacetci/lessonImage/teacher/show](spacetci_lessonImage_teacher_show.md) | TCILessonImageController | showTeacherLessonImage | @EnableAuthority |
+| 218 | [/spacetci/lessonImage/teacher/strategy/edit](spacetci_lessonImage_teacher_strategy_edit.md) | TCILessonImageController | editTeacherStrategy | @EnableAuthority |
+| 219 | [/spacetci/lessonImage/teacher/update](spacetci_lessonImage_teacher_update.md) | TCILessonImageController | updateTeacherLessonImage | @EnableAuthority |
+
+## 说明
+
+- 每个接口一个 md：front-matter（api/setup/request/response/polling/upstream/downstream/constraints/assertions/cleanup/idempotency）+ 12 章节正文（含 Mermaid 依赖关系全景图）
+- 上游/下游为 HTTP 接口（POST /rcc/xxx），field_map 契约映射字段级数据流
+- 异步接口含 polling 配置；断言以 HTTP 响应 status/msgKey 为准
+- vdi/create 为人工深度验证版（含真实 JSON 全字段）
+
+
+| [space_strategygroup_vdi_create](space_strategygroup_vdi_create.md) | VDI 策略创建（**人工深度验证版**，含真实请求 JSON 全字段） |
+## 别名接口（detail/getInfo）
+
+| 接口 | 说明 |
+|---|---|
+| [space_strategygroup_vdi_detail](space_strategygroup_vdi_detail.md) | VDI 策略详情 |
+| [space_strategygroup_vdi_getInfo](space_strategygroup_vdi_getInfo.md) | VDI 策略详情（别名，= detail） |
+| [space_strategy_tci_detail](space_strategy_tci_detail.md) | TCI 策略详情 |
+| [space_strategy_tci_getInfo](space_strategy_tci_getInfo.md) | TCI 策略详情（别名，= detail） |

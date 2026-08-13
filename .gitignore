@@ -1,0 +1,18 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# 运行产物
+.cache/
+*.log
+
+# 临时验证脚本
+_verify_*.py
+
+# IDE
+.idea/
+.vscode/

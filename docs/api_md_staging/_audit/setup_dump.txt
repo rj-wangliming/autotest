@@ -1,0 +1,929 @@
+============ rcc_classroom_desktop_tci_list.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批处理任务，出参BatchTaskSubmitResult）
+- name: query_classroom
+  api: POST /rcc/classroom/terminal/list
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+  purpose: 查询教室列表获取classroomId（ViewClassroomInfoEntity.classroomId）
+============ rcc_classroom_networkWhitelist_edit.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批任务，需轮询批任务完成后再查询教室）
+- name: query_classroom
+  api: POST /rcc/classroom/select
+  extract:
+    classroomId: $.content[0].classroomId
+  purpose: 按名称查询教室，获取 classroomId
+- name: get_white_list
+  api: POST /rcc/classroom/networkWhitelist/list
+  extract:
+    whiteListId: $.content.itemArr[0].id
+  purpose: 获取禁网白名单ID
+============ rcc_classroom_cmrcef_lesson_end.md
+- name: up_1
+  api: 内部调用:lessonService
+  method: POST
+  produces: BatchTaskSubmitResult
+  purpose: （内部调用）
+============ rcc_classroom_desktop_restart.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批处理任务，出参BatchTaskSubmitResult）
+- name: query_classroom
+  api: POST /rcc/classroom/terminal/list
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+  purpose: 查询教室列表获取classroomId（ViewClassroomInfoEntity.classroomId）
+- name: create_seat
+  api: POST /rcc/classroom/seat/batchCreate
+  purpose: 批量创建座位（异步批处理任务）
+- name: query_seat
+  api: POST /rcc/classroom/seat/list
+  extract:
+    seatId: $.content.itemArr[0].id
+    terminalId: $.content.itemArr[0].terminalId
+  purpose: 查询座位列表获取seatId/terminalId（SeatInfoDTO）
+- name: query_desktop
+  api: POST /rcc/classroom/desktop/list
+  extract:
+    desktopId: $.content.itemArr[0].desktopId
+  purpose: 查询桌面列表获取desktopId（ViewDesktopResultDTO.desktopId）
+============ rcc_classroom_checkTeacherIpDuplicate.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批任务，需轮询批任务完成后再查询教室）
+- name: query_classroom
+  api: POST /rcc/classroom/select
+  extract:
+    classroomId: $.content[0].classroomId
+  purpose: 按名称查询教室，获取 classroomId
+============ rcc_classroom_desktop_tci_shutdown.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批处理任务，出参BatchTaskSubmitResult）
+- name: query_classroom
+  api: POST /rcc/classroom/terminal/list
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+  purpose: 查询教室列表获取classroomId（ViewClassroomInfoEntity.classroomId）
+- name: create_seat
+  api: POST /rcc/classroom/seat/batchCreate
+  purpose: 批量创建座位（异步批处理任务）
+- name: query_seat
+  api: POST /rcc/classroom/seat/list
+  extract:
+    seatId: $.content.itemArr[0].id
+    terminalId: $.content.itemArr[0].terminalId
+  purpose: 查询座位列表获取seatId/terminalId（SeatInfoDTO）
+- name: query_desktop
+  api: POST /rcc/classroom/desktop/list
+  extract:
+    desktopId: $.content.itemArr[0].desktopId
+  purpose: 查询桌面列表获取desktopId（ViewDesktopResultDTO.desktopId）
+============ rcc_classroom_batchCheckDesktopNameDuplicate.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+============ rcc_classroom_select.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+============ rcc_classroom_cmr_freeClassroom_list.md
+- name: up_1
+  api: 内部调用:rccFreeClassroomAPI
+  method: POST
+  produces: PageQueryResponse<FreeClassroomEntity>
+  purpose: （内部调用）
+============ rcc_classroom_desktop_gtlog_download.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批处理任务，出参BatchTaskSubmitResult）
+- name: query_classroom
+  api: POST /rcc/classroom/terminal/list
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+  purpose: 查询教室列表获取classroomId（ViewClassroomInfoEntity.classroomId）
+- name: create_seat
+  api: POST /rcc/classroom/seat/batchCreate
+  purpose: 批量创建座位（异步批处理任务）
+- name: query_seat
+  api: POST /rcc/classroom/seat/list
+  extract:
+    seatId: $.content.itemArr[0].id
+    terminalId: $.content.itemArr[0].terminalId
+  purpose: 查询座位列表获取seatId/terminalId（SeatInfoDTO）
+- name: query_desktop
+  api: POST /rcc/classroom/desktop/list
+  extract:
+    desktopId: $.content.itemArr[0].desktopId
+  purpose: 查询桌面列表获取desktopId（ViewDesktopResultDTO.desktopId）
+============ rcc_classroom_network_disable.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: createClassroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室
+  extract:
+    classroomName: auto_classroom_<ts>
+- name: listClassroom
+  api: POST /rcc/classroom/list
+  purpose: 查询教室ID
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+============ rcc_classroom_desktop_tci_remoteAssist_assistRequest.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批处理任务，出参BatchTaskSubmitResult）
+- name: query_classroom
+  api: POST /rcc/classroom/terminal/list
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+  purpose: 查询教室列表获取classroomId（ViewClassroomInfoEntity.classroomId）
+- name: create_seat
+  api: POST /rcc/classroom/seat/batchCreate
+  purpose: 批量创建座位（异步批处理任务）
+- name: query_seat
+  api: POST /rcc/classroom/seat/list
+  extract:
+    seatId: $.content.itemArr[0].id
+    terminalId: $.content.itemArr[0].terminalId
+  purpose: 查询座位列表获取seatId/terminalId（SeatInfoDTO）
+- name: query_desktop
+  api: POST /rcc/classroom/desktop/list
+  extract:
+    desktopId: $.content.itemArr[0].desktopId
+  purpose: 查询桌面列表获取desktopId（ViewDesktopResultDTO.desktopId）
+============ rcc_classroom_getStudentConfig.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批任务，需轮询批任务完成后再查询教室）
+- name: query_classroom
+  api: POST /rcc/classroom/select
+  extract:
+    classroomId: $.content[0].classroomId
+  purpose: 按名称查询教室，获取 classroomId
+============ rcc_classroom_editStudentInfo.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批任务，需轮询批任务完成后再查询教室）
+- name: query_classroom
+  api: POST /rcc/classroom/select
+  extract:
+    classroomId: $.content[0].classroomId
+  purpose: 按名称查询教室，获取 classroomId
+- name: get_strategy
+  api: POST /rcc/classroom/strategy/list
+  extract:
+    classroomStrategyId: $.content.itemArr[0].classroomStrategyId
+  purpose: 获取学生机教室策略ID（可选）
+============ rcc_classroom_cmr_download_getUrl.md
+- name: up_1
+  api: https://{cluster_virtual_ip}:9274/api (Index/Download/getBtU
+  method: POST
+  produces: UpdaterResponse.data{url,checkSum}
+- name: up_2
+  api: https://{cluster_virtual_ip}:9274/api (Index/Download/getIns
+  method: POST
+  produces: UpdaterResponse.data{url,checkSum}
+- name: up_3
+  api: 内部调用:globalParameterAPI
+  method: POST
+  produces: String
+  purpose: （内部调用）
+============ rcc_classroom_networkWhitelist_list.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+============ rcc_classroom_networkWhitelist_getWhiteList.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: get_white_list
+  api: POST /rcc/classroom/networkWhitelist/list
+  extract:
+    whiteListId: $.content.itemArr[0].id
+  purpose: 获取禁网白名单ID
+============ rcc_classroom_desktop_tci_collectLog_getState.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批处理任务，出参BatchTaskSubmitResult）
+- name: query_classroom
+  api: POST /rcc/classroom/terminal/list
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+  purpose: 查询教室列表获取classroomId（ViewClassroomInfoEntity.classroomId）
+- name: create_seat
+  api: POST /rcc/classroom/seat/batchCreate
+  purpose: 批量创建座位（异步批处理任务）
+- name: query_seat
+  api: POST /rcc/classroom/seat/list
+  extract:
+    seatId: $.content.itemArr[0].id
+    terminalId: $.content.itemArr[0].terminalId
+  purpose: 查询座位列表获取seatId/terminalId（SeatInfoDTO）
+- name: query_desktop
+  api: POST /rcc/classroom/desktop/list
+  extract:
+    desktopId: $.content.itemArr[0].desktopId
+  purpose: 查询桌面列表获取desktopId（ViewDesktopResultDTO.desktopId）
+============ rcc_classroom_network_deliverIPForTeacherEditNetwork.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: listClassroom
+  api: POST /rcc/classroom/list
+  purpose: 查询教室ID
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+============ rcc_classroom_list.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+============ rcc_classroom_network_cancelDisable.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: createClassroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室
+  extract:
+    classroomName: auto_classroom_<ts>
+- name: listClassroom
+  api: POST /rcc/classroom/list
+  purpose: 查询教室ID
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+============ rcc_classroom_cmrcef_lesson_closeTerminal.md
+- name: up_1
+  api: 内部调用:seatAPI
+  method: POST
+  produces: void
+  purpose: （内部调用）
+============ rcc_classroom_getClassroomVdiDiskStorage.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批任务，需轮询批任务完成后再查询教室）
+- name: query_classroom
+  api: POST /rcc/classroom/select
+  extract:
+    classroomId: $.content[0].classroomId
+  purpose: 按名称查询教室，获取 classroomId
+- name: get_cluster_network
+  api: POST /rcc/classroom/image/getAssignedClusterAndNetwork
+  extract:
+    clusterId: $.content.itemArr[0].clusterId
+  purpose: 获取计算集群ID（推断）
+============ rcc_classroom_lesson_restart.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: createClassroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室
+  extract:
+    classroomName: auto_classroom_<ts>
+- name: listClassroom
+  api: POST /rcc/classroom/list
+  purpose: 查询教室ID
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+- name: listImage
+  api: POST /rcc/classroom/image/list
+  purpose: 查询镜像ID
+  extract:
+    imageId: $.content.itemArr[0].id
+============ rcc_spacetci_desktop_restore.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批处理任务，出参BatchTaskSubmitResult）
+- name: query_classroom
+  api: POST /rcc/classroom/terminal/list
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+  purpose: 查询教室列表获取classroomId（ViewClassroomInfoEntity.classroomId）
+- name: create_seat
+  api: POST /rcc/classroom/seat/batchCreate
+  purpose: 批量创建座位（异步批处理任务）
+- name: query_seat
+  api: POST /rcc/classroom/seat/list
+  extract:
+    seatId: $.content.itemArr[0].id
+    terminalId: $.content.itemArr[0].terminalId
+  purpose: 查询座位列表获取seatId/terminalId（SeatInfoDTO）
+- name: query_desktop
+  api: POST /rcc/classroom/desktop/list
+  extract:
+    desktopId: $.content.itemArr[0].desktopId
+  purpose: 查询桌面列表获取desktopId（ViewDesktopResultDTO.desktopId）
+============ rcc_classroom_desktop_forceWakeUp.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批处理任务，出参BatchTaskSubmitResult）
+- name: query_classroom
+  api: POST /rcc/classroom/terminal/list
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+  purpose: 查询教室列表获取classroomId（ViewClassroomInfoEntity.classroomId）
+- name: create_seat
+  api: POST /rcc/classroom/seat/batchCreate
+  purpose: 批量创建座位（异步批处理任务）
+- name: query_seat
+  api: POST /rcc/classroom/seat/list
+  extract:
+    seatId: $.content.itemArr[0].id
+    terminalId: $.content.itemArr[0].terminalId
+  purpose: 查询座位列表获取seatId/terminalId（SeatInfoDTO）
+- name: query_desktop
+  api: POST /rcc/classroom/desktop/list
+  extract:
+    desktopId: $.content.itemArr[0].desktopId
+  purpose: 查询桌面列表获取desktopId（ViewDesktopResultDTO.desktopId）
+============ rcc_classroom_getClassroomBasicInfo.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批任务，需轮询批任务完成后再查询教室）
+- name: query_classroom
+  api: POST /rcc/classroom/select
+  extract:
+    classroomId: $.content[0].classroomId
+  purpose: 按名称查询教室，获取 classroomId
+============ rcc_classroom_checkStudentIpDuplicate.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批任务，需轮询批任务完成后再查询教室）
+- name: query_classroom
+  api: POST /rcc/classroom/select
+  extract:
+    classroomId: $.content[0].classroomId
+  purpose: 按名称查询教室，获取 classroomId
+============ rcc_classroom_editTeacherInfo.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批任务，需轮询批任务完成后再查询教室）
+- name: query_classroom
+  api: POST /rcc/classroom/select
+  extract:
+    classroomId: $.content[0].classroomId
+  purpose: 按名称查询教室，获取 classroomId
+- name: get_strategy
+  api: POST /rcc/classroom/strategy/list
+  extract:
+    classroomStrategyId: $.content.itemArr[0].classroomStrategyId
+  purpose: 获取教师机教室策略ID（可选）
+============ rcc_classroom_desktop_tci_collectLog_download.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批处理任务，出参BatchTaskSubmitResult）
+- name: query_classroom
+  api: POST /rcc/classroom/terminal/list
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+  purpose: 查询教室列表获取classroomId（ViewClassroomInfoEntity.classroomId）
+- name: create_seat
+  api: POST /rcc/classroom/seat/batchCreate
+  purpose: 批量创建座位（异步批处理任务）
+- name: query_seat
+  api: POST /rcc/classroom/seat/list
+  extract:
+    seatId: $.content.itemArr[0].id
+    terminalId: $.content.itemArr[0].terminalId
+  purpose: 查询座位列表获取seatId/terminalId（SeatInfoDTO）
+- name: query_desktop
+  api: POST /rcc/classroom/desktop/list
+  extract:
+    desktopId: $.content.itemArr[0].desktopId
+  purpose: 查询桌面列表获取desktopId（ViewDesktopResultDTO.desktopId）
+============ rcc_classroom_desktop_remoteAssist_assistRequest.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批处理任务，出参BatchTaskSubmitResult）
+- name: query_classroom
+  api: POST /rcc/classroom/terminal/list
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+  purpose: 查询教室列表获取classroomId（ViewClassroomInfoEntity.classroomId）
+- name: create_seat
+  api: POST /rcc/classroom/seat/batchCreate
+  purpose: 批量创建座位（异步批处理任务）
+- name: query_seat
+  api: POST /rcc/classroom/seat/list
+  extract:
+    seatId: $.content.itemArr[0].id
+    terminalId: $.content.itemArr[0].terminalId
+  purpose: 查询座位列表获取seatId/terminalId（SeatInfoDTO）
+- name: query_desktop
+  api: POST /rcc/classroom/desktop/list
+  extract:
+    desktopId: $.content.itemArr[0].desktopId
+  purpose: 查询桌面列表获取desktopId（ViewDesktopResultDTO.desktopId）
+============ rcc_classroom_desktop_powerOff.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批处理任务，出参BatchTaskSubmitResult）
+- name: query_classroom
+  api: POST /rcc/classroom/terminal/list
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+  purpose: 查询教室列表获取classroomId（ViewClassroomInfoEntity.classroomId）
+- name: create_seat
+  api: POST /rcc/classroom/seat/batchCreate
+  purpose: 批量创建座位（异步批处理任务）
+- name: query_seat
+  api: POST /rcc/classroom/seat/list
+  extract:
+    seatId: $.content.itemArr[0].id
+    terminalId: $.content.itemArr[0].terminalId
+  purpose: 查询座位列表获取seatId/terminalId（SeatInfoDTO）
+- name: query_desktop
+  api: POST /rcc/classroom/desktop/list
+  extract:
+    desktopId: $.content.itemArr[0].desktopId
+  purpose: 查询桌面列表获取desktopId（ViewDesktopResultDTO.desktopId）
+============ rcc_classroom_network_deliverIPForVDISeat.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: listClassroom
+  api: POST /rcc/classroom/list
+  purpose: 查询教室ID
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+============ rcc_classroom_lesson_start.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: createClassroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室
+  extract:
+    classroomName: auto_classroom_<ts>
+- name: listClassroom
+  api: POST /rcc/classroom/list
+  purpose: 查询教室ID
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+- name: listImage
+  api: POST /rcc/classroom/image/list
+  purpose: 查询镜像ID
+  extract:
+    imageId: $.content.itemArr[0].id
+============ rcc_classroom_editClassroomBasicInfo.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批任务，需轮询批任务完成后再查询教室）
+- name: query_classroom
+  api: POST /rcc/classroom/select
+  extract:
+    classroomId: $.content[0].classroomId
+  purpose: 按名称查询教室，获取 classroomId
+============ rcc_classroom_desktop_shutdown.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批处理任务，出参BatchTaskSubmitResult）
+- name: query_classroom
+  api: POST /rcc/classroom/terminal/list
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+  purpose: 查询教室列表获取classroomId（ViewClassroomInfoEntity.classroomId）
+- name: create_seat
+  api: POST /rcc/classroom/seat/batchCreate
+  purpose: 批量创建座位（异步批处理任务）
+- name: query_seat
+  api: POST /rcc/classroom/seat/list
+  extract:
+    seatId: $.content.itemArr[0].id
+    terminalId: $.content.itemArr[0].terminalId
+  purpose: 查询座位列表获取seatId/terminalId（SeatInfoDTO）
+- name: query_desktop
+  api: POST /rcc/classroom/desktop/list
+  extract:
+    desktopId: $.content.itemArr[0].desktopId
+  purpose: 查询桌面列表获取desktopId（ViewDesktopResultDTO.desktopId）
+============ rcc_classroom_desktop_tci_restart.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批处理任务，出参BatchTaskSubmitResult）
+- name: query_classroom
+  api: POST /rcc/classroom/terminal/list
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+  purpose: 查询教室列表获取classroomId（ViewClassroomInfoEntity.classroomId）
+- name: create_seat
+  api: POST /rcc/classroom/seat/batchCreate
+  purpose: 批量创建座位（异步批处理任务）
+- name: query_seat
+  api: POST /rcc/classroom/seat/list
+  extract:
+    seatId: $.content.itemArr[0].id
+    terminalId: $.content.itemArr[0].terminalId
+  purpose: 查询座位列表获取seatId/terminalId（SeatInfoDTO）
+- name: query_desktop
+  api: POST /rcc/classroom/desktop/list
+  extract:
+    desktopId: $.content.itemArr[0].desktopId
+  purpose: 查询桌面列表获取desktopId（ViewDesktopResultDTO.desktopId）
+============ rcc_classroom_checkClassroomNameDuplicate.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批任务，需轮询批任务完成后再查询教室）
+- name: query_classroom
+  api: POST /rcc/classroom/select
+  extract:
+    classroomId: $.content[0].classroomId
+  purpose: 按名称查询教室，获取 classroomId
+============ rcc_classroom_cmrcef_lesson_isShowCloseServerButton.md
+- name: up_1
+  api: 内部调用:classroomCMRAPI
+  method: POST
+  produces: Boolean
+  purpose: （内部调用）
+============ rcc_classroom_lesson_end.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: createClassroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室
+  extract:
+    classroomName: auto_classroom_<ts>
+- name: listClassroom
+  api: POST /rcc/classroom/list
+  purpose: 查询教室ID
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+- name: startLesson
+  api: POST /rcc/classroom/lesson/start
+  purpose: 先上课再下课
+============ rcc_classroom_cmrcef_lesson_start.md
+- name: up_1
+  api: 内部调用:classroomLessonStatusAPI
+  method: POST
+  produces: void
+  purpose: （内部调用）
+- name: up_3
+  api: 内部调用:lessonService
+  method: POST
+  produces: BatchTaskSubmitResult
+  purpose: （内部调用）
+============ rcc_classroom_cmrcef_lesson_list.md
+- name: up_1
+  api: 内部调用:classroomImageAPI
+  method: POST
+  produces: List<ClassroomImageCardInfoDTO>
+  purpose: （内部调用）
+- name: up_2
+  api: 内部调用:classroomLessonStatusAPI
+  method: POST
+  produces: ClassroomLessonInfoDTO
+  purpose: （内部调用）
+============ rcc_classroom_desktop_tci_collectLog.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批处理任务，出参BatchTaskSubmitResult）
+- name: query_classroom
+  api: POST /rcc/classroom/terminal/list
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+  purpose: 查询教室列表获取classroomId（ViewClassroomInfoEntity.classroomId）
+- name: create_seat
+  api: POST /rcc/classroom/seat/batchCreate
+  purpose: 批量创建座位（异步批处理任务）
+- name: query_seat
+  api: POST /rcc/classroom/seat/list
+  extract:
+    seatId: $.content.itemArr[0].id
+    terminalId: $.content.itemArr[0].terminalId
+  purpose: 查询座位列表获取seatId/terminalId（SeatInfoDTO）
+- name: query_desktop
+  api: POST /rcc/classroom/desktop/list
+  extract:
+    desktopId: $.content.itemArr[0].desktopId
+  purpose: 查询桌面列表获取desktopId（ViewDesktopResultDTO.desktopId）
+============ rcc_classroom_getInfo.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批任务，需轮询批任务完成后再查询教室）
+- name: query_classroom
+  api: POST /rcc/classroom/select
+  extract:
+    classroomId: $.content[0].classroomId
+  purpose: 按名称查询教室，获取 classroomId
+============ rcc_classroom_getTeacherConfig.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批任务，需轮询批任务完成后再查询教室）
+- name: query_classroom
+  api: POST /rcc/classroom/select
+  extract:
+    classroomId: $.content[0].classroomId
+  purpose: 按名称查询教室，获取 classroomId
+============ rcc_classroom_oneclickshutdown.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: createClassroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室
+  extract:
+    classroomName: auto_classroom_<ts>
+- name: listClassroom
+  api: POST /rcc/classroom/list
+  purpose: 查询教室ID
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+============ rcc_classroom_network_deliverIPForVDISeatEdit.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: listClassroom
+  api: POST /rcc/classroom/list
+  purpose: 查询教室ID
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+- name: listSeat
+  api: POST /rcc/classroom/seat/list
+  purpose: 查询座位ID
+  extract:
+    seatId: $.content.itemArr[0].id
+============ rcc_classroom_cmrcef_lesson_progress.md
+- name: up_1
+  api: 内部调用:classroomLessonAPI
+  method: POST
+  produces: UUID
+  purpose: （内部调用）
+============ rcc_classroom_editTeacherInfoCheckDesktopPreName.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批任务，需轮询批任务完成后再查询教室）
+- name: query_classroom
+  api: POST /rcc/classroom/select
+  extract:
+    classroomId: $.content[0].classroomId
+  purpose: 按名称查询教室，获取 classroomId
+============ rcc_classroom_create.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: get_strategy
+  api: POST /rcc/classroom/strategy/list
+  extract:
+    studentClassroomStrategyId: $.content.itemArr[0].classroomStrategyId
+  purpose: 获取学生机教室策略ID（可选）
+============ rcc_classroom_networkWhitelist_delete.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批任务，需轮询批任务完成后再查询教室）
+- name: query_classroom
+  api: POST /rcc/classroom/select
+  extract:
+    classroomId: $.content[0].classroomId
+  purpose: 按名称查询教室，获取 classroomId
+- name: get_white_list
+  api: POST /rcc/classroom/networkWhitelist/list
+  extract:
+    whiteListId: $.content.itemArr[0].id
+  purpose: 获取禁网白名单ID
+============ rcc_classroom_network_deliverIPForVDIClassroom.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: createClassroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（VDI）
+============ rcc_classroom_delete.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批任务，需轮询批任务完成后再查询教室）
+- name: query_classroom
+  api: POST /rcc/classroom/select
+  extract:
+    classroomId: $.content[0].classroomId
+  purpose: 按名称查询教室，获取 classroomId
+============ rcc_classroom_networkWhitelist_create.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批任务，需轮询批任务完成后再查询教室）
+- name: query_classroom
+  api: POST /rcc/classroom/select
+  extract:
+    classroomId: $.content[0].classroomId
+  purpose: 按名称查询教室，获取 classroomId
+============ rcc_classroom_cmr_version_getRpmAndSubsystemVersion.md
+- name: up_1
+  api: 内部调用:configCenterKvAPI
+  method: POST
+  produces: PackageVersionDTO
+  purpose: （内部调用）
+- name: up_2
+  api: file:///config/packet/{rpmName}.ini
+  method: POST
+  produces: Properties[version]
+============ rcc_classroom_desktop_gtlog_collectLog.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批处理任务，出参BatchTaskSubmitResult）
+- name: query_classroom
+  api: POST /rcc/classroom/terminal/list
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+  purpose: 查询教室列表获取classroomId（ViewClassroomInfoEntity.classroomId）
+- name: create_seat
+  api: POST /rcc/classroom/seat/batchCreate
+  purpose: 批量创建座位（异步批处理任务）
+- name: query_seat
+  api: POST /rcc/classroom/seat/list
+  extract:
+    seatId: $.content.itemArr[0].id
+    terminalId: $.content.itemArr[0].terminalId
+  purpose: 查询座位列表获取seatId/terminalId（SeatInfoDTO）
+- name: query_desktop
+  api: POST /rcc/classroom/desktop/list
+  extract:
+    desktopId: $.content.itemArr[0].desktopId
+  purpose: 查询桌面列表获取desktopId（ViewDesktopResultDTO.desktopId）
+============ rcc_classroom_desktop_cancelFault.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批处理任务，出参BatchTaskSubmitResult）
+- name: query_classroom
+  api: POST /rcc/classroom/terminal/list
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+  purpose: 查询教室列表获取classroomId（ViewClassroomInfoEntity.classroomId）
+- name: create_seat
+  api: POST /rcc/classroom/seat/batchCreate
+  purpose: 批量创建座位（异步批处理任务）
+- name: query_seat
+  api: POST /rcc/classroom/seat/list
+  extract:
+    seatId: $.content.itemArr[0].id
+    terminalId: $.content.itemArr[0].terminalId
+  purpose: 查询座位列表获取seatId/terminalId（SeatInfoDTO）
+- name: query_desktop
+  api: POST /rcc/classroom/desktop/list
+  extract:
+    desktopId: $.content.itemArr[0].desktopId
+  purpose: 查询桌面列表获取desktopId（ViewDesktopResultDTO.desktopId）
+============ rcc_classroom_desktop_list.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批处理任务，出参BatchTaskSubmitResult）
+- name: query_classroom
+  api: POST /rcc/classroom/terminal/list
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+  purpose: 查询教室列表获取classroomId（ViewClassroomInfoEntity.classroomId）
+============ rcc_classroom_desktop_gtlog_getState.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批处理任务，出参BatchTaskSubmitResult）
+- name: query_classroom
+  api: POST /rcc/classroom/terminal/list
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+  purpose: 查询教室列表获取classroomId（ViewClassroomInfoEntity.classroomId）
+- name: create_seat
+  api: POST /rcc/classroom/seat/batchCreate
+  purpose: 批量创建座位（异步批处理任务）
+- name: query_seat
+  api: POST /rcc/classroom/seat/list
+  extract:
+    seatId: $.content.itemArr[0].id
+    terminalId: $.content.itemArr[0].terminalId
+  purpose: 查询座位列表获取seatId/terminalId（SeatInfoDTO）
+- name: query_desktop
+  api: POST /rcc/classroom/desktop/list
+  extract:
+    desktopId: $.content.itemArr[0].desktopId
+  purpose: 查询桌面列表获取desktopId（ViewDesktopResultDTO.desktopId）
+============ rcc_classroom_desktop_restoreVDIImage.md
+- name: login
+  api: POST /rco/admin/loginAdmin
+  purpose: 管理员登录
+- name: create_classroom
+  api: POST /rcc/classroom/create
+  purpose: 创建教室（异步批处理任务，出参BatchTaskSubmitResult）
+- name: query_classroom
+  api: POST /rcc/classroom/terminal/list
+  extract:
+    classroomId: $.content.itemArr[0].classroomId
+  purpose: 查询教室列表获取classroomId（ViewClassroomInfoEntity.classroomId）
+- name: create_seat
+  api: POST /rcc/classroom/seat/batchCreate
+  purpose: 批量创建座位（异步批处理任务）
+- name: query_seat
+  api: POST /rcc/classroom/seat/list
+  extract:
+    seatId: $.content.itemArr[0].id
+    terminalId: $.content.itemArr[0].terminalId
+  purpose: 查询座位列表获取seatId/terminalId（SeatInfoDTO）
+- name: query_desktop
+  api: POST /rcc/classroom/desktop/list
+  extract:
+    desktopId: $.content.itemArr[0].desktopId
+  purpose: 查询桌面列表获取desktopId（ViewDesktopResultDTO.desktopId）

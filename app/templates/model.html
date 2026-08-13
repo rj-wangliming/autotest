@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>🧠 模型配置</h2>
+<p class="muted">配置 LLM 服务（用于自由文本用例的 AI 解析、接口消歧、字段映射兜底）</p>
+
+<div class="panel">
+    <div class="panel-head"><span>LLM Provider</span></div>
+    <div class="form-grid">
+        <label>Provider
+            <select id="cfg-provider">
+                <option value="openai">OpenAI 兼容</option>
+                <option value="deepseek">DeepSeek</option>
+                <option value="qwen">通义千问</option>
+                <option value="local">本地 Ollama</option>
+            </select>
+        </label>
+        <label>Base URL
+            <input id="cfg-base-url" placeholder="https://api.deepseek.com/v1">
+        </label>
+        <label>API Key
+            <input id="cfg-api-key" type="password" placeholder="sk-...">
+        </label>
+        <label>模型名
+            <input id="cfg-model" placeholder="deepseek-chat">
+        </label>
+        <label>Temperature
+            <input id="cfg-temperature" type="number" step="0.1" value="0.1">
+        </label>
+        <label>Max Tokens
+            <input id="cfg-max-tokens" type="number" value="2048">
+        </label>
+    </div>
+    <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveConfig()">💾 保存配置</button>
+        <button class="btn" onclick="testConnection()">🔌 测试连接</button>
+        <span id="cfg-status" class="muted"></span>
+    </div>
+</div>
+
+<div class="panel">
+    <div class="panel-head"><span>AI 介入边界（方案约束）</span></div>
+    <table class="table">
+        <thead><tr><th>环节</th><th>AI 使用</th><th>说明</th></tr></thead>
+        <tbody>
+            <tr><td>结构化模板用例（通道 A）</td><td><span class="badge badge-green">0 AI</span></td><td>规则解析，确定性</td></tr>
+            <tr><td>自由文本用例（通道 B）</td><td><span class="badge badge-orange">1 次批量</span></td><td>自然语言 → 意图</td></tr>
+            <tr><td>接口消歧</td><td><span class="badge badge-orange">可选批量</span></td><td>意图 → 接口，词典优先</td></tr>
+            <tr><td>字段映射</td><td><span class="badge badge-orange">可选兜底</span></td><td>field_map 优先，AI 仅未命中</td></tr>
+            <tr><td>脚本合成/执行/断言</td><td><span class="badge badge-green">0 AI</span></td><td>纯机械转换</td></tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function loadConfig() {
+    const r = await fetch('/api/model-config');
+    const d = await r.json();
+    document.getElementById('cfg-provider').value = d.provider || 'openai';
+    document.getElementById('cfg-base-url').value = d.base_url || '';
+    document.getElementById('cfg-api-key').value = d.api_key || '';
+    document.getElementById('cfg-model').value = d.model || '';
+    document.getElementById('cfg-temperature').value = d.temperature ?? 0.1;
+    document.getElementById('cfg-max-tokens').value = d.max_tokens ?? 2048;
+}
+async function saveConfig() {
+    const cfg = {
+        provider: document.getElementById('cfg-provider').value,
+        base_url: document.getElementById('cfg-base-url').value,
+        api_key: document.getElementById('cfg-api-key').value,
+        model: document.getElementById('cfg-model').value,
+        temperature: parseFloat(document.getElementById('cfg-temperature').value),
+        max_tokens: parseInt(document.getElementById('cfg-max-tokens').value),
+    };
+    await fetch('/api/model-config', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(cfg)});
+    document.getElementById('cfg-status').textContent = '✅ 已保存';
+}
+async function testConnection() {
+    const cfg = {
+        provider: document.getElementById('cfg-provider').value,
+        base_url: document.getElementById('cfg-base-url').value,
+        api_key: document.getElementById('cfg-api-key').value,
+        model: document.getElementById('cfg-model').value,
+        temperature: parseFloat(document.getElementById('cfg-temperature').value) || 0.1,
+        max_tokens: parseInt(document.getElementById('cfg-max-tokens').value) || 2048,
+    };
+    const st = document.getElementById('cfg-status');
+    st.textContent = '测试中...';
+    try {
+        const r = await fetch('/api/model-test', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(cfg)});
+        const d = await r.json();
+        st.textContent = d.ok ? ('✅ 连接成功：' + (d.reply || '')) : ('❌ ' + d.error);
+    } catch(e) {
+        st.textContent = '❌ ' + e.message;
+    }
+}
+loadConfig();
+</script>
+{% endblock %}

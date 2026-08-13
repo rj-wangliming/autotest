@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>📝 用例输入</h2>
+<p class="muted">AI 编排为主：配置 LLM 后由 AI 把用例映射到接口并自动展开依赖；未配置 LLM 时降级规则匹配。参数在「全局参数」(global_params.yaml) 维护，用例文本中不写参数。</p>
+
+<div class="panel">
+    <div class="panel-head">
+        <span>用例（前置步骤 / 执行步骤 / 预测结果，前置可空）</span>
+        <button onclick="fillTemplate()" class="btn btn-sm">填充示例</button>
+    </div>
+    <textarea id="use-case" rows="18" placeholder="前置步骤：
+    1、教室云桌面列表中有多个云桌面处于运行中
+执行步骤：
+    1、教室详情 - 云桌面列表中选择多个正在运行的VDI云桌面点击【重启云桌面】按钮重启云桌面
+预测结果：
+    1、勾选的云桌面重启成功"></textarea>
+</div>
+
+<div class="panel">
+    <div class="panel-head"><span>用例参数（JSON，覆盖 global_params.yaml）</span></div>
+    <textarea id="params" rows="5" placeholder='留空则使用 global_params.yaml 全局参数；可填 JSON 临时覆盖，如 {"classroom_name":"test_001","teacherIp":"10.10.10.10"}'></textarea>
+</div>
+
+<div class="panel">
+    <div class="panel-head"><span>目标环境</span></div>
+    <input id="base-url" value="http://127.0.0.1:8080" placeholder="BASE_URL">
+    <button id="btn-plan" class="btn" onclick="previewPlan()">🔍 预览计划</button>
+    <button id="btn-run" class="btn btn-primary" onclick="runUseCase()">▶ 执行用例</button>
+    <span id="run-status" class="muted"></span>
+</div>
+
+<div class="panel" id="plan-preview" style="display:none">
+    <div class="panel-head"><span>编排计划（dry-run 预览）</span></div>
+    <pre id="plan-json"></pre>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function fillTemplate() {
+    document.getElementById('use-case').value =
+'前置步骤：\n' +
+'    1、教室云桌面列表中有多个云桌面处于运行中\n' +
+'执行步骤：\n' +
+'    1、教室详情 - 云桌面列表中选择多个正在运行的VDI云桌面点击【重启云桌面】按钮重启云桌面\n' +
+'预测结果：\n' +
+'    1、勾选的云桌面重启成功';
+}
+async function previewPlan() {
+    const use_case = document.getElementById('use-case').value;
+    let params = {};
+    const pv = document.getElementById('params').value.trim();
+    if (pv) {
+        try { params = JSON.parse(pv); } catch(e) { alert('参数 JSON 解析失败'); return; }
+    }
+    const resp = await fetch('/api/plan', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({use_case, params})});
+    const d = await resp.json();
+    if (d.error) { alert('编排失败: ' + d.error); return; }
+    document.getElementById('plan-preview').style.display = 'block';
+    document.getElementById('plan-json').textContent = JSON.stringify(d, null, 2);
+}
+async function runUseCase() {
+    const use_case = document.getElementById('use-case').value;
+    let params = {};
+    const pv = document.getElementById('params').value.trim();
+    if (pv) {
+        try { params = JSON.parse(pv); } catch(e) { alert('参数 JSON 解析失败'); return; }
+    }
+    const base_url = document.getElementById('base-url').value;
+    const btn = document.getElementById('btn-run');
+    btn.disabled = true;
+    document.getElementById('run-status').textContent = '执行中...';
+    try {
+        const resp = await fetch('/api/execute', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({use_case, params, base_url})});
+        const d = await resp.json();
+        location.href = '/execution?session=' + d.session_id;
+    } catch(e) {
+        document.getElementById('run-status').textContent = '执行失败: ' + e.message;
+        btn.disabled = false;
+    }
+}
+</script>
+{% endblock %}
