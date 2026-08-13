@@ -98,7 +98,7 @@ class Orchestrator:
                 else:
                     flds.append(str(k))
             catalog.append({"url": m["url"], "name": (m.get("name") or "")[:50], "fields": flds})
-        intent = client.parse_use_case(sections, catalog)
+        intent = client.parse_use_case(sections, catalog, sorted((params or {}).keys()))
 
         steps = []
         seen = set()

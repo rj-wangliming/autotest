@@ -13,7 +13,7 @@ import sys
 import time
 
 from .jsonpath import jsonpath_get
-from .params import resolve_body, gen_config_value
+from .params import resolve_body, gen_config_value, to_snake
 
 
 class Executor:
@@ -225,7 +225,7 @@ class Executor:
         """递归收集 body 里的 ${param.xxx} 引用名（用于批量展开检测）"""
         if isinstance(obj, str):
             for m in re.finditer(r"\$\{param\.([\w.]+)(?:\[\d+\])?\}", obj):
-                refs.add(m.group(1))
+                refs.add(to_snake(m.group(1)))
         elif isinstance(obj, dict):
             for v in obj.values():
                 self._collect_param_refs(v, refs)
@@ -244,8 +244,8 @@ class Executor:
     # ---------- 完整执行 ----------
     def execute(self, plan, params=None, timeout=120):
         """执行完整用例计划（真实方法调用）"""
-        ctx = {"params": params or {}, "token": None, "context": {},
-               "steps": {}, "_last_data": None}
+        ctx = {"params": {to_snake(k): v for k, v in (params or {}).items()},
+               "token": None, "context": {}, "steps": {}, "_last_data": None}
         results = []
         start = time.time()
         try:

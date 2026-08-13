@@ -38,11 +38,11 @@ setup:
   purpose: 按镜像名精确过滤（searchKeyword + matchArr.fieldName=imageName）
   request:
     body:
-      searchKeyword: ${param.student_image_name}
+      searchKeyword: ${param.teacher_image_name}
       matchArr:
       - fieldName: imageName
         matchType: EQUAL
-        value: ${param.student_image_name}
+        value: ${param.teacher_image_name}
 request:
   dto: DoActionRequest
   body:
@@ -119,6 +119,9 @@ params:
   - name: student_image_name
     desc: ''
     used_by: 见 setup/request
+  - name: image_name
+    desc: ''
+    used_by: setup/request
 ---
 # POST /rcc/classroom/image/teacher/show
 

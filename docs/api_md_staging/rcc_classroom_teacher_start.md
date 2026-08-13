@@ -45,7 +45,7 @@ setup:
       matchArr:
       - fieldName: imageName
         matchType: EQUAL
-        value: ${param.student_image_name}
+        value: ${param.image_name}
 request:
   dto: OperateTeacherDesktopWebRequest
   body:
@@ -115,6 +115,9 @@ params:
   - name: student_image_name
     desc: ''
     used_by: 见 setup/request
+  - name: image_name
+    desc: ''
+    used_by: setup/request
 ---
 # POST /rcc/classroom/teacher/start
 

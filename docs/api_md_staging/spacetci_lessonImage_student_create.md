@@ -53,7 +53,7 @@ setup:
       matchArr:
       - fieldName: imageName
         matchType: EQUAL
-        value: ${param.student_image_name}
+        value: ${param.image_name}
 - name: assign_student_image
   api: POST /spacetci/lessonImage/student/create
   purpose: 分配学生机课程镜像
@@ -209,6 +209,9 @@ params:
   - name: student_image_name
     desc: ''
     used_by: 见 setup/request
+  - name: image_name
+    desc: ''
+    used_by: setup/request
 ---
 # POST /spacetci/lessonImage/student/create
 

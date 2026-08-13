@@ -62,7 +62,7 @@ setup:
       matchArr:
       - fieldName: computerName
         matchType: LIKE
-        value: ${param.desktop_name}
+        value: ${param.computer_name}
 request:
   dto: IdWebRequest
   body:
@@ -124,6 +124,9 @@ params:
   - name: desktop_name
     desc: ''
     used_by: 见 setup/request
+  - name: computer_name
+    desc: ''
+    used_by: setup/request
 ---
 # POST /rcc/classroom/desktop/gtlog/getState
 

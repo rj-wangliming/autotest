@@ -3,12 +3,19 @@
 import re
 
 
+def to_snake(name):
+    """参数名统一转 Python 风格（snake_case）：startIp→start_ip、usbTypeIdArr→usb_type_id_arr；
+    已是 snake/全小写的原样返回。yaml 因此「一个语义只留一个键」，
+    文档里 ${param.startIp} 这类驼峰引用归一后命中同一键"""
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
+
+
 # ---------- 参数解析 ----------
 def _lookup(kind, name, ctx, idx=None):
     """取引用原始值（保留类型）；idx 支持 ${param.x[N]} / ${prev.step.output.y[N]} 显式索引；
     param 值为列表且 ctx 有 _batch_index 时，隐式取当前批量索引（批量展开用）"""
     if kind == "param":
-        v = ctx.get("params", {}).get(name, "")
+        v = ctx.get("params", {}).get(to_snake(name), "")
         if idx is not None:
             return v[idx] if isinstance(v, list) and idx < len(v) else None
         if isinstance(v, list) and "_batch_index" in ctx:
@@ -81,7 +88,7 @@ def gen_config_value(field, spec, ctx):
     if field == "memory":
         return ctx["params"].get("memory", 8192)
     if field == "systemSize":
-        return ctx["params"].get("systemSize", 80)
+        return ctx["params"].get("system_size", 80)
     if field == "platformStrategyGroup":
         # 外设/协议等嵌套：返回最小结构
         return {"strategyGroupFacadeStr": "{}"}

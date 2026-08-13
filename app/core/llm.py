@@ -53,7 +53,7 @@ class LlmClient:
             raise RuntimeError("LLM 返回无 choices: %s" % json.dumps(data, ensure_ascii=False)[:300])
         return choices[0].get("message", {}).get("content", "")
 
-    def parse_use_case(self, sections, api_catalog):
+    def parse_use_case(self, sections, api_catalog, param_names=None):
         """结构化用例（前置/操作/预期，前置可空）→ 接口意图序列
 
         sections: {"前置":[...], "操作":[...], "预期":[...]}
@@ -65,7 +65,7 @@ class LlmClient:
             "你是 RCC-Space 接口自动化测试的用例编排器。"
             "用户用例是业务/UI 操作描述（如\"点击XX按钮\"\"勾选XX\"\"列表中选择多个XX并执行XX\"），你要映射到后端 API。"
             "给定接口清单（url + 中文名 + body 字段），把【前置】和【执行/操作】的每个步骤映射到一个接口 url，必须从清单选取，不得编造。"
-            "用例文本不含参数值，参数在全局变量文件。对每个步骤的必填 body 字段，用 param_map 声明来源："
+            "用例文本若明确含量化条件（时长/数量/规格等，如\"保持开机30分钟\"\"创建3台\"），把该值作为固定值写入对应字段的 param_map；其余参数从全局参数清单选取。对每个步骤的必填 body 字段，用 param_map 声明来源："
             "前置步骤产出用 ${prev.<step_name>.output.<field>}；全局参数用 ${param.<参数名>}；固定值直接写。"
             "若某查询步骤需产出数组（如多个ID供后续批量操作），用 extract_override 声明 JSONPath（如 $.content.itemArr[*].id）覆盖默认产出。"
             "若某步骤是纯环境状态描述且无需调接口即可满足，可省略；若需查询确认，映射为查询/list 接口。"
@@ -77,6 +77,10 @@ class LlmClient:
             "\"param_map\":{\"字段\":\"${prev.xx.output.yy}|${param.zz}|值\"},"
             "\"extract_override\":{\"产出名\":\"$.jsonpath\"}}],"
             "\"assertions\":[\"断言\"]}。"
+        )
+        system += (
+            "全局参数清单（${param.<参数名>} 只能从清单选取，不得编造清单外名字）："
+            + ("、".join(param_names) if param_names else "（空）") + "。"
         )
         catalog_text = "\n".join(
             "%s  |  %s  |  body: %s" % (

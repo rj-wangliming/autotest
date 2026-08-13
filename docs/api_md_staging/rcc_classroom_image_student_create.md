@@ -41,7 +41,7 @@ setup:
       matchArr:
       - fieldName: classroomStrategyName
         matchType: EQUAL
-        value: ${param.strategy_name}
+        value: ${param.classroom_strategy_name}
 - name: get_image
   api: POST /rcc/classroom/image/assignImage/yetAssign/list
   extract:
@@ -53,7 +53,7 @@ setup:
       matchArr:
       - fieldName: imageName
         matchType: EQUAL
-        value: ${param.student_image_name}
+        value: ${param.image_name}
 - name: get_cluster
   api: POST /space/cluster/obtainComputeClusterList
   extract:
@@ -238,6 +238,12 @@ params:
   - name: student_image_name
     desc: ''
     used_by: 见 setup/request
+  - name: image_name
+    desc: ''
+    used_by: setup/request
+  - name: classroom_strategy_name
+    desc: ''
+    used_by: setup/request
 ---
 # POST /rcc/classroom/image/student/create
 

@@ -25,7 +25,7 @@ setup:
       matchArr:
       - fieldName: imageName
         matchType: EQUAL
-        value: ${param.student_image_name}
+        value: ${param.image_name}
 - name: list_tci_strategy
   api: POST /space/strategy/tci/list
   extract:
@@ -107,6 +107,9 @@ params:
   - name: strategy_name
     desc: ''
     used_by: 见 setup/request
+  - name: image_name
+    desc: ''
+    used_by: setup/request
 ---
 # POST /spacetci/lessonImage/student/strategy/edit
 

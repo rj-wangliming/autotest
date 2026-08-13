@@ -49,11 +49,11 @@ setup:
   purpose: 按镜像名精确过滤（searchKeyword + matchArr.fieldName=imageName）
   request:
     body:
-      searchKeyword: ${param.student_image_name}
+      searchKeyword: ${param.teacher_image_name}
       matchArr:
       - fieldName: imageName
         matchType: EQUAL
-        value: ${param.student_image_name}
+        value: ${param.teacher_image_name}
 - name: assign_teacher_image
   api: POST /spacetci/lessonImage/teacher/create
   purpose: 分配教师机课程镜像
@@ -195,6 +195,9 @@ params:
   - name: student_image_name
     desc: ''
     used_by: 见 setup/request
+  - name: image_name
+    desc: ''
+    used_by: setup/request
 ---
 # POST /spacetci/lessonImage/teacher/create
 

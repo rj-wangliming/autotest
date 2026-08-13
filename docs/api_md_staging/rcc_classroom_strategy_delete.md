@@ -32,7 +32,7 @@ setup:
       matchArr:
       - fieldName: classroomStrategyName
         matchType: EQUAL
-        value: ${param.strategy_name}
+        value: ${param.classroom_strategy_name}
 request:
   dto: IdArrWebRequest（sk.webmvc 框架类）
   body:
@@ -107,6 +107,9 @@ params:
   - name: strategy_name
     desc: ''
     used_by: 见 setup/request
+  - name: classroom_strategy_name
+    desc: ''
+    used_by: setup/request
 ---
 # POST /rcc/classroom/strategy/delete
 

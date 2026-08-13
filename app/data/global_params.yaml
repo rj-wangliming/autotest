@@ -1,5 +1,7 @@
 # 全局参数（所有用例共享基线；cases/*.yaml 的 params / web 用例参数 JSON 覆盖同名项）
 # 用例文本不含 ${param.xxx}；接口文档 body 声明 ${param.xxx} 引用，值由此注入
+# 参数名统一 Python 风格（snake_case）：文档里 ${param.startIp} 这类驼峰引用
+#   解析时自动归一（startIp→start_ip），yaml 一个语义只留一个键
 # 登录凭据走环境变量：export TEST_ADMIN_USER=... TEST_ADMIN_PASSWORD=...（executor.login 优先读）
 #
 # 资源类参数支持「多个」：值填列表时（如 classroom_name: [c1, c2]），
@@ -11,7 +13,7 @@ base_url: http://127.0.0.1:8080      # 目标环境地址（也可 --base-url �
 
 # ── 教室（可多个：值填列表）──
 classroom_name:                      # 教室名，多个: [c1, c2]
-classroomStrategyName:               # 教室策略名
+classroom_strategy_name:             # 教室策略名
 
 # ── 策略（可多个）──
 strategy_name:                       # VDI 策略名
@@ -19,30 +21,36 @@ initial_strategy_name:               # 初始策略名（镜像分配关联）
 
 # ── 镜像（可多个）──
 student_image_name:                  # 学生镜像名
+teacher_image_name:                  # 教师镜像名
+image_name:                          # 镜像名（matchArr.fieldName=imageName，精确匹配）
 
 # ── 桌面/座位 ──
-desktop_name:                        # 桌面名（可多个）
-desktopName:                         # 桌面主机名（可多个）
-desktopPreName:                      # 桌面名前缀
-desktopNameStartNum:                 # 桌面名起始值
-seatNum:                             # 座位数
+desktop_name:                        # 桌面主机名（可多个；创建赋值与操作过滤共用）
+desktop_pre_name:                    # 桌面名前缀
+desktop_name_start_num:              # 桌面名起始值
+computer_name:                       # 计算机名（matchArr.fieldName=computerName，桌面操作过滤）
+seat_num:                            # 座位数
 
 # ── IP（可多个，与教室/桌面列表索引对应）──
-teacherIp:                           # 教师机 IP
+teacher_ip:                          # 教师机 IP
 start_ip:                            # 起始 IP
-endIp:                               # 结束 IP
-startIp:                             # 起始 IP（驼峰命名接口用）
-studentStartIp:                      # 学生起始 IP
-studentEndIp:                        # 学生结束 IP
+end_ip:                              # 结束 IP
+student_start_ip:                    # 学生起始 IP
+student_end_ip:                      # 学生结束 IP
+
+# ── 终端 IP（按终端类型，可多个）──
+tci_terminal_ip:                     # TCI 终端 IP
+vdi_terminal_ip:                     # VDI 终端 IP
+idv_terminal_ip:                     # IDV 终端 IP
 
 # ── 集群/空间/外设（可多个）──
 cluster_name:                        # 集群名
 space_name:                          # 空间名
-usbTypeIdArr:                        # USB 类型 ID 数组
+usb_type_id_arr:                     # USB 类型 ID 数组
 
 # ── 配置规格（单个，不展开批量）──
 cpu:                                 # CPU 核数
 memory:                              # 内存 MB
-systemSize:                          # 系统盘 GB
+system_size:                         # 系统盘 GB
 expected_cpu:                        # 期望 CPU（一致性断言用）
 expected_memory:                     # 期望内存（一致性断言用）
