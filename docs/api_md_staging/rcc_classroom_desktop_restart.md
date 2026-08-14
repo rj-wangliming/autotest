@@ -36,7 +36,7 @@ setup:
         value: ${param.classroom_name}
 - name: create_seat
   api: POST /rcc/classroom/seat/batchCreate
-  purpose: 批量创建座位（异步批处理任务）
+  purpose: 批量创建座位（异步批处理任务）；若教室已分配学生镜像，新座位随建桌面
   idempotent: recreate
   delete_api: /rcc/classroom/seat/delete
   delete_param: seatIdArr
@@ -65,7 +65,7 @@ setup:
       enableTeacher: false
 - name: assign_student_image
   api: POST /rcc/classroom/image/student/create
-  purpose: 给学生机教室分配课程镜像（首镜像时批量创建座位云桌面；重启前置必须先有桌面）
+  purpose: 给学生机教室分配课程镜像（桌面存在的必要条件）。桌面诞生规则：已分配镜像时新建座位随座位建桌面；座位已存在时首镜像分配批量建桌面；未分配镜像则教室无桌面
   request:
     body:
       crId: ${prev.query_classroom.output.classroomId}

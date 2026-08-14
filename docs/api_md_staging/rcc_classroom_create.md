@@ -44,8 +44,8 @@ request:
       type: TerminalTypeEnum
       required: true
       constraint: '@NotNull'
-      description: 教师机工作模式（VDI/IDV/TCI等）
-      value: VDI
+      description: 教师机工作模式（PC/VDI/IDV/TCI）；默认 PC（无需给教师机分配镜像），非 PC 模式须另行分配教师机镜像
+      value: ${param.teacher_mode}
     teacherIp:
       type: String
       required: true
