@@ -22,7 +22,7 @@ def main():
     ap = argparse.ArgumentParser(description="无封装测试平台 CI 批量")
     ap.add_argument("case_dir", help="用例目录")
     ap.add_argument("--params", default="app/data/global_params.yaml", help="全局参数文件")
-    ap.add_argument("--base-url", default=os.environ.get("BASE_URL", "http://127.0.0.1:8080"))
+    ap.add_argument("--base-url", default=None, help="目标环境（优先级：--base-url > BASE_URL 环境变量 > yaml base_url > 默认）")
     ap.add_argument("--llm-config", default="app/data/model_config.json", help="LLM 配置文件")
     ap.add_argument("--plan-cache", default=".cache/plans", help="plan 缓存目录")
     ap.add_argument("--junit", default="report.xml", help="JUnit XML 输出路径")

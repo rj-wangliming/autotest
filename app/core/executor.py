@@ -15,6 +15,13 @@ import time
 from .jsonpath import jsonpath_get
 from .params import resolve_body, gen_config_value, to_snake, materialize_naming
 
+# 目标环境为自签 HTTPS 证书，禁用 SSL 证书验证告警（verify=False 时的 InsecureRequestWarning）
+try:
+    import urllib3
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+except Exception:
+    pass
+
 
 class Executor:
     """进程内执行器（完整业务方法）"""
@@ -48,9 +55,14 @@ class Executor:
             return [self._mask(x) for x in obj]
         return obj
 
-    def http_request(self, method, path, body=None, token=None):
-        """发送 HTTP 请求（真实方法调用）"""
+    def http_request(self, method, path, body=None, ctx=None):
+        """发送 HTTP 请求（真实方法调用）。
+
+        ctx 提供 token 与登录凭据；401 自动重登并把新 token 写回 ctx['token']（会话持久化）。
+        verify=False：目标环境为自签 HTTPS 证书。
+        """
         import requests
+        token = ctx.get("token") if ctx else None
         headers = {"Content-Type": "application/json"}
         if token:
             headers["Authorization"] = "Bearer " + token
@@ -59,18 +71,23 @@ class Executor:
         if body:
             self.log("req", "body: %s" % json.dumps(self._mask(body), ensure_ascii=False))
         try:
-            resp = requests.request(method, url, json=body, headers=headers, timeout=30)
+            resp = requests.request(method, url, json=body, headers=headers,
+                                    timeout=30, verify=False)
             try:
                 data = resp.json()
             except Exception:
                 data = {"raw": resp.text}
             self.log("resp", "HTTP %s: %s" % (resp.status_code, json.dumps(self._mask(data), ensure_ascii=False)))
-            # 401 自动重登一次再重试（会话过期自愈）
-            if resp.status_code == 401 and token and "/loginAdmin" not in path:
+            # 401 自动重登一次再重试（会话过期自愈，新 token 写回 ctx 持久化）
+            if resp.status_code == 401 and token and "/loginAdmin" not in path and ctx is not None:
                 self.log("auth", "401 → 重新登录")
-                token = self.login()
+                p = ctx.get("params", {})
+                token = self.login(p.get("rcdc_user") or p.get("admin_user"),
+                                   p.get("rcdc_passwd") or p.get("admin_password"))
+                ctx["token"] = token
                 headers["Authorization"] = "Bearer " + token
-                resp = requests.request(method, url, json=body, headers=headers, timeout=30)
+                resp = requests.request(method, url, json=body, headers=headers,
+                                        timeout=30, verify=False)
                 try:
                     data = resp.json()
                 except Exception:
@@ -87,8 +104,8 @@ class Executor:
         admin_password = admin_password or os.environ.get("TEST_ADMIN_PASSWORD")
         if not admin_user or not admin_password:
             raise RuntimeError(
-                "缺少登录凭据：请在用例参数 admin_user/admin_password 或环境变量 "
-                "TEST_ADMIN_USER/TEST_ADMIN_PASSWORD 中提供"
+                "缺少登录凭据：请在用例参数 rcdc_user/rcdc_passwd（或 admin_user/admin_password）"
+                "或环境变量 TEST_ADMIN_USER/TEST_ADMIN_PASSWORD 中提供"
             )
         body = {"userName": admin_user, "password": admin_password}
         status, data = self.http_request("POST", "/rco/admin/loginAdmin", body, None)
@@ -109,8 +126,9 @@ class Executor:
 
         # 登录内置
         if "loginAdmin" in api:
-            ctx["token"] = self.login(ctx["params"].get("admin_user"),
-                                      ctx["params"].get("admin_password"))
+            p = ctx["params"]
+            ctx["token"] = self.login(p.get("rcdc_user") or p.get("admin_user"),
+                                      p.get("rcdc_passwd") or p.get("admin_password"))
             ctx["context"] = {"token": ctx["token"]}
             return {"status": "SUCCESS", "content": {"token": ctx["token"]}}
 
@@ -126,12 +144,12 @@ class Executor:
 
         # 幂等 true：先尝试创建（存在则幂等通过）
         if step.get("idempotent") is True:
-            status, data = self.http_request(method, path, body or None, ctx.get("token"))
+            status, data = self.http_request(method, path, body or None, ctx)
             if jsonpath_get(data, "$.status") == "SUCCESS":
                 self.log("info", "[idempotent] 创建成功或已存在")
             return data
 
-        status, data = self.http_request(method, path, body or None, ctx.get("token"))
+        status, data = self.http_request(method, path, body or None, ctx)
 
         # extract 产出（多变量）
         self._extract(step, data, ctx)
@@ -148,11 +166,11 @@ class Executor:
         """幂等 recreate：存在同名先调 delete_api 删除再创建"""
         del_api = step["delete_api"]
         del_path = del_api.split(" ", 1)[-1] if " " in del_api else del_api
-        status, data = self.http_request("POST", path, body or None, ctx.get("token"))
+        status, data = self.http_request("POST", path, body or None, ctx)
         found_id = jsonpath_get(data, "$.content.id") or jsonpath_get(data, "$.content.classroomId")
         if found_id:
             self.log("info", "[recreate] 存在同名资源 %s，先删除" % found_id)
-            self.http_request("POST", del_path, {"id": found_id}, ctx.get("token"))
+            self.http_request("POST", del_path, {"id": found_id}, ctx)
 
     def _try_reuse(self, step, ctx):
         """幂等 reuse：按 reuse_query 查已有资源；命中则把产出写入
@@ -165,7 +183,7 @@ class Executor:
         path = raw.split(" ", 1)[-1] if " " in raw else raw
         method = raw.split(" ", 1)[0] if " " in raw else "POST"
         qbody = resolve_body(rq.get("body", {}), ctx)
-        status, data = self.http_request(method, path, qbody or None, ctx.get("token"))
+        status, data = self.http_request(method, path, qbody or None, ctx)
         if jsonpath_get(data, "$.status") != "SUCCESS":
             self.log("warning", "[reuse] 查询未成功，回退正常创建")
             return None
@@ -243,7 +261,7 @@ class Executor:
         fail_states = poll.get("terminal_states", {}).get("fail", ["FAILURE"])
         deadline = time.time() + timeout
         while time.time() < deadline:
-            status, data = self.http_request("POST", path, {"msgrelationid": task_id}, ctx.get("token"))
+            status, data = self.http_request("POST", path, {"msgrelationid": task_id}, ctx)
             st = jsonpath_get(data, "$.content.taskStatus") or jsonpath_get(data, "$.content.status")
             self.log("info", "[poll] taskStatus=%s" % st)
             if st in ok_states:
@@ -311,6 +329,16 @@ class Executor:
         ctx = {"params": {to_snake(k): v for k, v in (params or {}).items()},
                "token": None, "context": {}, "steps": {}, "_last_data": None}
         materialize_naming(ctx["params"], self.log)
+        # 执行前主动登录：token 持久化到 ctx，后续所有步骤复用，401 时 http_request 自动重登写回
+        try:
+            p = ctx["params"]
+            ctx["token"] = self.login(p.get("rcdc_user") or p.get("admin_user"),
+                                      p.get("rcdc_passwd") or p.get("admin_password"))
+            self.log("info", "[登录] 平台登录完成，会话 token 已建立")
+        except Exception as e:
+            self.log("error", "登录失败: %s" % e)
+            return {"status": "FAIL", "duration_ms": 0, "steps": [],
+                    "error": "登录失败: %s" % e, "cleanup": "SKIP"}
         results = []
         start = time.time()
         try:
@@ -355,7 +383,7 @@ class Executor:
             if del_path:
                 self.log("info", "[cleanup] 删除 %s=%s" % (name, rid))
                 try:
-                    self.http_request("POST", del_path, {"id": rid}, ctx.get("token"))
+                    self.http_request("POST", del_path, {"id": rid}, ctx)
                 except Exception as e:
                     self.log("error", "[cleanup] 删除失败: %s" % e)
 

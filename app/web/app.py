@@ -151,7 +151,7 @@ def api_execute():
     data = request.get_json() or {}
     use_case = data.get("use_case", "")
     params = data.get("params", {})
-    base_url = data.get("base_url", "http://127.0.0.1:8080")
+    base_url = data.get("base_url") or _load_global_params().get("base_url") or "http://127.0.0.1:8080"
 
     session_id = _new_session()
     thread = threading.Thread(

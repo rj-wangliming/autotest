@@ -130,6 +130,8 @@ def run_one(case_path, args):
     uc = load_use_case(case_path)
     params = dict(args.params) if isinstance(args.params, dict) else {}
     params.update(uc["params"])
+    base_url = (args.base_url or os.environ.get("BASE_URL")
+                or params.get("base_url") or "http://127.0.0.1:8080")
     plan, channel = build_or_load_plan(uc["use_case"], params, args.llm_config, args.plan_cache)
     from app.core.executor import run_plan
     log_path = new_case_log("ci_" + uc["name"])
@@ -141,7 +143,7 @@ def run_one(case_path, args):
     flog = CaseFileLogger(log_path)
     start = time.time()
     try:
-        result = run_plan(plan, params, args.base_url, log_cb=log)
+        result = run_plan(plan, params, base_url, log_cb=log)
         status = result.get("status", "FAIL")
         error = result.get("error", "") or ""
     except Exception as e:
@@ -160,7 +162,7 @@ def main():
     ap = argparse.ArgumentParser(description="无封装测试平台 CI 一条龙")
     ap.add_argument("case", help="用例文件 (.yaml/.yml/.txt/.md)")
     ap.add_argument("--params", default="app/data/global_params.yaml", help="全局参数文件")
-    ap.add_argument("--base-url", default=os.environ.get("BASE_URL", "http://127.0.0.1:8080"))
+    ap.add_argument("--base-url", default=None, help="目标环境（优先级：--base-url > BASE_URL 环境变量 > yaml base_url > 默认）")
     ap.add_argument("--llm-config", default="app/data/model_config.json", help="LLM 配置文件")
     ap.add_argument("--plan-cache", default=".cache/plans", help="plan 缓存目录")
     ap.add_argument("--junit", help="JUnit XML 输出路径")
