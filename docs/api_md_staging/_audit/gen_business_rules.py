@@ -152,9 +152,9 @@ def derive_resource_chains(src):
             content = open(path, encoding="utf-8").read()
         except Exception:
             continue
-        # 类级 RequestMapping 前缀（类声明前的 @RequestMapping，value= 或无 value= 形式）
+        # 类级 RequestMapping 前缀（类声明前的 @RequestMapping；允许中间有其他注解，如 @Api）
         cls_pre = ""
-        m_cls = re.search(r'@RequestMapping\((?:value\s*=\s*)?("[^"]+")\)[^@]*?\bclass\s+\w+', content)
+        m_cls = re.search(r'@RequestMapping\((?:value\s*=\s*)?("[^"]+")\)(?:(?!\bclass\b)[\s\S])*?\bclass\s+\w+', content)
         if m_cls:
             cls_pre = m_cls.group(1).strip('"').strip("/")
         # 方法级：value + 方法签名（允许中间有注解）
