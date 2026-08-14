@@ -37,6 +37,15 @@ class Executor:
     def __init__(self, base_url=None, log_cb=None):
         self.base_url = (base_url or os.environ.get("TEST_BASE_URL", "http://127.0.0.1:8080")).rstrip("/")
         self.log_cb = log_cb or (lambda level, msg: None)
+        self._session = None  # requests.Session：维持登录 cookie 会话（webmvckit 会话认证）
+
+    def _get_session(self):
+        """懒加载 requests.Session：登录的 Set-Cookie 被保留，后续请求自动携带会话凭证"""
+        if self._session is None:
+            import requests
+            self._session = requests.Session()
+            self._session.verify = False
+        return self._session
 
     # 敏感字段（日志脱敏，避免凭据落盘/落库）
     SENSITIVE_KEYS = {"token", "password", "pwd", "apikey", "api_key", "admin_password",
@@ -61,18 +70,19 @@ class Executor:
         ctx 提供 token 与登录凭据；401 自动重登并把新 token 写回 ctx['token']（会话持久化）。
         verify=False：目标环境为自签 HTTPS 证书。
         """
-        import requests
+        session = self._get_session()
         token = ctx.get("token") if ctx else None
         headers = {"Content-Type": "application/json"}
         if token:
             headers["Authorization"] = "Bearer " + token
+            headers["token"] = token  # 锐捷平台常见 token header（双保险）
         url = self.base_url + path
         self.log("req", "%s %s" % (method, path))
         if body:
             self.log("req", "body: %s" % json.dumps(self._mask(body), ensure_ascii=False))
         try:
-            resp = requests.request(method, url, json=body, headers=headers,
-                                    timeout=30, verify=False)
+            resp = session.request(method, url, json=body, headers=headers,
+                                   timeout=30, verify=False)
             try:
                 data = resp.json()
             except Exception:
@@ -86,8 +96,9 @@ class Executor:
                                    p.get("rcdc_passwd") or p.get("admin_password"))
                 ctx["token"] = token
                 headers["Authorization"] = "Bearer " + token
-                resp = requests.request(method, url, json=body, headers=headers,
-                                        timeout=30, verify=False)
+                headers["token"] = token
+                resp = session.request(method, url, json=body, headers=headers,
+                                       timeout=30, verify=False)
                 try:
                     data = resp.json()
                 except Exception:
