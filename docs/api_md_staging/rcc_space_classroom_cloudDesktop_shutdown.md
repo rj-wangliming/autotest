@@ -31,6 +31,27 @@ setup:
   request:
     body:
       searchKeyword: ${param.classroom_name}
+- name: create_seat
+  api: POST /rcc/classroom/seat/batchCreate
+  purpose: 批量创建座位（异步批任务）；桌面在「分配学生机镜像」时批量创建，座位必须先存在
+  idempotent: recreate
+  delete_api: /rcc/classroom/seat/delete
+  delete_param: seatIdArr
+  request:
+    body:
+      classroomId: ${prev.select_classroom_id.output.classroomId}
+
+- name: assign_student_image
+  api: POST /rcc/classroom/image/student/create
+  purpose: 分配学生机镜像——首镜像+有座位时批量创建云桌面（桌面在此诞生），轮询批任务完成后桌面存在
+  idempotent: recreate
+  delete_api: /rcc/classroom/image/student/delete
+  delete_param: id
+- name: query_desktop
+  api: POST /rcc/classroom/desktop/list
+  purpose: 分配镜像后查询桌面列表，产出 desktopIdArr 供操作步骤 idArr 使用
+  extract:
+    desktopIdArr: $.content.itemArr[*].desktopId
 request:
   dto: IdArrWebRequest
   body:
@@ -39,6 +60,7 @@ request:
       required: true
       constraint: '@NotNull @NotEmpty'
       description: 教室ID数组，取 idArr[0]
+      value: ${prev.query_desktop.output.desktopIdArr}
 response:
   wrapper:
     status: String

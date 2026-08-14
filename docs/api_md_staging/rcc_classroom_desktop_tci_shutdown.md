@@ -52,6 +52,17 @@ setup:
       - name: desktopName
         valueArr:
         - ${param.desktop_name}
+- name: assign_student_image
+  api: POST /rcc/classroom/image/student/create
+  purpose: 分配学生机镜像——首镜像+有座位时批量创建云桌面（桌面在此诞生），轮询批任务完成后桌面存在
+  idempotent: recreate
+  delete_api: /rcc/classroom/image/student/delete
+  delete_param: id
+- name: query_desktop
+  api: POST /rcc/classroom/desktop/list
+  purpose: 分配镜像后查询桌面列表，产出 desktopIdArr 供操作步骤 idArr 使用
+  extract:
+    desktopIdArr: $.content.itemArr[*].desktopId
 - name: query_desktop
   api: POST /rcc/classroom/desktop/list
   extract:
@@ -71,6 +82,7 @@ request:
       required: true
       constraint: '@NotEmpty 非空'
       description: TCI云桌面ID数组
+      value: ${prev.query_desktop.output.desktopIdArr}
 response:
   wrapper:
     status: String
