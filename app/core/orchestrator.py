@@ -694,7 +694,8 @@ class Orchestrator:
             return "${param." + snake + "}"
         # 2. 生成规则字段
         gen_fields = ("cpu", "memory", "systemSize", "platformStrategyGroup", "deskCreateMode",
-                      "desktopPreName", "desktopNameStartNum", "desktopNum", "seatNum")
+                      "desktopPreName", "desktopNameStartNum", "desktopNum", "seatNum",
+                      "page", "limit", "rows", "sort", "sortArr")
         if field in gen_fields:
             return "generated"
         # 3. setup extract 产出（prev 变量）

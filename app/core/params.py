@@ -160,6 +160,17 @@ def gen_config_value(field, spec, ctx):
         return 1
     if field == "studentClassroomStrategyId":
         return None  # 依赖前置策略查询（保留 None 由后续步骤填充）
+    # 分页参数默认值（查询类接口安全默认，不涉业务语义）
+    if field == "page":
+        return 0
+    if field == "limit":
+        return 20
+    if field == "rows":
+        return 20
+    if field == "sort":
+        return ""
+    if field == "sortArr":
+        return []
     return None
 
 
