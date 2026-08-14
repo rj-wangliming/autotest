@@ -4,6 +4,8 @@ import json
 import re
 import uuid
 
+import yaml
+
 from .jsonpath import jsonpath_get
 from .params import gen_config_value
 from . import index as index_mod
@@ -15,6 +17,292 @@ class Orchestrator:
 
     def __init__(self, index=None):
         self.index = index or index_mod.get_index()
+        if not self.index.api_map:
+            self.index.load()
+        self.rules = self._load_rules()
+
+    # ---------- 业务规则库加载（business_rules.md） ----------
+    def _load_rules(self):
+        """加载业务规则库 front-matter（依赖链/操作前置状态/用例前置条件）"""
+        import os
+        rules = {}
+        for cand in (index_mod.API_MD_DIR,
+                     os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "docs", "api_md_staging")):
+            p = os.path.join(cand, "business_rules.md")
+            if os.path.isfile(p):
+                try:
+                    text = open(p, encoding="utf-8").read()
+                    fm = yaml.safe_load(text.split("---\n", 2)[1])
+                    if isinstance(fm, dict):
+                        rules = {k: v for k, v in fm.items()
+                                 if k in ("resource_chains", "state_prereq", "case_prereq")}
+                    break
+                except Exception as e:
+                    print(f"[orchestrator] business_rules.md 解析失败: {e}")
+        return rules
+
+    @staticmethod
+    def _norm(api):
+        """去掉方法前缀：'POST /rcc/x' -> '/rcc/x'"""
+        if not api:
+            return api
+        for m in ("POST", "GET", "PUT", "DELETE", "PATCH"):
+            if api.startswith(m + " "):
+                return api[len(m) + 1:]
+        return api
+
+    def _find_state_prereq(self, api):
+        """查操作接口的 state_prereq 规则（模式匹配：URL 含 resource 段 + action 段即命中）"""
+        api = self._norm(api)
+        if not api:
+            return None
+        api_l = api.lower()
+        for sp in self.rules.get("state_prereq", []) or []:
+            # 规则声明 api 精确路径 → 优先精确匹配（避免子路径误匹配，如 classroom/delete vs image/student/delete）
+            if sp.get("api"):
+                if api == sp["api"]:
+                    return sp
+                continue
+            res = str(sp.get("resource", "") or "").lower()
+            act = str(sp.get("action", "") or "").lower()
+            if not res or not act:
+                continue
+            # resource 段匹配（desktop 兼容 desktop/cloudDesktop；strategy 兼容 strategy/strategygroup）
+            if sp.get("resource_optional"):
+                res_ok = True  # 动作词特异（如 forcewakeup），URL 无需含 resource 段
+            elif res == "desktop":
+                res_ok = "desktop" in api_l or "clouddesktop" in api_l
+            elif res == "strategy":
+                res_ok = "strategy" in api_l or "strategygroup" in api_l or "deskstrategy" in api_l
+            else:
+                res_ok = res in api_l
+            # action 段匹配（支持下划线分段，如 lesson_start → URL 须含 lesson 且含 start）
+            if "_" in act:
+                act_ok = all(seg in api_l for seg in act.split("_"))
+            else:
+                act_ok = act in api_l
+            if res_ok and act_ok:
+                return sp
+        return None
+
+    def validate_plan(self, plan):
+        """编排后校验（规则库驱动，确定性逻辑，非 AI）：
+        1. 前置状态校验：操作步骤命中 state_prereq 且缺达成步骤 → 自动补 achieve_via 步骤
+        2. 依赖顺序修正：资源依赖链接口若逆序 → 按链顺序重排
+        返回修正后的 plan（自动补的步骤标记 _auto_by_rules，可人工确认）
+        """
+        steps = plan.get("steps", [])
+        added = []
+
+        # 0. 资源依赖链自动补：操作步骤的资源在 resource_chains 中，且 plan 无该链任何造数接口
+        #    → 在操作步骤前补完整造数链（如：教室 → 座位 → 分配镜像）
+        steps = self._ensure_resource_chain(steps, added)
+
+        # 1. 前置状态校验 + 补步骤
+        i = 0
+        while i < len(steps):
+            st = steps[i]
+            api = st.get("api", "")
+            rule = self._find_state_prereq(api)
+            if not rule:
+                i += 1
+                continue
+            achieve_apis = {self._norm(a.get("api", "")) for a in (rule.get("achieve_via") or [])}
+            has_achieve = any(self._norm(s.get("api", "")) in achieve_apis for s in steps)
+            if has_achieve:
+                i += 1
+                continue
+            # 补第一条达成途径（须为索引内真实 HTTP 接口）
+            for a in (rule.get("achieve_via") or []):
+                a_api = self._norm(a.get("api", ""))
+                if not self.index.get(a_api):
+                    continue
+                step = self._build_step(a_api, a.get("note", "") or ("达成前置状态: " + rule.get("required_state", "")))
+                step["step_name"] = "rule_auto_" + a_api.rstrip("/").rsplit("/", 1)[-1]
+                step["name"] = "规则自动补: " + (a.get("note", "") or rule.get("required_state", ""))[:30]
+                step["section"] = "pre"
+                step["_auto_by_rules"] = True
+                steps.insert(i, step)
+                added.append(step["step_name"])
+                i += 1
+                break
+            i += 1
+
+        # 2. 用例前置条件校验（case_prereq）：前置文本命中 keyword → 检查/补达成步骤
+        steps = self._ensure_case_prereq(steps, plan, added)
+
+        # 2b. 禁止状态校验（forbidden）：命中规则的步骤若 plan 已有达成 forbidden 状态的步骤 → 警告
+        warns = self._check_forbidden(steps)
+
+        # 3. 依赖顺序修正（资源依赖链）
+        steps = self._fix_chain_order(steps)
+
+        plan["steps"] = steps
+        plan["rule_added"] = added
+        if warns:
+            plan["warns"] = warns
+        return plan
+
+    def _ensure_case_prereq(self, steps, plan, added):
+        """用例前置条件达成：前置文本命中 case_prereq.keyword → 若 plan 无达成步骤则自动补
+        （如前置"运行中"→ 补上课开机；前置"已分配"→ 补分配学生机镜像）"""
+        sections = plan.get("sections") or {}
+        for item in sections.get("前置", []) or []:
+            for cp in self.rules.get("case_prereq", []) or []:
+                kw = cp.get("keyword")
+                if not kw or kw not in item:
+                    continue
+                achieve_apis = {self._norm(a.get("api", "")) for a in (cp.get("achieve_via") or [])}
+                has = any(self._norm(s.get("api", "")) in achieve_apis for s in steps)
+                if has:
+                    continue
+                # 补第一条达成途径，插到首个 action 步骤前（无 action 则追加到末尾）
+                for a in (cp.get("achieve_via") or []):
+                    a_api = self._norm(a.get("api", ""))
+                    if not self.index.get(a_api):
+                        continue
+                    step = self._build_step(a_api, a.get("note", "") or ("达成前置条件: " + cp.get("required_state", "")))
+                    step["step_name"] = "rule_case_" + a_api.rstrip("/").rsplit("/", 1)[-1]
+                    step["name"] = "规则补前置: " + (a.get("note", "") or cp.get("required_state", ""))[:30]
+                    step["section"] = "pre"
+                    step["_auto_by_rules"] = True
+                    action_idx = next((i for i, s in enumerate(steps) if s.get("section") == "action"), len(steps))
+                    steps.insert(action_idx, step)
+                    added.append(step["step_name"])
+                    break
+        return steps
+
+    def _check_forbidden(self, steps):
+        """禁止状态校验：仅当 plan 中存在「另一步骤的 required_state 命中本步骤 forbidden」的真实冲突时警告"""
+        warns = []
+        # 收集每个步骤的资源+要求状态
+        step_states = []  # (api, resource, required_state)
+        for st in steps:
+            api = self._norm(st.get("api", ""))
+            rule = self._find_state_prereq(api)
+            if rule and rule.get("required_state"):
+                step_states.append((api, rule.get("resource"), rule.get("required_state")))
+        for st in steps:
+            api = self._norm(st.get("api", ""))
+            rule = self._find_state_prereq(api)
+            if not rule or not rule.get("forbidden"):
+                continue
+            res = rule.get("resource")
+            forb = rule.get("forbidden")
+            # 真实冲突：另一步骤要求的状态 ∈ 本步骤 forbidden（如 lesson_end 要求 IN_CLASS 与 lesson_start 禁止 IN_CLASS）
+            for other_api, other_res, other_state in step_states:
+                if other_api == api or other_res != res:
+                    continue
+                if other_state in forb:
+                    warns.append({"api": api, "forbidden_state": other_state,
+                                  "conflict_with": other_api,
+                                  "hint": "%s 禁止 %s 状态，但步骤 %s 要求 %s，请确认执行顺序" % (api, other_state, other_api, other_state)})
+        return warns
+
+    def _ensure_resource_chain(self, steps, added):
+        """资源依赖链自动补：操作步骤的资源在 resource_chains 中，且 plan 无该链任何造数接口
+        → 在操作步骤前补完整造数链（create → seat → 分配镜像），解决"有桌面可操作但没造桌面"的通用缺口"""
+        chains = self.rules.get("resource_chains", {}) or {}
+        if not chains:
+            return steps
+        result = steps[:]
+        for st in list(result):
+            api = self._norm(st.get("api", ""))
+            if not api or not self.index.get(api):
+                continue
+            # 仅对命中 state_prereq 的操作步骤补造数链（查询类/无状态前置的操作不造数）
+            rule = self._find_state_prereq(api)
+            if not rule:
+                continue
+            # 规则显式 chain: false（如上课/下课是状态达成步骤，非消耗资源的操作）→ 不补链
+            if rule.get("chain") is False:
+                continue
+            api_l = api.lower()
+            # 操作对象含 desktop/cloudDesktop → 只匹配 desktop 类链（避免教室链连带分配教师镜像）
+            if "clouddesktop" in api_l or "desktop" in api_l:
+                relevant = {k: v for k, v in chains.items() if "desktop" in k}
+            else:
+                relevant = chains
+            for res, chain in relevant.items():
+                order = [self._norm(u) for u in (chain.get("order") or [])]
+                if not order:
+                    continue
+                # 资源段匹配（vdi_desktop 要求 desktop 且非 tci；tci_desktop 要求 tci/lessonimage）
+                res_l = str(res).lower()
+                if "tci" in res_l:
+                    res_ok = "tci" in api_l or "lessonimage" in api_l or "spacetci" in api_l
+                elif "desktop" in res_l:
+                    res_ok = ("desktop" in api_l or "clouddesktop" in api_l) and "tci" not in api_l
+                else:
+                    res_ok = res_l in api_l
+                if not res_ok:
+                    continue
+                # 链本身的造数接口不触发
+                if api in order:
+                    break
+                # plan 已有该链造数接口（或已有同链后续产物）→ 不重复补
+                plan_chain = [self._norm(s.get("api", "")) for s in result]
+                if any(u in plan_chain for u in order):
+                    break
+                # 补链：展开【操作接口自身】的文档 setup + 链中缺失接口，全部收集到 new_steps
+                # （拓扑序：策略→教室→座位→镜像→…，再统一插入操作步骤前，保证 ${prev.*} 引用可解析）
+                new_steps = []
+                seen = {self._norm(s.get("api", "")) for s in result if s.get("api")}
+                before_seen = set(seen)
+                self._expand_setup(api, new_steps, seen)
+                # 链中仍缺失的接口：展开其自身 setup 递归补全，并把主接口本身加入
+                for u in order:
+                    u_norm = self._norm(u)
+                    if u_norm in seen:
+                        continue
+                    if not self.index.get(u):
+                        continue
+                    self._expand_setup(u, new_steps, seen)
+                    if u_norm in seen:                     # _expand_setup 不加入接口本身
+                        continue
+                    step = self._build_step(u, "规则补链造数: %s" % u)
+                    segs = u.strip("/").rsplit("/", 2)[-2:]
+                    step["step_name"] = "chain_" + "_".join(segs)
+                    step["section"] = "pre"
+                    step["_auto_by_rules"] = True
+                    new_steps.append(step)
+                    seen.add(u_norm)
+                for s in new_steps:
+                    s["_auto_by_rules"] = True
+                    s["name"] = "规则补链: " + (s.get("name") or s.get("step_name") or "")[:40]
+                    if s.get("step_name") and s["step_name"] not in added:
+                        added.append(s["step_name"])
+                if new_steps:
+                    idx = result.index(st)
+                    result[idx:idx] = new_steps
+                break
+        return result
+
+    def _fix_chain_order(self, steps):
+        """资源依赖链顺序修正：链中接口若逆序出现 → 按链顺序重排（保持其他步骤相对位置）"""
+        chains = self.rules.get("resource_chains", {}) or {}
+        if not chains:
+            return steps
+        for chain in chains.values():
+            order = [self._norm(u) for u in (chain.get("order") or [])]
+            if not order:
+                continue
+            hits = []  # (链内序号, plan 内位置)
+            for i, st in enumerate(steps):
+                u = self._norm(st.get("api", ""))
+                if u in order:
+                    hits.append((order.index(u), i))
+            if len(hits) < 2:
+                continue
+            order_seq = [oi for oi, _ in hits]       # 链内序号序列（应递增 = 链顺序正确）
+            if order_seq != sorted(order_seq):
+                # 逆序 → 按链顺序重排命中的步骤，移到最前命中位置
+                ordered_steps = [steps[pos] for _, pos in sorted(hits)]
+                first_pos = min(pos for _, pos in hits)
+                for pos in sorted((p for _, p in hits), reverse=True):
+                    del steps[pos]
+                steps[first_pos:first_pos] = ordered_steps
+        return steps
 
     # 段落标记关键词（支持多种写法：【前置】/前置步骤：/执行步骤/预测结果 等）
     SECTION_KEYWORDS = {
@@ -57,12 +345,17 @@ class Orchestrator:
         # 前置：创建/分配 → 匹配接口；创建类自动追加「创建后验证」
         for item in sections["前置"]:
             api, _ = self._match_pre(item)
-            if api:
-                steps.append(self._build_step(api, item))
-                if self._is_create(api):
-                    verify = self._verify_step(api, item)
-                    if verify:
-                        steps.append(verify)
+            if not api:
+                continue
+            # 状态声明句（"...处于运行中/存在/已分配..."且匹配到查询类接口）→ 不作为造数步骤，
+            # 前置状态由 business_rules case_prereq + validate_plan 校验达成
+            if self._is_state_declaration(item, api):
+                continue
+            steps.append(self._build_step(api, item))
+            if self._is_create(api):
+                verify = self._verify_step(api, item)
+                if verify:
+                    steps.append(verify)
         # 操作：匹配接口；创建类自动追加验证
         for item in sections["操作"]:
             api = self._match_action(item)
@@ -74,8 +367,9 @@ class Orchestrator:
                         steps.append(verify)
         # 预期 → 断言
         assertions = [{"type": "status", "expect": "SUCCESS"} for _ in sections["预期"]]
-        return {"id": str(uuid.uuid4())[:8], "steps": steps, "assertions": assertions,
+        plan = {"id": str(uuid.uuid4())[:8], "steps": steps, "assertions": assertions,
                 "sections": sections}
+        return self.validate_plan(plan)
 
     def build_plan_ai(self, use_case_text, params=None, llm_config=None):
         """通道 B（主）：LLM 选接口 → 确定性依赖展开 → 文档填充（0 AI 脚本合成）
@@ -123,8 +417,9 @@ class Orchestrator:
         raw_asserts = intent.get("assertions", [])
         assertions = [{"type": "status", "expect": a} for a in raw_asserts] or \
                      [{"type": "status", "expect": "SUCCESS"}]
-        return {"id": str(uuid.uuid4())[:8], "steps": steps, "assertions": assertions,
+        plan = {"id": str(uuid.uuid4())[:8], "steps": steps, "assertions": assertions,
                 "sections": sections, "mode": "ai"}
+        return self.validate_plan(plan)
 
     # 通道 B 旧名兼容
     def build_plan_free_text(self, free_text, params=None, llm_config=None):
@@ -176,6 +471,16 @@ class Orchestrator:
             if item.get("reuse_query"):
                 step["reuse_query"] = item["reuse_query"]
         return step
+
+    def _is_state_declaration(self, item, api):
+        """判断前置句是否为「状态声明」（含状态词且匹配到查询类接口）：
+        状态声明不作为造数步骤，其状态达成由 business_rules case_prereq + validate_plan 校验"""
+        state_words = ("运行中", "处于", "存在", "已分配", "可用", "关机", "在线", "离线", "已创建", "启动")
+        if not any(w in item for w in state_words):
+            return False
+        # 匹配到的是查询类接口（list/getInfo/detail/get/select）→ 判定为状态声明
+        api_l = self._norm(api).lower()
+        return any(q in api_l for q in ("/list", "/getinfo", "/detail", "/get", "/select", "page"))
 
     def _build_step_named(self, api, sname, reason, section="action",
                           param_map=None, extract_override=None):
@@ -266,7 +571,16 @@ class Orchestrator:
                     gv = gen_config_value(k, v, {})
                     if gv is not None:
                         body[k] = dict(v, _field=k)
-                # 纯描述（无 value 无 generated_by）→ 跳过
+                else:
+                    # 裸字段（无 value/generated_by）：按字段名推断 value 引用
+                    inferred = self._infer_body_value(k, v, meta)
+                    if inferred == "generated":
+                        gv = gen_config_value(k, v, {})
+                        if gv is not None:
+                            body[k] = dict(v, _field=k)  # 生成字段走 generated 逻辑
+                    elif inferred is not None:
+                        body[k] = dict(v, value=inferred)
+                # 纯描述（无 value 无 generated_by 且无法推断）→ 跳过
         # extract：取接口 setup 中第一个有产出变量的步骤（若无显式 extract 则用其首个）
         extract = {}
         for s in meta.get("setup") or []:
@@ -293,6 +607,38 @@ class Orchestrator:
                 break
         return step
 
+    def _infer_body_value(self, field, spec, meta):
+        """推断裸请求字段的 value 引用（确定性规则，非 AI）：
+        1. 字段名 snake_case 命中文档 params → ${param.<snake>}
+        2. 字段命中已知生成规则（cpu/memory/systemSize 等）→ 标记 generated_by
+        3. 字段名匹配 setup extract 产出变量 → ${prev.<var>}
+        否则返回 None（保持裸字段，由 param_map/人工补充）
+        """
+        import re
+        snake = re.sub(r'(?<!^)(?=[A-Z])', '_', field).lower()
+        # 1. params 节变量（required + 全量）
+        pnames = set()
+        params = meta.get("params") or {}
+        for grp in ("required", "optional"):
+            for p in (params.get(grp) or []) or []:
+                if isinstance(p, dict) and p.get("name"):
+                    pnames.add(p["name"])
+        if snake in pnames:
+            return "${param." + snake + "}"
+        # 2. 生成规则字段
+        gen_fields = ("cpu", "memory", "systemSize", "platformStrategyGroup", "deskCreateMode",
+                      "desktopPreName", "desktopNameStartNum", "desktopNum", "seatNum")
+        if field in gen_fields:
+            return "generated"
+        # 3. setup extract 产出（prev 变量）
+        for s in meta.get("setup") or []:
+            ex = s.get("extract") or {}
+            if isinstance(ex, dict):
+                for var in ex:
+                    if var.lower() == snake or var.lower() == field.lower():
+                        return "${prev." + var + "}"
+        return None
+
     # ---------- 文档语义驱动匹配（灵活，覆盖全部接口文档） ----------
 
     # 动作词 → URL 动作段（从接口文档自动提取 + 补充中文映射）
@@ -313,6 +659,8 @@ class Orchestrator:
         "收集": ["collectLog"],
         "下载": ["download"],
         "恢复": ["restore"],
+        "上课|开课": ["lesson/start"],
+        "下课|结束上课|结束课程": ["lesson/end"],
         "禁用": ["disable"],
         "启用|取消禁用": ["enable", "cancelDisable"],
         "批量配置": ["batchConfig"],
@@ -370,10 +718,21 @@ class Orchestrator:
 
     def _match_action(self, item):
         """操作步骤 → 接口：文档语义匹配（动作+实体组合）"""
-        url = self._semantic_match(item, prefer_create=False)
+        # 操作句剔除查询类动作词（列表/获取/查看），避免干扰操作动作（如"选择多个...重启"不应命中 list/get）
+        query_actions = ("list", "getInfo", "detail", "get", "page")
+        has_op = any(a not in query_actions for a in self._actions_of(item))
+        url = self._semantic_match(item, prefer_create=False, drop_query=has_op)
         return url
 
-    def _semantic_match(self, item, prefer_create):
+    def _actions_of(self, item):
+        """提取例句命中的动作词列表"""
+        actions = []
+        for act_kw, act_urls in self.ACTION_WORDS.items():
+            if any(kw in item for kw in act_kw.split("|")):
+                actions.extend(act_urls)
+        return actions
+
+    def _semantic_match(self, item, prefer_create, drop_query=False):
         """通用语义匹配：例句动作词+实体词 → 接口 URL 打分"""
         # 提取例句中的动作词与实体词
         actions = []
@@ -382,6 +741,8 @@ class Orchestrator:
             # key 内 | 分隔的任一词在例句中即命中（"收集|收集日志" 匹配"收集终端日志"）
             if any(kw in item for kw in act_kw.split("|")):
                 actions.extend(act_urls)
+        if drop_query:
+            actions = [a for a in actions if a not in ("list", "getInfo", "detail", "get", "page")]
         for ent_kw, ent_urls in self.ENTITY_WORDS.items():
             if any(kw in item for kw in ent_kw.split("|")):
                 entities.extend(ent_urls)

@@ -116,6 +116,10 @@ constraints:
   field: desktop
   rule: 桌面必须存在教室桌面关联
   failure: getRelationByDeskId 返回 null 时抛 IllegalArgumentException
+- level: BIZ
+  field: desktop
+  rule: 桌面须处于运行中（RUNNING）
+  failure: 非运行中桌面关机指令无效；学生桌面无独立开机接口，运行中状态须通过上课（POST /rcc/classroom/cmrcef/lesson/start）间接达成
 assertions:
   success:
   - scenario: 单台关机（idArr 长度1）

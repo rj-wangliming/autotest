@@ -29,16 +29,18 @@ request:
       required: true
       constraint: '@NotNull，教室ID'
       description: 要上课的教室
+      value: ${prev.query_classroom.output.classroomId}
     token:
       type: String
       required: true
       constraint: '@NotNull，AES加密TOKEN'
-      description: 由@ClassroomCef拦截器校验
+      description: 由@ClassroomCef拦截器校验（CMR 专用加密 TOKEN，需测试环境提供/注入）
     imageId:
       type: UUID
       required: true
       constraint: '@NotNull，镜像ID'
       description: 上课使用的镜像
+      value: ${prev.get_image.output.plusImageId}
     macArr:
       type: String[]
       required: false

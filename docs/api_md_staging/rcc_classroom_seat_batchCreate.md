@@ -127,7 +127,9 @@ upstream:
 - api: POST /space/platform/list
   produces: $.content.itemArr[0].id
   purpose: 推断：云平台ID来源，字段名为推断
-downstream: []
+downstream:
+- api: POST /rcc/classroom/image/student/create
+  purpose: 创建座位后需分配学生机镜像，桌面才存在（座位本身不含桌面，桌面由「座位 + 镜像分配」生成；分配镜像接口的上游即本接口）
 constraints:
 - level: PARAM
   field: desktopPreName

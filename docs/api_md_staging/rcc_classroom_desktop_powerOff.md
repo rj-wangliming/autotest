@@ -112,6 +112,10 @@ constraints:
   field: desktop
   rule: 桌面必须存在
   failure: 单项失败 rcdc_rcc_desktop_poweroff_item_fail_desc
+- level: BIZ
+  field: desktop
+  rule: 桌面须处于运行中（RUNNING）
+  failure: 非运行中桌面关机指令无效；学生桌面无独立开机接口，运行中状态须通过上课（POST /rcc/classroom/cmrcef/lesson/start）间接达成
 assertions:
   success:
   - scenario: 桌面存在且允许强制关机

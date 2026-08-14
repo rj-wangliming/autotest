@@ -112,6 +112,10 @@ constraints:
   field: desktop
   rule: 桌面必须存在且能查询到
   failure: 单项失败 rcdc_rcc_desktop_force_wake_up_item_fail_desc
+- level: BIZ
+  field: desktop
+  rule: 桌面须处于运行中（RUNNING）
+  failure: 唤醒仅对运行中桌面生效；学生桌面无独立开机接口，运行中状态须通过上课（POST /rcc/classroom/cmrcef/lesson/start）间接达成
 assertions:
   success:
   - scenario: 课堂桌面存在且可唤醒
