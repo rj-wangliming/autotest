@@ -109,7 +109,11 @@ class Executor:
             )
         body = {"userName": admin_user, "password": admin_password}
         status, data = self.http_request("POST", "/rco/admin/loginAdmin", body, None)
+        if status < 200 or status >= 300:
+            raise RuntimeError("登录失败: HTTP %s (%s)" % (status, json.dumps(data, ensure_ascii=False, default=str)))
         token = jsonpath_get(data, "$.content.token") or jsonpath_get(data, "$.data.token")
+        if not token:
+            raise RuntimeError("登录成功但无法获取 token: %s" % json.dumps(data, ensure_ascii=False, default=str))
         self.log("info", "[登录] token=%s..." % str(token)[:12])
         return token
 
@@ -336,7 +340,7 @@ class Executor:
                                       p.get("rcdc_passwd") or p.get("admin_password"))
             self.log("info", "[登录] 平台登录完成，会话 token 已建立")
         except Exception as e:
-            self.log("error", "登录失败: %s" % e)
+            self.log("error", "[登录] 登录失败: %s" % e)
             return {"status": "FAIL", "duration_ms": 0, "steps": [],
                     "error": "登录失败: %s" % e, "cleanup": "SKIP"}
         results = []
