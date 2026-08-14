@@ -52,6 +52,32 @@ setup:
       - name: desktopName
         valueArr:
         - ${param.desktop_name}
+- name: get_vdi_disk_storage
+  api: POST /rcc/classroom/getClassroomVdiDiskStorage
+  extract:
+    vdiDiskStorageId: $.content.vdiDiskStorageId
+  purpose: 查询教室VDI数据盘存储池ID（分配学生镜像用）
+  request:
+    body:
+      classroomId: ${prev.query_classroom.output.classroomId}
+      clusterId: ${prev.get_cluster.output.clusterId}
+      platformId: ${prev.get_cluster.output.platformId}
+      enableTeacher: false
+- name: assign_student_image
+  api: POST /rcc/classroom/image/student/create
+  purpose: 给学生机教室分配课程镜像（首镜像时批量创建座位云桌面；重启前置必须先有桌面）
+  request:
+    body:
+      crId: ${prev.query_classroom.output.classroomId}
+      plusImageId: ${prev.get_image.output.plusImageId}
+      enableHide: false
+      storagePoolIdList: ${prev.get_storage_pool.output.storagePoolId}
+      clusterId: ${prev.get_cluster.output.clusterId}
+      platformId: ${prev.get_cluster.output.platformId}
+      strategyId: ${prev.get_strategy.output.strategyId}
+      networkId: ${prev.get_network.output.networkId}
+      desktopStartIp: ${param.student_start_ip}
+      vdiDiskStorageId: ${prev.get_vdi_disk_storage.output.vdiDiskStorageId}
 - name: query_desktop
   api: POST /rcc/classroom/desktop/list
   extract:
@@ -146,6 +172,15 @@ params:
   - name: computer_name
     desc: ''
     used_by: setup/request
+  - name: student_image_name
+    desc: ''
+    used_by: setup（分配学生镜像按名查询）
+  - name: image_name
+    desc: ''
+    used_by: setup（分配学生镜像按名精确过滤）
+  - name: student_start_ip
+    desc: ''
+    used_by: setup（分配学生镜像 desktopStartIp）
 ---
 # POST /rcc/classroom/desktop/restart
 

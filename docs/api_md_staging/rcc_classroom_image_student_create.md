@@ -126,6 +126,7 @@ request:
       required: false
       constraint: '@Nullable（首次新增时必填）'
       description: 网络策略开始IP
+      value: ${param.student_start_ip}
     vdiDiskStorageId:
       type: UUID
       required: false

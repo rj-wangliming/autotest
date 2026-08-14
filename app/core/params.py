@@ -154,6 +154,8 @@ def gen_config_value(field, spec, ctx):
         return {"strategyGroupFacadeStr": "{}"}
     if field == "deskCreateMode":
         return "NEW"
+    if field == "enableHide":
+        return False
     if field == "studentModeArr":
         return ["VDI"]  # 学生机类型数组默认
     if field == "desktopNum":

@@ -18,6 +18,7 @@ setup:
   api: POST /rcc/classroom/strategy/list
   extract:
     studentClassroomStrategyId: $.content.itemArr[0].classroomStrategyId
+    strategyId: $.content.itemArr[0].classroomStrategyId
   purpose: 获取学生机教室策略ID（可选）；按策略名精确过滤获取教室策略（matchArr.fieldName=classroomStrategyName），取 classroomStrategyId
   request:
     body:
