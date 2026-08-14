@@ -137,6 +137,9 @@ class Orchestrator:
         # 3. 依赖顺序修正（资源依赖链）
         steps = self._fix_chain_order(steps)
 
+        # 3b. 查询产物后置（desktop/list 等查询移到资源链完成后）
+        steps = self._fix_query_after_chain(steps)
+
         plan["steps"] = steps
         plan["rule_added"] = added
         if warns:
@@ -240,25 +243,19 @@ class Orchestrator:
                 # 链本身的造数接口不触发
                 if api in order:
                     break
-                # plan 已有该链造数接口（或已有同链后续产物）→ 不重复补
+                # 逐接口检查链完整性：补缺失的链接口（如已有 create/seat 但缺 image → 只补 image）
                 plan_chain = [self._norm(s.get("api", "")) for s in result]
-                if any(u in plan_chain for u in order):
+                missing = [u for u in order if self._norm(u) not in plan_chain]
+                if not missing:
                     break
-                # 补链：展开【操作接口自身】的文档 setup + 链中缺失接口，全部收集到 new_steps
-                # （拓扑序：策略→教室→座位→镜像→…，再统一插入操作步骤前，保证 ${prev.*} 引用可解析）
+                # 补缺失链接口：展开其自身 setup（依赖），并把主接口本身加入
                 new_steps = []
                 seen = {self._norm(s.get("api", "")) for s in result if s.get("api")}
-                before_seen = set(seen)
-                self._expand_setup(api, new_steps, seen)
-                # 链中仍缺失的接口：展开其自身 setup 递归补全，并把主接口本身加入
-                for u in order:
-                    u_norm = self._norm(u)
-                    if u_norm in seen:
-                        continue
+                for u in missing:
                     if not self.index.get(u):
                         continue
-                    self._expand_setup(u, new_steps, seen)
-                    if u_norm in seen:                     # _expand_setup 不加入接口本身
+                    self._expand_setup(u, new_steps, seen)   # 先补该接口的 setup 依赖
+                    if self._norm(u) in seen:                 # _expand_setup 不加入接口本身
                         continue
                     step = self._build_step(u, "规则补链造数: %s" % u)
                     segs = u.strip("/").rsplit("/", 2)[-2:]
@@ -266,7 +263,7 @@ class Orchestrator:
                     step["section"] = "pre"
                     step["_auto_by_rules"] = True
                     new_steps.append(step)
-                    seen.add(u_norm)
+                    seen.add(self._norm(u))
                 for s in new_steps:
                     s["_auto_by_rules"] = True
                     s["name"] = "规则补链: " + (s.get("name") or s.get("step_name") or "")[:40]
@@ -276,6 +273,76 @@ class Orchestrator:
                     idx = result.index(st)
                     result[idx:idx] = new_steps
                 break
+        return result
+
+    def _fix_query_after_chain(self, steps):
+        """查询产物后置：查询某资源产物的步骤（如 desktop/list 查运行中桌面）应在其资源链完成后执行，
+        否则在造座位/分配镜像之前查询会落空（LLM 常把查询步骤排在造数链中间/前）"""
+        chains = self.rules.get("resource_chains", {}) or {}
+        if not chains:
+            return steps
+        result = steps[:]
+        # 所有链资源段的 (资源名, 段词) 表（用于识别查询对象）
+        res_seg_map = {}
+        for rr, cc in chains.items():
+            rl = str(rr).lower()
+            if "tci" in rl:
+                res_seg_map[rl] = ("tci", "lessonimage", "spacetci")
+            elif "desktop" in rl:
+                res_seg_map[rl] = ("desktop", "clouddesktop")
+            elif "image" in rl:
+                res_seg_map[rl] = ("image", "lessonimage", "spacetci")
+            else:
+                res_seg_map[rl] = (rl,)
+        for res, chain in chains.items():
+            # 查询后置只对桌面类链生效（desktop/list 查运行中桌面必须在座位+镜像后）;
+            # 其他链的查询由 _expand_setup 拓扑序保证，无需移动（避免索引错乱波及依赖步骤）
+            if "desktop" not in str(res).lower():
+                continue
+            order = [self._norm(u) for u in (chain.get("order") or [])]
+            if not order:
+                continue
+            res_l = str(res).lower()
+            # 链最后接口位置（该资源数据就绪点）
+            last_pos = -1
+            for i, st in enumerate(result):
+                if self._norm(st.get("api", "")) in order:
+                    last_pos = i
+            if last_pos < 0:
+                continue
+            # 收集需要后移的查询步骤（静态判断，避免 pop/insert 快照索引错乱）
+            to_move = []
+            for st in result:
+                api = self._norm(st.get("api", ""))
+                api_l = api.lower()
+                if api in order:
+                    continue
+                # 查询对象 = list 前紧邻路径段含的资源词（desktop/list → desktop；deskNetwork/list → 无链词不动；
+                # assignImage/yetAssign/list → 无链词不动；避免前缀段误伤）
+                seg_before = ""
+                for marker in ("/list", "/getinfo", "/detail", "/select"):
+                    if marker in api_l:
+                        seg_before = api_l.rsplit(marker, 1)[0].rsplit("/", 1)[-1]
+                        break
+                if not seg_before:
+                    continue
+                obj_res = None
+                for rr, segs in res_seg_map.items():
+                    if any(seg in seg_before for seg in segs):
+                        obj_res = rr
+                        break
+                if obj_res != res:
+                    continue
+                # 查询步骤在链完成后？是则不动；否则后移到链最后接口之后
+                if result.index(st) <= last_pos:
+                    to_move.append(st)
+            if not to_move:
+                continue
+            for st in to_move:
+                result.remove(st)
+            # 重新定位链最后接口（移除后索引变化），统一插入其后
+            last_pos = max(i for i, s in enumerate(result) if self._norm(s.get("api", "")) in order)
+            result[last_pos + 1:last_pos + 1] = to_move
         return result
 
     def _fix_chain_order(self, steps):
