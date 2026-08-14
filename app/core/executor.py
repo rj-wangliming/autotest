@@ -39,7 +39,7 @@ class Executor:
         self.log_cb = log_cb or (lambda level, msg: None)
 
     # 敏感字段（日志脱敏，避免凭据落盘/落库）
-    SENSITIVE_KEYS = {"token", "password", "apikey", "api_key", "admin_password",
+    SENSITIVE_KEYS = {"token", "password", "pwd", "apikey", "api_key", "admin_password",
                       "studentaccountpassword", "authorization", "secret"}
 
     # ---------- 基础 ----------
@@ -107,7 +107,7 @@ class Executor:
                 "缺少登录凭据：请在用例参数 rcdc_user/rcdc_passwd（或 admin_user/admin_password）"
                 "或环境变量 TEST_ADMIN_USER/TEST_ADMIN_PASSWORD 中提供"
             )
-        body = {"userName": admin_user, "password": admin_password}
+        body = {"userName": admin_user, "pwd": admin_password}
         status, data = self.http_request("POST", "/rco/admin/loginAdmin", body, None)
         if status < 200 or status >= 300:
             raise RuntimeError("登录失败: HTTP %s (%s)" % (status, json.dumps(data, ensure_ascii=False, default=str)))

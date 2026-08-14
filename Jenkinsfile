@@ -23,6 +23,8 @@ pipeline {
                 sh 'python3 -c "from app.core import get_index; n=len(get_index().load()); print(f\\"接口数 {n}\\")"'
                 // 回归测试：编排/规则库/文档（不依赖真实环境与 LLM；失败即中止，防止带回归进入真实用例）
                 sh 'python3 tests/test_orchestration.py'
+                // 运行配置(global_params.yaml)不入库:CI 缺失时生成最小模板,凭据走环境变量 TEST_ADMIN_USER/TEST_ADMIN_PASSWORD
+                sh 'mkdir -p app/data && [ -f app/data/global_params.yaml ] || echo "base_url: \${BASE_URL}\nrcdc_user:\nrcdc_passwd:" > app/data/global_params.yaml'
             }
         }
         stage('Test') {
