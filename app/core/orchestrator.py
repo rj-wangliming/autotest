@@ -248,13 +248,17 @@ class Orchestrator:
                 missing = [u for u in order if self._norm(u) not in plan_chain]
                 if not missing:
                     break
-                # 补缺失链接口：展开其自身 setup（依赖），并把主接口本身加入
+                # 补缺失链接口：先展开【操作接口自身】的文档 setup（含 create_seat/分配镜像/query_desktop 等完整声明），
+                # 再对链中仍缺失的接口补其 setup + 主接口（文档 setup 优先，规则库兜底）
                 new_steps = []
                 seen = {self._norm(s.get("api", "")) for s in result if s.get("api")}
+                self._expand_setup(api, new_steps, seen)      # 展开操作接口自身 setup
                 for u in missing:
+                    if self._norm(u) in seen:                 # setup 已声明该接口则跳过
+                        continue
                     if not self.index.get(u):
                         continue
-                    self._expand_setup(u, new_steps, seen)   # 先补该接口的 setup 依赖
+                    self._expand_setup(u, new_steps, seen)   # 展开缺失链接口的 setup 依赖
                     if self._norm(u) in seen:                 # _expand_setup 不加入接口本身
                         continue
                     step = self._build_step(u, "规则补链造数: %s" % u)
