@@ -76,11 +76,11 @@ class Orchestrator:
                 res_ok = "strategy" in api_l or "strategygroup" in api_l or "deskstrategy" in api_l
             else:
                 res_ok = res in api_l
-            # action 段匹配（支持下划线分段，如 lesson_start → URL 须含 lesson 且含 start）
+            # action 段匹配（词边界，避免 restart 误匹配 start 子串；支持下划线分段如 lesson_start）
             if "_" in act:
-                act_ok = all(seg in api_l for seg in act.split("_"))
+                act_ok = all(re.search(r"\b" + re.escape(seg) + r"\b", api_l) for seg in act.split("_"))
             else:
-                act_ok = act in api_l
+                act_ok = re.search(r"\b" + re.escape(act) + r"\b", api_l) is not None
             if res_ok and act_ok:
                 return sp
         return None
