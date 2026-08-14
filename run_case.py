@@ -125,21 +125,33 @@ def to_junit_xml(results):
 
 def run_one(case_path, args):
     """跑单个用例 → result dict（name/status/duration_ms/error/channel）"""
+    from app.core.logger import setup_app_logging, new_case_log, CaseFileLogger
+    setup_app_logging()  # 项目运行日志（CI 也落盘）
     uc = load_use_case(case_path)
     params = dict(args.params) if isinstance(args.params, dict) else {}
     params.update(uc["params"])
     plan, channel = build_or_load_plan(uc["use_case"], params, args.llm_config, args.plan_cache)
     from app.core.executor import run_plan
+    log_path = new_case_log("ci_" + uc["name"])
+
+    def log(level, msg):
+        print("[%s] %s" % (level, msg))
+        flog.write(level, msg)
+
+    flog = CaseFileLogger(log_path)
     start = time.time()
     try:
-        result = run_plan(plan, params, args.base_url)
+        result = run_plan(plan, params, args.base_url, log_cb=log)
         status = result.get("status", "FAIL")
         error = result.get("error", "") or ""
     except Exception as e:
         status = "ERROR"
         error = str(e)
+        log("error", "执行异常: %s" % e)
+    finally:
+        flog.close()
     dur = int((time.time() - start) * 1000)
-    print("[ci] %s → %s (%.2fs, %s)" % (uc["name"], status, dur / 1000.0, channel))
+    print("[ci] %s → %s (%.2fs, %s) 日志→%s" % (uc["name"], status, dur / 1000.0, channel, log_path))
     return {"name": uc["name"], "status": status, "duration_ms": dur,
             "error": error, "channel": channel}
 
