@@ -56,7 +56,15 @@ async function previewPlan() {
     const d = await resp.json();
     if (d.error) { alert('编排失败: ' + d.error); return; }
     document.getElementById('plan-preview').style.display = 'block';
-    document.getElementById('plan-json').textContent = JSON.stringify(d, null, 2);
+    // 规则摘要：自动补步骤 + 警告（可人工确认）
+    const added = (d.rule_added || []);
+    const warns = (d.warns || []);
+    let summary = '';
+    if (added.length) summary += '⚡ 规则自动补 ' + added.length + ' 步：' + added.join(', ') + '\n';
+    if (warns.length) summary += '⚠️ 警告：' + warns.map(w => (w.api || '') + ' 禁止 ' + (w.forbidden_state||'') + (w.conflict_with ? '（与 ' + w.conflict_with + ' 冲突）' : '')).join('; ') + '\n';
+    const autoCount = (d.steps || []).filter(s => s.auto_by_rules).length;
+    if (!summary && autoCount) summary = '⚡ 规则补链 ' + autoCount + ' 步（详见下方计划）\n';
+    document.getElementById('plan-json').textContent = (summary ? summary + '\n' : '') + JSON.stringify(d, null, 2);
 }
 async function runUseCase() {
     const use_case = document.getElementById('use-case').value;

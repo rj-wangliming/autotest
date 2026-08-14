@@ -130,12 +130,15 @@ def api_plan():
     plan = _build_plan_with_mode(use_case, merged)
     return jsonify({
         "channel": plan.get("_channel"),
+        "rule_added": plan.get("rule_added", []),
+        "warns": plan.get("warns", []),
         "steps": [{
             "step_name": s.get("step_name", ""), "name": s.get("name", ""),
             "api": s.get("api", ""), "section": s.get("section", ""),
             "body_fields": list(s.get("body", {}).keys()),
             "extract": list(s.get("extract", {}).keys()),
             "poll": bool(s.get("poll")), "idempotent": s.get("idempotent"),
+            "auto_by_rules": bool(s.get("_auto_by_rules")),
             "warn": s.get("_warn"),
         } for s in plan.get("steps", [])],
         "assertions": plan.get("assertions", []),
