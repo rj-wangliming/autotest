@@ -16,3 +16,6 @@ _verify_*.py
 # IDE
 .idea/
 .vscode/
+
+# 敏感配置(api_key),不入库
+app/data/model_config.json

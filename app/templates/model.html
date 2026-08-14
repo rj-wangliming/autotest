@@ -85,10 +85,12 @@ async function loadConfig() {
 }
 async function saveConfig() {
     await fetch('/api/model-config', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(readCfg())});
-    document.getElementById('cfg-status').textContent = '✅ 已保存';
+    document.getElementById('cfg-status').textContent = '✅ 已保存（持久化到本地文件，重启后仍生效）';
 }
 async function testConnection() {
     const st = document.getElementById('cfg-status');
+    // 自动持久化：测试即保存，避免"测试通过但重启后丢失"
+    try { await fetch('/api/model-config', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(readCfg())}); } catch(e) {}
     st.textContent = '测试中...';
     try {
         const r = await fetch('/api/model-test', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(readCfg())});
@@ -114,6 +116,8 @@ function addLine(role, text) {
     log.scrollTop = log.scrollHeight;
 }
 async function sendChat() {
+    // 自动持久化：对话即保存
+    try { await fetch('/api/model-config', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(readCfg())}); } catch(e) {}
     const inp = document.getElementById('chat-input');
     const text = inp.value.trim();
     if (!text) return;
