@@ -136,6 +136,11 @@ assertions:
     trigger: wakeupTerminal 全部抛错
     expect: $.status=="SUCCESS" 且 $.content.taskId 非空；轮询 content.taskId 至终态 batchTaskItemStatus==FAILURE（任务结果 rcdc_rcc_seat_wake_fail）
 cleanup: []
+prereq_state:
+  resource: terminal
+  required_state: ONLINE
+  achieve_via: []
+
 idempotency:
   level: data_level
   note: 重复调用会重复下发唤醒命令（终端已开机时唤醒无实际影响）

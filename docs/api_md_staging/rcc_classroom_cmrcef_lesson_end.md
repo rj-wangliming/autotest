@@ -112,6 +112,11 @@ assertions:
     trigger: validForForceDelete失败
     expect: $.status==ERROR && $.msgKey==rcdc_rcc_classroom_validate_force_ending_class_desc_for_platform_unavailable_cmr
 cleanup: []
+prereq_state:
+  resource: classroom
+  required_state: IN_CLASS
+  achieve_via: []
+
 idempotency:
   level: data_level
   note: 重复下课由classroomLessonAPI.checkCanEndLesson状态校验拦截，非严格幂等

@@ -102,6 +102,15 @@ assertions:
     trigger: 教室状态非空闲
     expect: $.status=="SUCCESS"；content.taskId 非空；轮询终态对应项 batchTaskItemStatus==FAILURE；msgKey==RCDC_RCC_CLASSROOM_OPERATE_CLASSROOM_DELETE_SINGLE_FAIL_LOG
 cleanup: []
+prereq_state:
+  resource: classroom
+  required_state: NONE_CLASS
+  forbidden: [STARTING_CLASS, IN_CLASS, ENDING_CLASS]
+  api: /rcc/classroom/delete
+  achieve_via:
+  - api: POST /rcc/classroom/cmrcef/lesson/end
+    note: 教室上课中需先下课(lesson/end)才能删除
+
 idempotency:
   level: data_level
   note: 删除为破坏性非幂等操作；重复删除已删除教室会报不存在；部分教室删除失败时为 PARTIAL_SUCCESS

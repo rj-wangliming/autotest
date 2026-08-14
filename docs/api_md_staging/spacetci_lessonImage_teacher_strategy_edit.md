@@ -96,6 +96,11 @@ assertions:
 cleanup:
 - api: POST /spacetci/lessonImage/teacher/strategy/edit
   note: 误操作时再次调用本接口换回原策略
+prereq_state:
+  resource: strategy
+  required_state: AVAILABLE
+  achieve_via: []
+
 idempotency:
   level: data_level
   note: 重复设置相同策略可视为幂等；不同策略为覆盖写

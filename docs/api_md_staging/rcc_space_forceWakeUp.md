@@ -96,6 +96,11 @@ assertions:
     trigger: 桌面 RUNNING/CLOSE
     expect: 轮询 content.taskId 至终态 batchTaskItemStatus∈["FAILURE"]
 cleanup: []
+prereq_state:
+  resource: desktop
+  required_state: SLEEP
+  achieve_via: []
+
 idempotency:
   level: data_level
   note: 重复提交重复下发唤醒命令

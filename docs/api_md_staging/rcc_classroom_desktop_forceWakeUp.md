@@ -125,6 +125,11 @@ assertions:
     trigger: 桌面已删除/离线或平台唤醒命令异常
     expect: $.status=="SUCCESS"；content.taskId 非空；轮询终态对应项 batchTaskItemStatus==FAILURE；审计 rcdc_rcc_desktop_force_wake_up_fail_log
 cleanup: []
+prereq_state:
+  resource: desktop
+  required_state: SLEEP
+  achieve_via: []
+
 idempotency:
   level: data_level
   note: 唤醒对已唤醒桌面重复执行通常无害（状态已一致），但每次提交都会新建批任务并重新下发指令

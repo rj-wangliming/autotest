@@ -92,6 +92,11 @@ assertions:
     trigger: getTeacherInfo 返回空或终端ID为空
     expect: $.status=="SUCCESS" 且 $.content.taskId 非空；轮询 content.taskId 至终态 batchTaskItemStatus==FAILURE（rcdc_rcc_classroom_terminal_not_find_mac）
 cleanup: []
+prereq_state:
+  resource: terminal
+  required_state: ONLINE
+  achieve_via: []
+
 idempotency:
   level: data_level
   note: 唤醒对已开机终端重复执行基本无害（状态已一致）

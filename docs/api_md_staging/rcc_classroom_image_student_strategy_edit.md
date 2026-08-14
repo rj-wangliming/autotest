@@ -165,6 +165,11 @@ assertions:
     trigger: VDI镜像配TCI策略
     expect: $.status==ERROR && $.msgKey==rcdc_classroom_operate_tip_failed（底层抛 rcdc_rcc_image_strategy_not_same_type）
 cleanup: []
+prereq_state:
+  resource: strategy
+  required_state: AVAILABLE
+  achieve_via: []
+
 idempotency:
   level: data_level
   note: '@OneTimeTokenRequired 一次性Token防重复提交；版本变更批任务带唯一锁；策略更新本身可重放'

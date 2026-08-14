@@ -125,6 +125,13 @@ assertions:
     trigger: 桌面已删除或平台返回异常
     expect: $.status=="SUCCESS"；content.taskId 非空；轮询终态对应项 batchTaskItemStatus==FAILURE；对应项 msgKey==rcdc_rcc_desktop_poweroff_item_fail_desc（单条任务时 finish msgKey==rcdc_rcc_desktop_poweroff_single_fail）；rcdc_rcc_desktop_poweroff_fail_log 仅为审计日志 key，不是响应 msgKey
 cleanup: []
+prereq_state:
+  resource: desktop
+  required_state: RUNNING
+  achieve_via:
+  - api: POST /rcc/classroom/cmrcef/lesson/start
+    note: 学生桌面无独立开机接口，只能通过上课批量开机
+
 idempotency:
   level: data_level
   note: 强制关机为有状态操作，重复执行对已关机桌面会重复下发断电指令；任务级不幂等

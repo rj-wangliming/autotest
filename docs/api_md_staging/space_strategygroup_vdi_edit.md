@@ -199,6 +199,11 @@ assertions:
 cleanup:
 - api: 无
   note: 无对应 HTTP 清理接口（编辑不创建资源，无回滚/undo）
+prereq_state:
+  resource: strategy
+  required_state: AVAILABLE
+  achieve_via: []
+
 idempotency:
   level: data_level
   note: 依赖乐观锁 version，重复提交相同数据版本冲突失败；相同内容重复提交结果一致

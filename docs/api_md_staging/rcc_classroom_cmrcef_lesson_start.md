@@ -121,6 +121,12 @@ assertions:
     trigger: lessonService.startLesson抛异常
     expect: $.status==ERROR（异常向上抛出，无固定 msgKey）；finally 释放教室锁
 cleanup: []
+prereq_state:
+  resource: classroom
+  required_state: NONE_CLASS
+  forbidden: [STARTING_CLASS, IN_CLASS]
+  achieve_via: []
+
 idempotency:
   level: data_level
   note: addClassroomLessonMap互斥防止并发，但同镜像重复上课被状态校验拦截；结果不保证幂等

@@ -177,6 +177,11 @@ assertions:
     trigger: targetImageId 传单镜像或跨平台
     expect: $.status==ERROR && $.msgKey==rcdc_classroom_operate_tip_failed（底层抛 62100223/62100224）
 cleanup: []
+prereq_state:
+  resource: strategy
+  required_state: AVAILABLE
+  achieve_via: []
+
 idempotency:
   level: data_level
   note: '@OneTimeTokenRequired 防重复提交；版本变更批任务带唯一锁'

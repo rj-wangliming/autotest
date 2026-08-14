@@ -98,6 +98,13 @@ assertions:
     trigger: 桌面不存在或状态异常
     expect: 轮询 content.taskId 至终态 batchTaskItemStatus∈["FAILURE"]
 cleanup: []
+prereq_state:
+  resource: desktop
+  required_state: RUNNING
+  achieve_via:
+  - api: POST /rcc/classroom/cmrcef/lesson/start
+    note: 学生桌面无独立开机接口，只能通过上课批量开机
+
 idempotency:
   level: data_level
   note: 重复提交重复下发重启命令

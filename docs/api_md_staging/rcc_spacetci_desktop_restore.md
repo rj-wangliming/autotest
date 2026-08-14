@@ -163,6 +163,13 @@ assertions:
     trigger: shine 返回非0码或抛 BusinessException
     expect: 任务项 batchTaskItemStatus==FAILURE；msgKey==rcc_restore_tci_desktop_task_default_fail_log
 cleanup: []
+prereq_state:
+  resource: desktop
+  required_state: RUNNING
+  achieve_via:
+  - api: POST /rcc/classroom/cmrcef/lesson/start
+    note: 学生桌面无独立开机接口，只能通过上课批量开机
+
 idempotency:
   level: data_level
   note: 还原会覆盖TCI本地磁盘，重复执行会再次还原；任务级不幂等

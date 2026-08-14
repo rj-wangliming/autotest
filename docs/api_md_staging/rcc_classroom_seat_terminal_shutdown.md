@@ -121,6 +121,11 @@ assertions:
     trigger: 平台关机接口抛错
     expect: $.status=="SUCCESS" 且 $.content.taskId 非空；轮询 content.taskId 至终态 batchTaskItemStatus==FAILURE 并记录失败审计日志
 cleanup: []
+prereq_state:
+  resource: terminal
+  required_state: ONLINE
+  achieve_via: []
+
 idempotency:
   level: data_level
   note: 重复调用会再次向终端下发关机命令

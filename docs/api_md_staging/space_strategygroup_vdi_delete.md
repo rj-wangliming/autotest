@@ -98,6 +98,11 @@ assertions:
 cleanup:
 - api: 无
   note: 无对应 HTTP 清理接口（删除状态机为内部调用，非 HTTP 端点）
+prereq_state:
+  resource: strategy
+  required_state: AVAILABLE
+  achieve_via: []
+
 idempotency:
   level: non_idempotent
   note: 删除状态机各 processor 幂等；重复提交已删 id 无副作用

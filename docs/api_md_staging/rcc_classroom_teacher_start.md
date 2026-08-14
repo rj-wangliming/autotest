@@ -104,6 +104,11 @@ assertions:
     trigger: classroomId/imageId 未传
     expect: status==ERROR（参数校验 Assert.notNull）
 cleanup: []
+prereq_state:
+  resource: teacher
+  required_state: CLOSE
+  achieve_via: []
+
 idempotency:
   level: data_level
   note: 重复启动同一教师机桌面通常无副作用，但无显式防重，仍会重新下发启动指令

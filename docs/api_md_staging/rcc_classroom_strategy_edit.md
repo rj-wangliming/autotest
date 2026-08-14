@@ -163,6 +163,11 @@ assertions:
     trigger: classroomStrategyName 被占用
     expect: $.status==ERROR 且 $.msgKey==RCDC_RCC_CLASSROOM_STRATEGY_EDIT_OPERATE_FAIL_LOG（msgArgArr[1] 为名称重复文案）
 cleanup: []
+prereq_state:
+  resource: strategy
+  required_state: AVAILABLE
+  achieve_via: []
+
 idempotency:
   level: data_level
   note: 按 id 整体更新策略，重复提交收敛于最终值；名称冲突时失败

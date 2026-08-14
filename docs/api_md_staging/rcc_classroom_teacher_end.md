@@ -98,6 +98,11 @@ assertions:
     trigger: 教师机配置缺失/桌面不存在
     expect: status==ERROR；msgKey==SPACETCI_LESSON_TEACHER_END_LESSON_FAIL_LOG
 cleanup: []
+prereq_state:
+  resource: teacher
+  required_state: RUNNING
+  achieve_via: []
+
 idempotency:
   level: data_level
   note: 重复关闭通常无害，但无显式防重

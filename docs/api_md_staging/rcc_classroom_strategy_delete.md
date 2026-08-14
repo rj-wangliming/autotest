@@ -106,6 +106,11 @@ assertions:
     trigger: 关联教室正在上课
     expect: $.status=="SUCCESS"；content.taskId 非空；轮询终态对应项 batchTaskItemStatus==FAILURE；msgKey==RCDC_RCC_CLASSROOM_STRATEGY_HAS_CLASSROOM_IN_CLASS
 cleanup: []
+prereq_state:
+  resource: strategy
+  required_state: AVAILABLE
+  achieve_via: []
+
 idempotency:
   level: data_level
   note: 删除为破坏性非幂等操作；重复删除已删除策略会报不存在；多条时有部分成功场景

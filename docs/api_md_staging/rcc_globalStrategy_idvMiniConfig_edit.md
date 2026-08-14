@@ -63,6 +63,11 @@ assertions:
     trigger: expireCleanDay 未传或非法
     expect: status==ERROR（参数校验类 msgKey）
 cleanup: []
+prereq_state:
+  resource: strategy
+  required_state: AVAILABLE
+  achieve_via: []
+
 idempotency:
   level: non_idempotent
   note: 值相同时跳过更新，重复提交幂等

@@ -102,6 +102,13 @@ assertions:
     trigger: 任务执行时桌面状态异常
     expect: 轮询 content.taskId 至终态 batchTaskItemStatus∈["FAILURE"]
 cleanup: []
+prereq_state:
+  resource: desktop
+  required_state: RUNNING
+  achieve_via:
+  - api: POST /rcc/classroom/cmrcef/lesson/start
+    note: 学生桌面无独立开机接口，只能通过上课批量开机
+
 idempotency:
   level: data_level
   note: 每次调用都会重新下发强制关机命令，重复提交产生重复命令与重复审计日志

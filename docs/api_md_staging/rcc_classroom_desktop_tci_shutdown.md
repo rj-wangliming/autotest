@@ -137,6 +137,13 @@ assertions:
     trigger: 终端离线/平台异常（shutdownDesktop 抛 BusinessException）
     expect: 任务已提交：status==SUCCESS；content.taskId 非空；轮询 taskId 终态 batchTaskItemStatus==FAILURE；对应项 msgKey==rcdc_rcc_tci_desktop_shutdown_item_fail_desc（单条任务时 finish msgKey==rcdc_rcc_tci_desktop_shutdown_single_fail）；审计 RCDC_RCC_TCI_DESKTOP_SHUTDOWN_FAIL_LOG
 cleanup: []
+prereq_state:
+  resource: desktop
+  required_state: RUNNING
+  achieve_via:
+  - api: POST /rcc/classroom/cmrcef/lesson/start
+    note: 学生桌面无独立开机接口，只能通过上课批量开机
+
 idempotency:
   level: data_level
   note: 关机为有状态操作，任务级不幂等

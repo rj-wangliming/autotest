@@ -107,6 +107,11 @@ assertions:
     trigger: IN_CLASS 且 source 为 WEB 且不足3分钟
     expect: $.status==ERROR && $.msgKey==rcdc_classroom_end_lessoon_limit_time
 cleanup: []
+prereq_state:
+  resource: classroom
+  required_state: IN_CLASS
+  achieve_via: []
+
 idempotency:
   level: data_level
   note: 重复下课因当前镜像不存在或不在上课状态被拒绝；正常路径为一次性操作

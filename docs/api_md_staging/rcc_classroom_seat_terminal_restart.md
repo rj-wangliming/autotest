@@ -124,6 +124,11 @@ assertions:
     trigger: 平台重启接口抛错
     expect: $.status=="SUCCESS" 且 $.content.taskId 非空；轮询 content.taskId 至终态 batchTaskItemStatus==FAILURE（onFinish 返回失败/部分成功结果）
 cleanup: []
+prereq_state:
+  resource: terminal
+  required_state: ONLINE
+  achieve_via: []
+
 idempotency:
   level: data_level
   note: 每次调用都会向终端重新下发重启命令，重复调用导致终端反复重启，无去重

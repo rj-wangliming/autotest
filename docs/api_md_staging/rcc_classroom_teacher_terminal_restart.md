@@ -92,6 +92,11 @@ assertions:
     trigger: 教师配置或终端缺失
     expect: 单教室：$.status=="ERROR" 且 $.msgKey=="rcdc_rcc_teacher_operate_terminal_restart_fail"；批量：任务已提交，轮询 content.taskId 至终态 batchTaskItemStatus==FAILURE
 cleanup: []
+prereq_state:
+  resource: terminal
+  required_state: ONLINE
+  achieve_via: []
+
 idempotency:
   level: data_level
   note: 重启为有状态操作，重复执行会反复重启教师终端

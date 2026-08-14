@@ -129,6 +129,13 @@ assertions:
     trigger: 桌面已删除或终端离线
     expect: $.status=="SUCCESS"；content.taskId 非空；轮询终态对应项 batchTaskItemStatus==FAILURE；对应项 msgKey==rcdc_rcc_tci_desktop_restart_item_fail_desc（单条任务时 finish msgKey==rcdc_rcc_tci_desktop_restart_single_fail）；rcdc_rcc_tci_desktop_restart_fail_log 仅为审计日志 key，不是响应 msgKey
 cleanup: []
+prereq_state:
+  resource: desktop
+  required_state: RUNNING
+  achieve_via:
+  - api: POST /rcc/classroom/cmrcef/lesson/start
+    note: 学生桌面无独立开机接口，只能通过上课批量开机
+
 idempotency:
   level: data_level
   note: 重启为有状态操作，任务级不幂等

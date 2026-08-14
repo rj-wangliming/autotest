@@ -129,6 +129,12 @@ assertions:
 cleanup:
 - api: 无对应 HTTP 清理接口
   note: finally 释放上课执行锁为服务端内部动作，无 HTTP 清理接口
+prereq_state:
+  resource: classroom
+  required_state: NONE_CLASS
+  forbidden: [STARTING_CLASS, IN_CLASS]
+  achieve_via: []
+
 idempotency:
   level: data_level
   note: 通过 hasClassroomLessonMap 锁串行化；重复同镜像上课被拒绝，不同镜像视为切课（先下课再上课），非严格幂等

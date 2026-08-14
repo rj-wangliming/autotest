@@ -106,6 +106,11 @@ assertions:
     trigger: 终端状态 OFFLINE
     expect: $.status=="SUCCESS" 且 $.content.taskId 非空；轮询 content.taskId 至终态 batchTaskItemStatus==FAILURE（rcdc_rcc_terminal_unlock_terminal_offline）
 cleanup: []
+prereq_state:
+  resource: terminal
+  required_state: ONLINE
+  achieve_via: []
+
 idempotency:
   level: data_level
   note: 对已解锁终端重复调用会报未锁定错误；对锁定终端重复解锁结果一致

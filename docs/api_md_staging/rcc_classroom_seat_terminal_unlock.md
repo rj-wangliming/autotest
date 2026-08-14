@@ -128,6 +128,11 @@ assertions:
     trigger: unlockTerminalManagePwd 抛错
     expect: $.status=="SUCCESS" 且 $.content.taskId 非空；轮询 content.taskId 至终态 batchTaskItemStatus==FAILURE（审计 rcdc_rcc_terminal_unlock_fail_log）
 cleanup: []
+prereq_state:
+  resource: terminal
+  required_state: ONLINE
+  achieve_via: []
+
 idempotency:
   level: data_level
   note: 解锁操作本身幂等，但离线/未锁定终端会重复判定失败

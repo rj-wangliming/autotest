@@ -106,6 +106,11 @@ assertions:
     trigger: 某平台更新失败
     expect: $.status==SUCCESS（亲和规则更新异常仅记录日志，接口仍成功）
 cleanup: []
+prereq_state:
+  resource: strategy
+  required_state: AVAILABLE
+  achieve_via: []
+
 idempotency:
   level: data_level
   note: 每次提交都会重新遍历全部亲和性规则并逐平台更新（值相同也执行更新动作），参数本身有值对比；无事务回滚保护
