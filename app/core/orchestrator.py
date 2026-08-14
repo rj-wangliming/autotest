@@ -529,7 +529,7 @@ class Orchestrator:
         sname = item.get("name") or dep_api.rstrip("/").split("/")[-1]
         body = dict((item.get("request") or {}).get("body") or {})
         extract = {k: v for k, v in (item.get("extract") or {}).items()
-                   if isinstance(v, str) and v.startswith("$")}
+                   if (isinstance(v, str) and v.startswith("$")) or isinstance(v, dict)}
         dep_meta = self.index.get(dep_api) or {}          # setup 项对应接口的 polling
         step = {"step_name": sname, "name": (item.get("purpose") or sname)[:24],
                 "api": dep_api, "method": method, "body": body,
