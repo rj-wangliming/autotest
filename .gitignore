@@ -9,6 +9,7 @@ __pycache__/
 # 运行产物
 .cache/
 *.log
+logs/
 
 # 临时验证脚本
 _verify_*.py

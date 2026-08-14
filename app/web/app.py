@@ -185,39 +185,49 @@ def _cleanup_sessions():
 
 
 def _run_use_case(sid, use_case, params, base_url):
+    from app.core.logger import new_case_log, CaseFileLogger
+    first_line = (use_case.strip().splitlines()[0][:30] if use_case.strip() else "case")
+    log_path = new_case_log("web_" + first_line)
+    flog = CaseFileLogger(log_path)
+    exec_sessions[sid]["log_file"] = log_path
+
     def log(level, msg):
         exec_sessions[sid]["logs"].append({"level": level, "msg": msg, "ts": _ts()})
+        flog.write(level, msg)
 
-    merged = dict(_load_global_params()); merged.update(params or {})
     try:
-        plan = _build_plan_with_mode(use_case, merged)
-        log("info", "用例编排完成：%d 个步骤（通道 %s）→ 隔离执行" % (len(plan["steps"]), plan.get("_channel", "?")))
-    except Exception as e:
-        log("error", "用例编排失败: %s" % e)
-        exec_sessions[sid]["status"] = "ERROR"
-        exec_sessions[sid]["result"] = {"status": "ERROR", "error": str(e)}
-        return
-    # subprocess 隔离执行（executor.run_plan 方法调用，无字符串拼装）
-    runner = ScriptRunner()
-    try:
-        exec_sessions[sid]["script"] = json.dumps(plan, ensure_ascii=False, indent=1)  # 供前端查看编排计划
-        exec_sessions[sid]["plan_meta"] = {
-            "channel": plan.get("_channel", ""),
-            "rule_added": plan.get("rule_added", []),
-            "warns": plan.get("warns", []),
-            "steps": [{"step_name": s.get("step_name", ""), "api": s.get("api", ""),
-                       "section": s.get("section", ""), "auto_by_rules": bool(s.get("_auto_by_rules"))}
-                      for s in plan.get("steps", [])],
-        }
-        result = runner.run_isolated(plan, merged, base_url, timeout=120,
-                                     log_cb=lambda l, m: log(_map_log_level(m), m))
-        exec_sessions[sid]["result"] = result
-        exec_sessions[sid]["status"] = result["status"]
-        log("info", "执行完成：%s (exit=%s)" % (result["status"], result["exit_code"]))
-    except Exception as e:
-        log("error", "执行异常: %s" % e)
-        exec_sessions[sid]["status"] = "ERROR"
-        exec_sessions[sid]["result"] = {"status": "ERROR", "error": str(e)}
+        merged = dict(_load_global_params()); merged.update(params or {})
+        try:
+            plan = _build_plan_with_mode(use_case, merged)
+            log("info", "用例编排完成：%d 个步骤（通道 %s）→ 隔离执行" % (len(plan["steps"]), plan.get("_channel", "?")))
+        except Exception as e:
+            log("error", "用例编排失败: %s" % e)
+            exec_sessions[sid]["status"] = "ERROR"
+            exec_sessions[sid]["result"] = {"status": "ERROR", "error": str(e)}
+            return
+        # subprocess 隔离执行（executor.run_plan 方法调用，无字符串拼装）
+        runner = ScriptRunner()
+        try:
+            exec_sessions[sid]["script"] = json.dumps(plan, ensure_ascii=False, indent=1)  # 供前端查看编排计划
+            exec_sessions[sid]["plan_meta"] = {
+                "channel": plan.get("_channel", ""),
+                "rule_added": plan.get("rule_added", []),
+                "warns": plan.get("warns", []),
+                "steps": [{"step_name": s.get("step_name", ""), "api": s.get("api", ""),
+                           "section": s.get("section", ""), "auto_by_rules": bool(s.get("_auto_by_rules"))}
+                          for s in plan.get("steps", [])],
+            }
+            result = runner.run_isolated(plan, merged, base_url, timeout=120,
+                                         log_cb=lambda l, m: log(_map_log_level(m), m))
+            exec_sessions[sid]["result"] = result
+            exec_sessions[sid]["status"] = result["status"]
+            log("info", "执行完成：%s (exit=%s)" % (result["status"], result["exit_code"]))
+        except Exception as e:
+            log("error", "执行异常: %s" % e)
+            exec_sessions[sid]["status"] = "ERROR"
+            exec_sessions[sid]["result"] = {"status": "ERROR", "error": str(e)}
+    finally:
+        flog.close()
 
 
 def _map_log_level(line):
@@ -253,6 +263,7 @@ def api_execution(sid):
         "result": s.get("result"),
         "script": s.get("script"),
         "plan_meta": s.get("plan_meta"),
+        "log_file": s.get("log_file"),
     })
 
 

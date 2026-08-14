@@ -360,17 +360,24 @@ class Executor:
                     self.log("error", "[cleanup] 删除失败: %s" % e)
 
 
-def run_plan(plan_json, params_json, base_url):
-    """隔离入口：subprocess 固定入口调用（无字符串拼装）"""
+def run_plan(plan_json, params_json, base_url, log_cb=None):
+    """隔离入口：subprocess 固定入口调用（无字符串拼装）
+
+    log_cb 可选：传入则替代默认 print 日志（CLI 传「print+写文件」回调落盘）；
+    Web 子进程入口不传，走默认 print → stdout 由父进程 ScriptRunner 捕获回传。
+    """
     plan = json.loads(plan_json) if isinstance(plan_json, str) else plan_json
     params = json.loads(params_json) if isinstance(params_json, str) else params_json
 
-    def log(level, msg):
-        print("[%s] %s" % (level, msg))
+    if log_cb:
+        log = log_cb
+    else:
+        def log(level, msg):
+            print("[%s] %s" % (level, msg))
 
     ex = Executor(base_url=base_url, log_cb=log)
     result = ex.execute(plan, params)
-    print("[result] %s" % result["status"])
+    log("result", result["status"])
     return result
 
 
