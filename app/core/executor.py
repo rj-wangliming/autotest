@@ -73,16 +73,20 @@ class Executor:
         session = self._get_session()
         token = ctx.get("token") if ctx else None
         headers = {"Content-Type": "application/json"}
+        cookies = None
         if token:
-            headers["Authorization"] = "Bearer " + token
-            headers["token"] = token  # 锐捷平台常见 token header（双保险）
+            # 锐捷平台认证（浏览器抓包实测）：iac-token header + cookie(iac-token/rcdcAdmin-Token) + CDC 来源标识
+            headers["iac-token"] = token
+            headers["source"] = "CDC"
+            headers["subSystem"] = "CDC"
+            cookies = {"iac-token": token, "rcdcAdmin-Token": token}
         url = self.base_url + path
         self.log("req", "%s %s" % (method, path))
         if body:
             self.log("req", "body: %s" % json.dumps(self._mask(body), ensure_ascii=False))
         try:
             resp = session.request(method, url, json=body, headers=headers,
-                                   timeout=30, verify=False)
+                                   cookies=cookies, timeout=30, verify=False)
             try:
                 data = resp.json()
             except Exception:
@@ -95,10 +99,11 @@ class Executor:
                 token = self.login(p.get("rcdc_user") or p.get("admin_user"),
                                    p.get("rcdc_passwd") or p.get("admin_password"))
                 ctx["token"] = token
-                headers["Authorization"] = "Bearer " + token
-                headers["token"] = token
+                headers["iac-token"] = token
+                if cookies is not None:
+                    cookies = {"iac-token": token, "rcdcAdmin-Token": token}
                 resp = session.request(method, url, json=body, headers=headers,
-                                       timeout=30, verify=False)
+                                       cookies=cookies, timeout=30, verify=False)
                 try:
                     data = resp.json()
                 except Exception:
