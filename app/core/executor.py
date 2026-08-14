@@ -115,6 +115,9 @@ class Executor:
         if not token:
             raise RuntimeError("登录成功但无法获取 token: %s" % json.dumps(data, ensure_ascii=False, default=str))
         self.log("info", "[登录] token=%s..." % str(token)[:12])
+        if not token:
+            self.log("error", "[登录] token 为空，登录失败：检查接口路径/凭据/服务器状态")
+            raise RuntimeError("[登录] token 为空，登录失败：检查接口路径/凭据/服务器状态")
         return token
 
     # ---------- 步骤执行 ----------
