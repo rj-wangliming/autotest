@@ -3,7 +3,8 @@
 
 不再拼装业务代码字符串——业务全部由 executor.run_plan() 方法调用执行。
 本模块只做隔离：把 plan+params 序列化为 JSON 临时文件，通过独立入口脚本
-以命令行参数方式传递路径（避免 Windows 路径 \ 被 Python -c 字符串转义）。
+以命令行参数方式传递路径（避免 Windows 路径 \\ 被 Python -c 字符串转义）。
+兼容 Windows / Linux。
 """
 import json
 import os
@@ -12,7 +13,8 @@ import time
 
 
 # 入口脚本模板（独立 .py 文件，不存在路径转义问题）
-# __PROJECT_ROOT__ 在写入时被替换为实际项目根目录（使用原始字符串语法防 \ 转义）
+# __PROJECT_ROOT__ 在写入时被替换为实际项目根目录
+# 使用原始字符串 r"" 防止 Windows 路径中的 \ 被解释为转义序列
 _ENTRY_TEMPLATE = r"""\
 import sys, json, os
 
@@ -31,7 +33,12 @@ run_plan(plan, params, base_url)
 
 
 class ScriptRunner:
-    """subprocess 隔离执行器：独立入口脚本 + 命令行参数（无路径转义问题）"""
+    """subprocess 隔离执行器：独立入口脚本 + 命令行参数（无路径转义问题）
+
+    跨平台兼容：
+    - Windows：路径含 \，-c 拼接会被转义，entry 脚本 + r"" 解决
+    - Linux：路径为 /，无转义问题，同样兼容
+    """
 
     def __init__(self, executor_module="app.core.executor"):
         self.executor_module = executor_module
@@ -46,7 +53,11 @@ class ScriptRunner:
         return entry_path
 
     def run_isolated(self, plan, params, base_url, timeout=120, log_cb=None):
-        """subprocess 隔离执行：plan/params/entry 都写到临时目录，通过命令行参数传路径"""
+        """subprocess 隔离执行：plan/params/entry 都写到临时目录，通过命令行参数传路径
+
+        - 独立 .py 入口脚本避免 -c 字符串中的路径转义问题（Windows / Linux）
+        - 继承完整父进程环境变量，避免子进程初始化缺失变量导致崩溃
+        """
         import subprocess as sp
         import tempfile
 
@@ -70,7 +81,9 @@ class ScriptRunner:
             # 写入入口脚本（注入项目根目录）
             entry_path = self._write_entry_script(tmp_dir, project_root)
 
-            # 继承父进程环境，只覆盖必要的变量
+            # 继承父进程完整环境变量，只覆盖必要的变量
+            # 父进程 env 缺失会导致子进程 Python 初始化失败（Windows 上
+            # _Py_HashRandomization_Init 报错）
             env = dict(os.environ)
             env["TEST_BASE_URL"] = base_url
             env["PYTHONUNBUFFERED"] = "1"
@@ -95,7 +108,6 @@ class ScriptRunner:
             except Exception:
                 pass
 
-        rc = proc.returncode
         passed = rc == 0 and any("[result] PASS" in l for l in logs)
         return {"status": "PASS" if passed else "FAIL", "exit_code": rc, "logs": logs,
                 "script": "隔离执行（executor.run_plan 方法调用，无拼装脚本）"}
