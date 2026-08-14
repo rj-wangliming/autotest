@@ -107,7 +107,14 @@ class Executor:
                 "缺少登录凭据：请在用例参数 rcdc_user/rcdc_passwd（或 admin_user/admin_password）"
                 "或环境变量 TEST_ADMIN_USER/TEST_ADMIN_PASSWORD 中提供"
             )
-        body = {"userName": admin_user, "pwd": admin_password}
+        import time as _time
+        body = {
+            "userName": admin_user,
+            "pwd": admin_password,
+            "captchaCode": "",
+            "captchaKey": "",
+            "timestamp": int(_time.time() * 1000),
+        }
         status, data = self.http_request("POST", "/rco/admin/loginAdmin", body, None)
         if status < 200 or status >= 300:
             raise RuntimeError("登录失败: HTTP %s (%s)" % (status, json.dumps(data, ensure_ascii=False, default=str)))
