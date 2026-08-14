@@ -16,6 +16,10 @@
     <div class="panel-head"><span>执行结果</span></div>
     <pre id="result-json"></pre>
 </div>
+<div class="panel" id="plan-panel" style="display:none">
+    <div class="panel-head"><span>编排计划（⚡ = 规则自动补，可人工确认）</span></div>
+    <pre id="plan-json" class="log-box" style="height:200px"></pre>
+</div>
 <div class="panel" id="script-panel" style="display:none">
     <div class="panel-head"><span>生成脚本（裸脚本，可独立运行）</span></div>
     <pre id="script-json" class="log-box" style="height:300px"></pre>
@@ -36,6 +40,19 @@ function poll(sid) {
     fetch(`/api/execution/${sid}`).then(r=>r.json()).then(d => {
         renderLogs(d.logs || []);
         document.getElementById('exec-status').textContent = '状态: ' + d.status;
+        // 编排计划摘要（含规则自动补标记）
+        if (d.plan_meta) {
+            const pm = d.plan_meta;
+            let t = (pm.channel || '') + '\n';
+            if ((pm.rule_added || []).length) t += '⚡ 规则自动补 ' + pm.rule_added.length + ' 步：' + pm.rule_added.join(', ') + '\n';
+            if ((pm.warns || []).length) t += '⚠️ 警告：' + pm.warns.map(w => (w.api||'') + ' 禁止 ' + (w.forbidden_state||'')).join('; ') + '\n';
+            t += '\n步骤：\n';
+            (pm.steps || []).forEach((s, i) => {
+                t += '  ' + (i+1) + '. [' + (s.section||'') + '] ' + (s.step_name||'') + ' -> ' + s.api + (s.auto_by_rules ? ' ⚡' : '') + '\n';
+            });
+            document.getElementById('plan-panel').style.display = 'block';
+            document.getElementById('plan-json').textContent = t;
+        }
         if (d.script) {
             document.getElementById('script-panel').style.display = 'block';
             document.getElementById('script-json').textContent = d.script;

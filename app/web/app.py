@@ -201,6 +201,14 @@ def _run_use_case(sid, use_case, params, base_url):
     runner = ScriptRunner()
     try:
         exec_sessions[sid]["script"] = json.dumps(plan, ensure_ascii=False, indent=1)  # 供前端查看编排计划
+        exec_sessions[sid]["plan_meta"] = {
+            "channel": plan.get("_channel", ""),
+            "rule_added": plan.get("rule_added", []),
+            "warns": plan.get("warns", []),
+            "steps": [{"step_name": s.get("step_name", ""), "api": s.get("api", ""),
+                       "section": s.get("section", ""), "auto_by_rules": bool(s.get("_auto_by_rules"))}
+                      for s in plan.get("steps", [])],
+        }
         result = runner.run_isolated(plan, merged, base_url, timeout=120,
                                      log_cb=lambda l, m: log(_map_log_level(m), m))
         exec_sessions[sid]["result"] = result
@@ -244,6 +252,7 @@ def api_execution(sid):
         "logs": s["logs"],
         "result": s.get("result"),
         "script": s.get("script"),
+        "plan_meta": s.get("plan_meta"),
     })
 
 
