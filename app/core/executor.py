@@ -195,16 +195,42 @@ class Executor:
         bucket = ctx.setdefault("steps", {}).setdefault(sname, {})
         bi = ctx.get("_batch_index")
         for var, jp in ex.items():
-            if isinstance(jp, str) and jp.startswith("$"):
+            if isinstance(jp, dict):
+                val = self._extract_pick(data, jp)
+            elif isinstance(jp, str) and jp.startswith("$"):
                 val = jsonpath_get(data, jp)
-                if bi is not None:
-                    arr = bucket.setdefault(var, [])
-                    while len(arr) <= bi:
-                        arr.append(None)
-                    arr[bi] = val
-                else:
-                    bucket[var] = val
-                self.log("info", "[extract] %s.%s=%s" % (sname, var, val))
+            else:
+                continue
+            if bi is not None:
+                arr = bucket.setdefault(var, [])
+                while len(arr) <= bi:
+                    arr.append(None)
+                arr[bi] = val
+            else:
+                bucket[var] = val
+            self.log("info", "[extract] %s.%s=%s" % (sname, var, val))
+
+    def _extract_pick(self, data, spec):
+        """对象式 extract：从数组按 sort_key 取 max/min 条，再取 field。
+        spec: {from: $.content.itemArr, pick: max|min, sort_key: cbb.name, field: cbb.id}
+        用途：同名镜像多版本时取最新（版本名尾部时间戳，字典序=时间序）"""
+        arr = jsonpath_get(data, spec.get("from", ""))
+        if not isinstance(arr, list) or not arr:
+            return None
+        sk = spec.get("sort_key")
+        fld = spec.get("field")
+        pick = (spec.get("pick") or "max").lower()
+        best, best_key = None, None
+        for item in arr:
+            kv = jsonpath_get(item, sk) if sk else None
+            if kv is None:
+                continue
+            kv = str(kv)
+            if best_key is None or (kv > best_key if pick == "max" else kv < best_key):
+                best_key, best = kv, item
+        if best is None:
+            best = arr[0]
+        return jsonpath_get(best, fld) if fld else best
 
     def _poll(self, poll, ctx):
         """轮询异步任务至终态"""

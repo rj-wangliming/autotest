@@ -45,8 +45,12 @@ setup:
 - name: get_image
   api: POST /rcc/classroom/image/assignImage/yetAssign/list
   extract:
-    plusImageId: $.content.itemArr[0].cbbImageTemplateDetailDTO.id
-  purpose: 按镜像名过滤（searchKeyword + matchArr.fieldName=imageName）
+    plusImageId:
+      from: $.content.itemArr
+      pick: max
+      sort_key: cbbImageTemplateDetailDTO.name
+      field: cbbImageTemplateDetailDTO.id
+  purpose: 按镜像名精确过滤（searchKeyword + matchArr.fieldName=imageName）；同名多版本取模板名最大（尾部时间戳最新）的可分配镜像
   request:
     body:
       searchKeyword: ${param.student_image_name}
