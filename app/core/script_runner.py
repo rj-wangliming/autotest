@@ -87,6 +87,8 @@ class ScriptRunner:
             env = dict(os.environ)
             env["TEST_BASE_URL"] = base_url
             env["PYTHONUNBUFFERED"] = "1"
+            # 子进程强制 UTF-8 输出，避免 Windows cp936 编码导致 stdout 捕获失败/乱码
+            env["PYTHONIOENCODING"] = "utf-8"
             cmd = [
                 sys.executable,
                 entry_path,
@@ -95,10 +97,22 @@ class ScriptRunner:
                 base_url,
             ]
 
-            proc = sp.run(cmd, cwd=project_root, env=env,
-                          stdout=sp.PIPE, stderr=sp.STDOUT, text=True, timeout=timeout)
-            logs = proc.stdout.strip().splitlines() if proc.stdout else []
-            rc = proc.returncode
+            try:
+                proc = sp.run(cmd, cwd=project_root, env=env,
+                              stdout=sp.PIPE, stderr=sp.STDOUT,
+                              encoding="utf-8", errors="replace", timeout=timeout)
+                logs = proc.stdout.strip().splitlines() if proc.stdout else []
+                rc = proc.returncode
+            except sp.TimeoutExpired as e:
+                out = e.stdout or b""
+                if isinstance(out, bytes):
+                    out = out.decode("utf-8", "replace")
+                logs = (out.strip().splitlines() if out else []) + [
+                    "[error] 子进程执行超时(%ss)，以下为超时前已捕获的输出" % timeout]
+                rc = -1
+            except Exception as e:
+                logs = ["[error] 子进程启动/执行异常: %s" % e]
+                rc = -1
 
         finally:
             # 清理临时目录
