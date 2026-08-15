@@ -137,7 +137,7 @@ setup:
   idempotent: recreate
   delete_api: /rcc/classroom/image/student/delete
   delete_param: id
-- name: query_desktop
+- name: query_desktop_arr
   api: POST /rcc/classroom/desktop/list
   purpose: 分配镜像后查询桌面列表，产出 desktopIdArr 供操作步骤 idArr 使用
   extract:
