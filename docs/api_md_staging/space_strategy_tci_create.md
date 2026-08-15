@@ -108,8 +108,8 @@ request:
       type: Boolean
       required: true
       constraint: '@NotNull'
-      description: 数据盘开关
-      generated_by: config_generator
+      description: 数据盘开关（默认 false）
+      value: false
     diskSize:
       type: Integer
       required: false
@@ -119,8 +119,8 @@ request:
       type: Boolean
       required: true
       constraint: '@NotNull'
-      description: 磁盘定期策略开关
-      generated_by: config_generator
+      description: 磁盘定期策略开关（默认 false）
+      value: false
     diskRestoreStrategyArr:
       type: TCIDiskStrategyDTO[]
       required: false
@@ -131,19 +131,19 @@ request:
       required: true
       constraint: '@NotNull，默认 false'
       description: 自动编辑镜像（仅还原模式可开启）
-      generated_by: config_generator
+      value: false
     enableForceAutoEdit:
       type: Boolean
       required: true
       constraint: '@NotNull，默认 true'
       description: 适配驱动后自动退出云桌面
-      generated_by: config_generator
+      value: true
     enableAdaptiveResolution:
       type: Boolean
       required: true
       constraint: '@NotNull，默认 true'
       description: 分辨率自适应
-      generated_by: config_generator
+      value: true
 response:
   wrapper:
     status: String

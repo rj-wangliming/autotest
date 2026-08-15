@@ -103,7 +103,7 @@ request:
       required: true
       constraint: '@NotNull，是否隐藏'
       description: 初始隐藏状态；测试默认 false（分配后不隐藏）
-      generated_by: config_generator
+      value: false
     lessonStrategyId:
       type: UUID
       required: true

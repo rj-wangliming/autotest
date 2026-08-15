@@ -102,8 +102,8 @@ request:
       type: Boolean
       required: true
       constraint: '@NotNull，是否隐藏'
-      description: 初始隐藏状态
-      generated_by: config_generator
+      description: 初始隐藏状态（默认 false 不隐藏）
+      value: false
     lessonStrategyId:
       type: UUID
       required: true
