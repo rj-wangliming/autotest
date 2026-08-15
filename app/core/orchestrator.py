@@ -650,14 +650,14 @@ class Orchestrator:
                     body[k] = v  # 有 value 引用
                 elif v.get("generated_by"):
                     # 生成器标记 + 字段名；预判生成值，None 则跳过（避免请求体带 null）
-                    gv = gen_config_value(k, v, {})
+                    gv = gen_config_value(k, v, {"params": {}})
                     if gv is not None:
                         body[k] = dict(v, _field=k)
                 else:
                     # 裸字段（无 value/generated_by）：按字段名推断 value 引用
                     inferred = self._infer_body_value(k, v, meta)
                     if inferred == "generated":
-                        gv = gen_config_value(k, v, {})
+                        gv = gen_config_value(k, v, {"params": {}})
                         if gv is not None:
                             body[k] = dict(v, _field=k)  # 生成字段走 generated 逻辑
                     elif inferred is not None:
