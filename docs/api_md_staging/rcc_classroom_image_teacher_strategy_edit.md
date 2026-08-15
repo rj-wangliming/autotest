@@ -40,9 +40,11 @@ setup:
     body:
       searchKeyword: ${param.teacher_image_name}
       matchArr:
-      - fieldName: imageName
-        matchType: EQUAL
-        value: ${param.teacher_image_name}
+      - type: EXACT
+        fieldName: imageName
+        valueArr:
+        - ${param.teacher_image_name}
+        matchRule: EQ
 - name: get_strategy
   api: POST /space/strategygroup/vdi/list
   extract:
@@ -51,9 +53,11 @@ setup:
   request:
     body:
       matchArr:
-      - fieldName: strategyName
-        matchType: EQUAL
-        value: ${param.strategy_name}
+      - type: EXACT
+        fieldName: strategyName
+        valueArr:
+        - ${param.strategy_name}
+        matchRule: EQ
 - name: get_cluster
   api: POST /space/cluster/obtainComputeClusterList
   extract:

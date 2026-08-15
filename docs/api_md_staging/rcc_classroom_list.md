@@ -33,9 +33,11 @@ request:
       constraint: '@NotNull，默认空数组'
       description: 精确/模糊查询条件数组
       value:
-      - fieldName: classroomName
-        matchType: EQUAL
-        value: ${param.classroom_name}
+      - type: EXACT
+        fieldName: classroomName
+        valueArr:
+        - ${param.classroom_name}
+        matchRule: EQ
     sortArr:
       type: Sort[]
       required: false

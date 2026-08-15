@@ -39,9 +39,11 @@ setup:
   request:
     body:
       matchArr:
-      - fieldName: strategyName
-        matchType: EQUAL
-        value: ${param.initial_strategy_name}
+      - type: EXACT
+        fieldName: strategyName
+        valueArr:
+        - ${param.initial_strategy_name}
+        matchRule: EQ
 - name: get_image
   api: POST /rcc/classroom/image/assignImage/yetAssign/list
   extract:
@@ -55,9 +57,11 @@ setup:
     body:
       searchKeyword: ${param.teacher_image_name}
       matchArr:
-      - fieldName: imageName
-        matchType: EQUAL
-        value: ${param.teacher_image_name}
+      - type: EXACT
+        fieldName: imageName
+        valueArr:
+        - ${param.teacher_image_name}
+        matchRule: EQ
 - name: get_cluster
   api: POST /space/cluster/obtainComputeClusterList
   extract:

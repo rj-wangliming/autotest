@@ -33,9 +33,11 @@ setup:
   request:
     body:
       matchArr:
-      - fieldName: classroomName
-        matchType: EQUAL
-        value: ${param.classroom_name}
+      - type: EXACT
+        fieldName: classroomName
+        valueArr:
+        - ${param.classroom_name}
+        matchRule: EQ
 - name: listImage
   api: POST /rcc/classroom/image/list
   purpose: 查询镜像ID；按镜像名精确过滤查询镜像（crId=${prev.listClassroom.output.classroomId}，searchKeyword=${param.student_image_name}），取 imageId
@@ -46,9 +48,11 @@ setup:
       crId: ${prev.listClassroom.output.classroomId}
       searchKeyword: ${param.student_image_name}
       matchArr:
-      - fieldName: imageName
-        matchType: EQUAL
-        value: ${param.image_name}
+      - type: EXACT
+        fieldName: imageName
+        valueArr:
+        - ${param.image_name}
+        matchRule: EQ
 request:
   dto: StartLessonWebRequest
   body:

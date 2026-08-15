@@ -23,9 +23,11 @@ setup:
     body:
       searchKeyword: ${param.student_image_name}
       matchArr:
-      - fieldName: imageName
-        matchType: EQUAL
-        value: ${param.image_name}
+      - type: EXACT
+        fieldName: imageName
+        valueArr:
+        - ${param.image_name}
+        matchRule: EQ
 - name: list_tci_strategy
   api: POST /space/strategy/tci/list
   extract:
@@ -34,9 +36,11 @@ setup:
   request:
     body:
       matchArr:
-      - fieldName: strategyName
-        matchType: EQUAL
-        value: ${param.strategy_name}
+      - type: EXACT
+        fieldName: strategyName
+        valueArr:
+        - ${param.strategy_name}
+        matchRule: EQ
 request:
   dto: TCIChangeLessonStrategyWebRequest
   body:

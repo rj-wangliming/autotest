@@ -22,9 +22,11 @@ setup:
   request:
     body:
       exactMatchArr:
-      - fieldName: spaceName
-        matchType: EQUAL
-        value: ${param.space_name}
+      - type: EXACT
+        fieldName: spaceName
+        valueArr:
+        - ${param.space_name}
+        matchRule: EQ
 - name: listVdiStrategy
   api: POST /space/strategygroup/vdi/list
   purpose: 按策略名精确过滤（matchArr.fieldName=strategyName）
@@ -33,9 +35,11 @@ setup:
   request:
     body:
       matchArr:
-      - fieldName: strategyName
-        matchType: EQUAL
-        value: ${param.strategy_name}
+      - type: EXACT
+        fieldName: strategyName
+        valueArr:
+        - ${param.strategy_name}
+        matchRule: EQ
 - name: listTciStrategy
   api: POST /space/strategy/tci/list
   purpose: 按策略名精确过滤（matchArr.fieldName=strategyName）
@@ -44,9 +48,11 @@ setup:
   request:
     body:
       matchArr:
-      - fieldName: strategyName
-        matchType: EQUAL
-        value: ${param.strategy_name}
+      - type: EXACT
+        fieldName: strategyName
+        valueArr:
+        - ${param.strategy_name}
+        matchRule: EQ
 request:
   dto: AdminDataPermissionRequest
   body:

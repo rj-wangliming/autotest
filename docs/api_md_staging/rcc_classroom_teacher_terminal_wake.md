@@ -31,9 +31,11 @@ setup:
   request:
     body:
       matchArr:
-      - fieldName: classroomName
-        matchType: EQUAL
-        value: ${param.classroom_name}
+      - type: EXACT
+        fieldName: classroomName
+        valueArr:
+        - ${param.classroom_name}
+        matchRule: EQ
 request:
   dto: WakeTerminalByClassroomWebRequest
   body:

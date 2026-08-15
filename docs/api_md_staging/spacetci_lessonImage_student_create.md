@@ -46,9 +46,11 @@ setup:
       page: 0
       limit: 20
       matchArr:
-      - fieldName: strategyName
-        matchType: EQUAL
-        value: ${param.strategy_name}
+      - type: EXACT
+        fieldName: strategyName
+        valueArr:
+        - ${param.strategy_name}
+        matchRule: EQ
     extract:
       lessonStrategyId: $.content.itemArr[0].id
 - name: list_lesson_image
@@ -60,9 +62,11 @@ setup:
     body:
       searchKeyword: ${param.student_image_name}
       matchArr:
-      - fieldName: imageName
-        matchType: EQUAL
-        value: ${param.image_name}
+      - type: EXACT
+        fieldName: imageName
+        valueArr:
+        - ${param.image_name}
+        matchRule: EQ
 - name: get_cluster
   api: POST /space/cluster/obtainComputeClusterList
   extract:

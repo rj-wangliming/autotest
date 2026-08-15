@@ -22,9 +22,11 @@ setup:
   request:
     body:
       matchArr:
-      - fieldName: strategyName
-        matchType: EQUAL
-        value: ${param.strategy_name}
+      - type: EXACT
+        fieldName: strategyName
+        valueArr:
+        - ${param.strategy_name}
+        matchRule: EQ
 request:
   dto: SpaceDeskStrategyGroupVDI（继承 AbstractSpaceDeskStrategyGroup）
   body:

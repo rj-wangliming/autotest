@@ -31,9 +31,11 @@ setup:
   request:
     body:
       matchArr:
-      - fieldName: classroomName
-        matchType: EQUAL
-        value: ${param.classroom_name}
+      - type: EXACT
+        fieldName: classroomName
+        valueArr:
+        - ${param.classroom_name}
+        matchRule: EQ
 - name: collect_log
   api: POST /rcc/classroom/teacher/terminal/collectLog
   purpose: 发起教师机日志收集

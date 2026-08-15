@@ -40,9 +40,11 @@ setup:
     body:
       searchKeyword: ${param.teacher_image_name}
       matchArr:
-      - fieldName: imageName
-        matchType: EQUAL
-        value: ${param.teacher_image_name}
+      - type: EXACT
+        fieldName: imageName
+        valueArr:
+        - ${param.teacher_image_name}
+        matchRule: EQ
 request:
   dto: DoActionRequest
   body:

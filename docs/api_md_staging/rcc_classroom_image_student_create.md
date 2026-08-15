@@ -57,9 +57,11 @@ setup:
     body:
       searchKeyword: ${param.student_image_name}
       matchArr:
-      - fieldName: imageName
-        matchType: EQUAL
-        value: ${param.image_name}
+      - type: EXACT
+        fieldName: imageName
+        valueArr:
+        - ${param.image_name}
+        matchRule: EQ
 - name: get_cluster
   api: POST /space/cluster/obtainComputeClusterList
   extract:

@@ -31,9 +31,11 @@ setup:
   request:
     body:
       matchArr:
-      - fieldName: classroomName
-        matchType: EQUAL
-        value: ${param.classroom_name}
+      - type: EXACT
+        fieldName: classroomName
+        valueArr:
+        - ${param.classroom_name}
+        matchRule: EQ
 - name: create_seat
   api: POST /rcc/classroom/seat/batchCreate
   purpose: 批量创建座位（异步批处理任务）；若教室已分配学生镜像，新座位随建桌面

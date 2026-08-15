@@ -22,9 +22,11 @@ setup:
   request:
     body:
       exactMatchArr:
-      - fieldName: spaceName
-        matchType: EQUAL
-        value: ${param.space_name}
+      - type: EXACT
+        fieldName: spaceName
+        valueArr:
+        - ${param.space_name}
+        matchRule: EQ
 request:
   dto: RccSpaceHistoryRequest
   body:

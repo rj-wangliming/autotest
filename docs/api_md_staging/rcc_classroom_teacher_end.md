@@ -31,9 +31,11 @@ setup:
   request:
     body:
       matchArr:
-      - fieldName: classroomName
-        matchType: EQUAL
-        value: ${param.classroom_name}
+      - type: EXACT
+        fieldName: classroomName
+        valueArr:
+        - ${param.classroom_name}
+        matchRule: EQ
 - name: query_image
   api: POST /rcc/classroom/image/list
   extract:
@@ -43,9 +45,11 @@ setup:
     body:
       searchKeyword: ${param.student_image_name}
       matchArr:
-      - fieldName: imageName
-        matchType: EQUAL
-        value: ${param.image_name}
+      - type: EXACT
+        fieldName: imageName
+        valueArr:
+        - ${param.image_name}
+        matchRule: EQ
 request:
   dto: OperateTeacherDesktopWebRequest
   body:
