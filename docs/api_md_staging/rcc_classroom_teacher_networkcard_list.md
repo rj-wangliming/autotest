@@ -45,26 +45,6 @@ request:
       constraint: '@NotNull'
       description: 教室ID
       value: ${prev.query_classroom.output.classroomId}
-    page:
-      type: Integer
-      required: false
-      constraint: '@Range(min=0)，默认0'
-      description: 页码
-    limit:
-      type: Integer
-      required: false
-      constraint: '@Range(min=1, max=2000)，默认1'
-      description: 每页条数
-    matchArr:
-      type: Match[]
-      required: false
-      constraint: '@NotNull，默认空数组'
-      description: 查询条件数组
-    sortArr:
-      type: Sort[]
-      required: false
-      constraint: '@NotNull，默认空数组'
-      description: 排序条件数组
     customData:
       type: String
       required: false

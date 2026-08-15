@@ -5,7 +5,7 @@ api:
   name: 获取课程云桌面策略详情（别名）
   controller: SpaceDeskStrategyGroupVDIController
   method_ref: detail
-  permission: '@EnableAuthority'
+  permission: 无
   exec_mode: sync
   async: false
   description: getInfo 与 detail 是同一方法（@RequestMapping({"detail","getInfo"})），完整文档见 space_strategygroup_vdi_detail.md

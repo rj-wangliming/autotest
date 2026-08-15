@@ -5,7 +5,7 @@ api:
   name: 获取课程策略详情
   controller: SpaceDeskStrategyGroupTCIController
   method_ref: detail
-  permission: '@EnableAuthority'
+  permission: 无
   exec_mode: sync
   async: false
   description: 获取TCI策略组详情（getInfo 为同一方法的别名 @RequestMapping({"detail","getInfo"})）

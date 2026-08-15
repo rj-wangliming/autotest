@@ -45,6 +45,11 @@ request:
       constraint: '@NotNull'
       description: 教室ID
       value: ${prev.query_classroom.output.classroomId}
+    seatIdArr:
+      type: UUID[]
+      required: false
+      constraint: '@Nullable'
+      description: 座位ID数组（可选，按座位过滤）
 response:
   wrapper:
     status: String

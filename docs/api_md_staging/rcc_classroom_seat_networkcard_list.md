@@ -75,22 +75,23 @@ request:
       constraint: '@NotNull'
       description: 座位ID
       value: ${prev.query_seat.output.seatId}
-    page:
+    customData:
+      type: String
+      required: false
+      constraint: '@Nullable'
+      description: 扩展透传数据
       type: Integer
       required: false
       constraint: '@Range(min=0)'
       description: 页码（继承）
-    limit:
       type: Integer
       required: false
       constraint: '@Range(min=1,max=2000)'
       description: 每页条数（继承）
-    matchArr:
       type: Match[]
       required: false
       constraint: '@NotNull'
       description: 匹配条件（继承）
-    sortArr:
       type: Sort[]
       required: false
       constraint: '@NotNull'
