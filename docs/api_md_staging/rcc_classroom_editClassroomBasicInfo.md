@@ -39,11 +39,13 @@ request:
       required: true
       constraint: '@NotNull'
       description: 教室ID
+      value: ${prev.query_classroom.output.classroomId}
     classroomName:
       type: String
       required: true
       constraint: '@NotNull @Size(min=3, max=20)'
       description: 新教室名称
+      value: ${param.classroom_name}
     classroomDesc:
       type: String
       required: false

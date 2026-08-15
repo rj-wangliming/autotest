@@ -44,6 +44,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 教师机终端IP
+      value: ${param.teacher_ip}
 response:
   wrapper:
     status: String

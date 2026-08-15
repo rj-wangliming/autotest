@@ -28,11 +28,13 @@ request:
       required: true
       constraint: '@NotNull + @Range(1-200)'
       description: 终端日志保留天数
+      value: ${param.expire_clean_day}
     enableClear:
       type: Boolean
       required: true
       constraint: '@NotNull 默认false'
       description: 是否启用清理闲置桌面
+      value: ${prev.detail.output.enableClear}
     interval:
       type: Double
       required: false
@@ -43,16 +45,19 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: VDI启动策略类型
+      value: ${param.start_strategy_type}
     enableRecoverableImagePublishUpdate:
       type: Boolean
       required: true
       constraint: '@NotNull 非空'
       description: 是否启用还原镜像自动发布策略
+      value: false
     gatherRatio:
       type: Integer
       required: true
       constraint: '@NotNull + @Range(1-1000)'
       description: 聚集比例
+      value: ${param.gather_ratio}
 response:
   wrapper:
     status: String

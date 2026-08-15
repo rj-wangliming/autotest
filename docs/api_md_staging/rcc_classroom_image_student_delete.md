@@ -53,6 +53,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 操作的教室id
+      value: ${param.cr_id}
     teaTerminal:
       type: Boolean
       required: false
@@ -63,6 +64,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 操作的镜像ID
+      value: ${prev.get_image.output.imageId}
     action:
       type: Integer
       required: true

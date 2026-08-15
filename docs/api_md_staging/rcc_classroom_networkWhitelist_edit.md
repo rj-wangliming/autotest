@@ -52,21 +52,25 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: 教室ID
+      value: ${prev.query_classroom.output.classroomId}
     whiteListId:
       type: UUID
       required: true
       constraint: '@NotNull 非空'
       description: 禁网白名单ID
+      value: ${prev.get_white_list.output.whiteListId}
     startIp:
       type: String
       required: true
       constraint: '@NotNull 非空（内部校验IPv4）'
       description: 起始IP
+      value: ${param.start_ip}
     endIp:
       type: String
       required: true
       constraint: '@NotNull 非空（内部校验IPv4）'
       description: 结束IP
+      value: ${param.end_ip}
 response:
   wrapper:
     status: String

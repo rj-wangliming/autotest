@@ -44,6 +44,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 待校验的教室名称
+      value: ${param.classroom_name}
 response:
   wrapper:
     status: String

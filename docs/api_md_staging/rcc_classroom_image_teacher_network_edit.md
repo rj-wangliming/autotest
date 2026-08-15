@@ -45,21 +45,25 @@ request:
       required: true
       constraint: '@NotNull'
       description: 教室ID
+      value: ${prev.query_classroom.output.classroomId}
     clusterId:
       type: UUID
       required: true
       constraint: '@NotNull'
       description: 计算节点ID
+      value: ${prev.get_cluster_network.output.clusterId}
     platformId:
       type: UUID
       required: true
       constraint: '@NotNull'
       description: 云平台ID
+      value: ${param.platform_id}
     networkId:
       type: UUID
       required: true
       constraint: '@NotNull'
       description: 网络策略ID
+      value: ${prev.get_cluster_network.output.networkId}
     desktopStartIp:
       type: String
       required: false

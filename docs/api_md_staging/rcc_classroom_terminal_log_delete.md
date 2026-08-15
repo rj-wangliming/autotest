@@ -44,11 +44,13 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: 教室ID
+      value: ${prev.query_classroom.output.classroomId}
     logIdArr:
       type: UUID[]
       required: true
       constraint: '@NotEmpty 非空'
       description: 待删除的日志ID列表
+      value: ${param.log_id_arr}
 response:
   wrapper:
     status: String

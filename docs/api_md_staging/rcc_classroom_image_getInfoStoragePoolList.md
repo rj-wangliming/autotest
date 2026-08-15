@@ -53,11 +53,13 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: 操作的教室ID
+      value: ${param.cr_id}
     imageId:
       type: UUID
       required: true
       constraint: '@NotNull 非空'
       description: 镜像ID
+      value: ${prev.get_image.output.imageId}
     teaTerminal:
       type: Boolean
       required: false

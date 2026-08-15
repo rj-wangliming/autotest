@@ -22,11 +22,13 @@ request:
       required: true
       constraint: '@NotNull @Size(max=9)'
       description: 学生机座位名前缀
+      value: ${param.desktop_pre_name}
     desktopNameStartNum:
       type: Integer
       required: true
       constraint: '@NotNull @Range(min=1, max=65535)'
       description: 云桌面主机名起始值
+      value: ${param.desktop_name_start_num}
     studentModeArr:
       type: TerminalTypeEnum[]
       required: true
@@ -47,6 +49,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 教师机工作模式（可选值：NONE/PC/VDI/IDV/VOI(TCI)/APP/UNKNOWN）
+      value: ${param.teacher_mode}
 response:
   wrapper:
     status: String

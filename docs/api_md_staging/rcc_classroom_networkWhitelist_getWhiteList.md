@@ -35,6 +35,7 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: 禁网白名单ID
+      value: ${prev.get_white_list.output.whiteListId}
 response:
   wrapper:
     status: String

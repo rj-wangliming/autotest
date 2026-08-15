@@ -49,16 +49,19 @@ request:
       required: true
       constraint: '@NotNull，教室ID'
       description: 教室
+      value: ${param.classroom_id}
     lessonImageId:
       type: UUID
       required: true
       constraint: '@NotNull，课程镜像ID'
       description: 要更换策略的学生机课程镜像
+      value: ${prev.list_lesson_image.output.lessonImageId}
     lessonStrategyId:
       type: UUID
       required: true
       constraint: '@NotNull，课程策略ID'
       description: 新的课程策略
+      value: ${prev.list_tci_strategy.output.lessonStrategyId}
 response:
   wrapper:
     status: String

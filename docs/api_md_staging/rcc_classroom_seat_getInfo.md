@@ -74,6 +74,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 座位ID
+      value: ${prev.query_seat.output.seatId}
 response:
   wrapper:
     status: String

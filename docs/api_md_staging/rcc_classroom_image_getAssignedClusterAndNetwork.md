@@ -39,11 +39,13 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: 教室ID
+      value: ${prev.query_classroom.output.classroomId}
     enableTeacher:
       type: Boolean
       required: true
       constraint: '@NotNull 非空'
       description: 是否教师机（true教师/false学生）
+      value: ${param.enable_teacher}
 response:
   wrapper:
     status: String

@@ -39,11 +39,13 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: 教室ID
+      value: ${prev.query_classroom.output.classroomId}
     hasTeacher:
       type: Boolean
       required: true
       constraint: '@NotNull 非空'
       description: 是否包含教师机角色
+      value: ${param.has_teacher}
 response:
   wrapper:
     status: String

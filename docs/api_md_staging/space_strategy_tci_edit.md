@@ -35,21 +35,25 @@ request:
       required: true
       constraint: 必填（Assert.notNull(id)）
       description: 待修改策略 id
+      value: ${prev.list_tci_strategy.output.strategyId}
     name:
       type: String
       required: true
       constraint: 非空、≤32、名称正则
       description: 策略名称（允许修改，需查重）
+      value: ${param.name}
     pattern:
       type: CbbCloudDeskPattern
       required: true
       constraint: '@NotNull'
       description: 桌面类型
+      value: ${param.pattern}
     strategyType:
       type: DeskVirtualizationType
       required: true
       constraint: 必须 VOI
       description: 策略类型
+      value: ${param.strategy_type}
     systemSize:
       type: Integer
       required: true
@@ -60,6 +64,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 数据盘开关（关联镜像时不可变化）
+      value: ${param.enable_disk_config}
     diskSize:
       type: Integer
       required: false
@@ -70,6 +75,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 磁盘定期策略开关
+      value: ${param.enable_schedule_strategy}
     diskRestoreStrategyArr:
       type: TCIDiskStrategyDTO[]
       required: false
@@ -80,16 +86,19 @@ request:
       required: true
       constraint: '@NotNull'
       description: 自动编辑
+      value: ${param.enable_auto_edit}
     enableForceAutoEdit:
       type: Boolean
       required: true
       constraint: '@NotNull'
       description: 强制自动退出
+      value: ${param.enable_force_auto_edit}
     enableAdaptiveResolution:
       type: Boolean
       required: true
       constraint: '@NotNull'
       description: 分辨率自适应
+      value: ${param.enable_adaptive_resolution}
     platformStrategyGroup:
       type: PlatformStrategyGroup
       required: true
@@ -112,6 +121,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 联网
+      value: ${param.enable_internet}
     desktopOccupyDriveArr:
       type: String[]
       required: false

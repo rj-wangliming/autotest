@@ -39,16 +39,19 @@ request:
       required: true
       constraint: '@NotNull'
       description: 教室ID
+      value: ${prev.query_classroom.output.classroomId}
     teacherPreName:
       type: String
       required: true
       constraint: '@NotNull'
       description: 待校验的教师机主机名前缀
+      value: ${param.teacher_pre_name}
     teacherMode:
       type: TerminalTypeEnum
       required: true
       constraint: '@NotNull'
       description: 教师机工作模式（可选值：NONE/PC/VDI/IDV/VOI(TCI)/APP/UNKNOWN）
+      value: ${param.teacher_mode}
 response:
   wrapper:
     status: String

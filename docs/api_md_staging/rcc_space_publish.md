@@ -47,16 +47,19 @@ request:
       required: true
       constraint: '@NotBlank @TextShort @TextName'
       description: 实训空间名称
+      value: ${param.name}
     classroomId:
       type: UUID
       required: true
       constraint: '@NotNull'
       description: 绑定的教室ID
+      value: ${prev.select_classroom_id.output.classroomId}
     imageTemplateIdArr:
       type: UUID[]
       required: true
       constraint: '@NotNull（逻辑上不能为空数组）'
       description: 绑定的镜像ID数组
+      value: ${prev.list_image.output.imageTemplateIdArr}
     idleDesktopRecover:
       type: Integer
       required: false
@@ -67,6 +70,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 是否开启单次允许接入最大时间配置
+      value: false
     allowMaxUseTime:
       type: Integer
       required: false
@@ -82,6 +86,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 是否开启云桌面允许登录时间
+      value: false
     allowUseTimeInfoArr:
       type: RccAllowUseTimeInfoDTO[]
       required: false

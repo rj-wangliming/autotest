@@ -52,6 +52,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 教室ID
+      value: ${prev.query_classroom.output.classroomId}
     teacherMode:
       type: TerminalTypeEnum
       required: false
@@ -62,6 +63,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 教师机终端IP
+      value: ${param.teacher_ip}
     teacherPreName:
       type: String
       required: false

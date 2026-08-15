@@ -44,6 +44,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 教室ID
+      value: ${prev.query_classroom.output.classroomId}
     clusterId:
       type: UUID
       required: false
@@ -59,6 +60,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 是否查询教师机VDI磁盘配置（true=教师机，false=学生机）
+      value: ${param.enable_teacher}
 response:
   wrapper:
     status: String

@@ -66,11 +66,13 @@ request:
       required: true
       constraint: '@NotNull'
       description: 教室ID
+      value: ${prev.query_classroom.output.classroomId}
     imageId:
       type: UUID
       required: true
       constraint: '@NotNull'
       description: 课程镜像ID
+      value: ${prev.get_image.output.imageId}
     oldImageId:
       type: UUID
       required: false
@@ -86,16 +88,19 @@ request:
       required: true
       constraint: '@NotNull'
       description: 课程云桌面策略Id
+      value: ${prev.get_strategy.output.deskStrategyId}
     clusterId:
       type: UUID
       required: true
       constraint: '@NotNull'
       description: 计算节点ID
+      value: ${param.cluster_id}
     platformId:
       type: UUID
       required: true
       constraint: '@NotNull'
       description: 云平台ID
+      value: ${param.platform_id}
 response:
   wrapper:
     status: String

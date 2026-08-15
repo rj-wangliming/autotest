@@ -77,6 +77,7 @@ request:
       required: true
       constraint: '@NotBlank'
       description: 终端ID（MAC 或终端SN）
+      value: ${prev.query_seat.output.terminalId}
 response:
   wrapper:
     status: String

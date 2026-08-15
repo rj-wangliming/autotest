@@ -42,6 +42,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 教室ID
+      value: ${prev.select_classroom_id.output.classroomId}
     addUserByIdList:
       type: List<UUID>
       required: false

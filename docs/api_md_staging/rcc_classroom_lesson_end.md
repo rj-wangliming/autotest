@@ -49,6 +49,7 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: 教室ID
+      value: ${prev.listClassroom.output.classroomId}
 response:
   wrapper:
     status: String

@@ -74,6 +74,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 座位ID
+      value: ${prev.query_seat.output.seatId}
     page:
       type: Integer
       required: false

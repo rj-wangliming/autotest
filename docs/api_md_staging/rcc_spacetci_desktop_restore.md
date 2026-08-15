@@ -163,31 +163,37 @@ request:
       required: true
       constraint: '@NotEmpty 非空'
       description: 待还原TCI桌面信息列表
+      value: ${param.desk_list}
     deskList[].deskId:
       type: UUID
       required: true
       constraint: '@NotNull 非空'
       description: TCI桌面ID
+      value: ${param.desk_list[].desk_id}
     deskList[].computerName:
       type: String
       required: true
       constraint: '@NotNull 非空'
       description: TCI桌面计算机名
+      value: ${param.desk_list[].computer_name}
     imageId:
       type: UUID
       required: true
       constraint: '@NotNull 非空'
       description: 目标镜像模板ID
+      value: ${prev.get_image.output.plusImageId}
     partitionArr:
       type: Integer[]
       required: true
       constraint: '@NotEmpty 非空，值为0(系统分区)/1(数据分区)'
       description: 待还原的分区数组
+      value: ${param.partition_arr}
     classroomId:
       type: UUID
       required: true
       constraint: '@NotNull 非空'
       description: 教室ID
+      value: ${prev.query_classroom.output.classroomId}
 response:
   wrapper:
     status: String

@@ -32,6 +32,7 @@ request:
       required: true
       constraint: 查询条件，非空
       description: 教师终端ID，用于过滤下载状态记录
+      value: ${param.teacher_terminal_id}
     sort:
       type: Object
       required: false

@@ -79,6 +79,7 @@ request:
       required: true
       constraint: '@NotNull + @Size(min=1,max=14)'
       description: 云桌面主机名
+      value: ${param.desktop_name}
 response:
   wrapper:
     status: String

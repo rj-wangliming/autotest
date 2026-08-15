@@ -27,6 +27,7 @@ request:
       required: true
       constraint: '@NotNull 非空 + @Range(min=1,max=200)'
       description: 终端日志保留天数
+      value: ${prev.detail.output.expireCleanDay}
 response:
   wrapper:
     status: String

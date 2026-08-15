@@ -39,7 +39,7 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: 操作的教室ID；ID 来自前置步骤 setup 产出（${prev.*}）
-      value: ${prev.*}
+      value: ${prev.query_classroom.output.classroomId}
 response:
   wrapper:
     status: String

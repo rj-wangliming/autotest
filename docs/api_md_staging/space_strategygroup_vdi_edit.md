@@ -35,21 +35,25 @@ request:
       required: true
       constraint: 必填
       description: 待修改策略 id
+      value: ${prev.list_vdi_strategy.output.strategyId}
     name:
       type: String
       required: true
       constraint: 非空、≤32
       description: 策略名称（可修改，需查重）
+      value: ${param.name}
     pattern:
       type: CbbCloudDeskPattern
       required: true
       constraint: '@NotNull，不可修改'
       description: 桌面类型
+      value: ${param.pattern}
     strategyType:
       type: DeskVirtualizationType
       required: true
       constraint: 不可修改
       description: 策略类型
+      value: ${param.strategy_type}
     systemSize:
       type: Integer
       required: true
@@ -100,6 +104,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 联网
+      value: ${param.enable_internet}
     enablePersonalConfig:
       type: Boolean
       required: false

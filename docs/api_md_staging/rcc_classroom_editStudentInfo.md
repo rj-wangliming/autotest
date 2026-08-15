@@ -52,6 +52,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 教室ID
+      value: ${prev.query_classroom.output.classroomId}
     studentModeArr:
       type: TerminalTypeEnum[]
       required: true

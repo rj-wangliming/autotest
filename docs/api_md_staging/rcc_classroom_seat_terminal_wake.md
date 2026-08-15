@@ -74,11 +74,13 @@ request:
       required: true
       constraint: '@NotEmpty 至少一个座位'
       description: 待唤醒终端对应的座位ID数组
+      value: ${prev.query_seat.output.seatId}
     classroomId:
       type: UUID
       required: true
       constraint: '@NotNull'
       description: 座位所属教室ID
+      value: ${prev.query_classroom.output.classroomId}
 response:
   wrapper:
     status: String

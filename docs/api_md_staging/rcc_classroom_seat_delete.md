@@ -74,11 +74,13 @@ request:
       required: true
       constraint: '@NotNull'
       description: 教室ID
+      value: ${prev.query_classroom.output.classroomId}
     seatIdArr:
       type: UUID[]
       required: true
       constraint: '@NotEmpty'
       description: 待删除的座位ID数组
+      value: ${prev.query_seat.output.seatId}
     shouldOnlyDeleteDataFromDb:
       type: Boolean
       required: false

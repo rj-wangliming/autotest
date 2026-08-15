@@ -53,16 +53,19 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: 操作的教室ID
+      value: ${prev.query_classroom.output.classroomId}
     enableTeacher:
       type: Boolean
       required: true
       constraint: '@NotNull 非空'
       description: 是否教师机
+      value: ${param.enable_teacher}
     imageId:
       type: UUID
       required: true
       constraint: '@NotNull 非空'
       description: 镜像ID
+      value: ${prev.get_image.output.imageId}
 response:
   wrapper:
     status: String

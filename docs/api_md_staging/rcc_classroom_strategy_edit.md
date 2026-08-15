@@ -66,11 +66,13 @@ request:
       required: true
       constraint: '@NotNull'
       description: 教室策略ID
+      value: ${prev.listStrategy.output.classroomStrategyId}
     classroomStrategyName:
       type: String
       required: true
       constraint: '@NotBlank @Size(min=1, max=32)，且匹配名称规格正则'
       description: 教室策略名称
+      value: ${prev.createStrategy.output.classroomStrategyName}
     classroomStrategyDesc:
       type: String
       required: false
@@ -81,16 +83,19 @@ request:
       required: true
       constraint: '@NotNull'
       description: 终端联动关机开关
+      value: false
     startPolicy:
       type: DesktopStartPolicyEnum
       required: true
       constraint: '@NotNull'
       description: 上课云桌面启动策略（可选值：START_ALL/START_ONLINE）
+      value: ${param.start_policy}
     defaultEnterImageSwitch:
       type: Boolean
       required: true
       constraint: '@NotNull'
       description: 默认进入指定云桌面开关
+      value: false
     defaultEnterImageSeconds:
       type: Integer
       required: false
@@ -101,11 +106,13 @@ request:
       required: true
       constraint: '@NotNull'
       description: 默认展示桌面类型
+      value: ${param.default_display_desk_type}
     reservedStoragePolicy:
       type: ReservedSpaceType
       required: true
       constraint: '@NotNull'
       description: 预留空间类型
+      value: ${param.reserved_storage_policy}
     reservedStorageSize:
       type: Integer
       required: false

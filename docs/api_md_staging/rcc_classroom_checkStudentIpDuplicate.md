@@ -44,11 +44,13 @@ request:
       required: true
       constraint: '@NotNull'
       description: 学生机可接入终端起始IP
+      value: ${param.student_start_ip}
     studentEndIp:
       type: String
       required: true
       constraint: '@NotNull'
       description: 学生机可接入终端终止IP
+      value: ${param.student_end_ip}
 response:
   wrapper:
     status: String

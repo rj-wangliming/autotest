@@ -39,6 +39,7 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: 操作的教室ID
+      value: ${param.cr_id}
     teaTerminal:
       type: Boolean
       required: false

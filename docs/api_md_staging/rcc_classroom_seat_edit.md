@@ -74,16 +74,19 @@ request:
       required: true
       constraint: '@NotNull'
       description: 教室ID
+      value: ${prev.query_classroom.output.classroomId}
     seatId:
       type: UUID
       required: true
       constraint: '@NotNull'
       description: 座位ID
+      value: ${prev.query_seat.output.seatId}
     desktopName:
       type: String
       required: true
       constraint: '@NotNull + @Size(max=8)'
       description: 云桌面主机名
+      value: ${param.desktop_name}
     studentModeArr:
       type: TerminalTypeEnum[]
       required: true

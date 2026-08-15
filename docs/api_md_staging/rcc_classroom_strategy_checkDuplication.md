@@ -66,6 +66,7 @@ request:
       required: true
       constraint: '@NotBlank'
       description: 待校验的教室策略名称
+      value: ${prev.createStrategy.output.classroomStrategyName}
     id:
       type: UUID
       required: false

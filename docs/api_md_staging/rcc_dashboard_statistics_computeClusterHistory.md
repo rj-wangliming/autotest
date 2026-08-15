@@ -35,16 +35,19 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: 资源类型（可选值：CPU/MEM/DISK）
+      value: ${param.server_resource_type}
     clusterId:
       type: UUID
       required: true
       constraint: '@NotNull 非空'
       description: 集群ID
+      value: ${prev.listCluster.output.clusterId}
     timeQueryType:
       type: TimeQueryTypeEnum
       required: true
       constraint: '@NotNull 非空'
       description: 时间查询类型（可选值：HOUR/DAY/MONTHLY/YEAR/WEEK）
+      value: ${param.time_query_type}
     platformId:
       type: UUID
       required: false

@@ -55,11 +55,13 @@ request:
       required: true
       constraint: '@NotNull'
       description: 桌面池/实训空间ID
+      value: ${prev.select_classroom_id.output.classroomId}
     name:
       type: String
       required: true
       constraint: '@NotBlank @TextShort @TextName'
       description: 桌面池名称/实训空间名称
+      value: ${param.name}
     preStartDesktopNum:
       type: Integer
       required: false
@@ -90,6 +92,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 是否开启单次允许接入最大时间配置
+      value: false
     allowMaxUseTime:
       type: Integer
       required: false
@@ -105,6 +108,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 是否开启云桌面允许登录时间
+      value: false
     allowUseTimeInfoArr:
       type: RccAllowUseTimeInfoDTO[]
       required: false

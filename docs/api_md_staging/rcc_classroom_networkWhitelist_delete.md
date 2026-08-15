@@ -52,11 +52,13 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: 教室ID
+      value: ${prev.query_classroom.output.classroomId}
     whiteListIdArr:
       type: UUID[]
       required: true
       constraint: '@NotEmpty 非空'
       description: 待删除的禁网白名单ID列表
+      value: ${prev.get_white_list.output.whiteListId}
 response:
   wrapper:
     status: String

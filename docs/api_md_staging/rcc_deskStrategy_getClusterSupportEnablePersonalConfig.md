@@ -48,11 +48,13 @@ request:
       required: true
       constraint: '@NotNull'
       description: 课程策略 id，判断是否启用浮动个性配置
+      value: ${prev.list_vdi_strategy.output.strategyId}
     clusterId:
       type: UUID
       required: true
       constraint: '@NotNull'
       description: 计算集群 id，查询该集群关联存储池
+      value: ${prev.list_cluster.output.clusterId}
     platformId:
       type: UUID
       required: false

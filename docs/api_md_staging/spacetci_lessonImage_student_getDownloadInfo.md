@@ -32,6 +32,7 @@ request:
       required: true
       constraint: 查询条件，非空
       description: 学生姓名，用于过滤下载状态记录
+      value: ${param.stu_name}
     sort:
       type: Object
       required: false

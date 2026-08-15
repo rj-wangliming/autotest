@@ -61,11 +61,13 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: 教室ID
+      value: ${prev.listClassroom.output.classroomId}
     imageId:
       type: UUID
       required: true
       constraint: '@NotNull 非空'
       description: 新镜像模板ID
+      value: ${prev.listImage.output.imageId}
 response:
   wrapper:
     status: String

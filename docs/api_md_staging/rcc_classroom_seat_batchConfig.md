@@ -74,21 +74,25 @@ request:
       required: true
       constraint: '@NotNull'
       description: 教室ID
+      value: ${prev.query_classroom.output.classroomId}
     seatIdArr:
       type: UUID[]
       required: true
       constraint: '@NotEmpty'
       description: 待配置的座位ID数组
+      value: ${prev.query_seat.output.seatId}
     desktopPreName:
       type: String
       required: true
       constraint: '@NotBlank + @Size(max=9)'
       description: 云桌面主机名前缀
+      value: ${param.desktop_pre_name}
     desktopNameStartNum:
       type: Integer
       required: true
       constraint: '@NotNull + @Range(min=1,max=999)'
       description: 云桌面主机名起始值
+      value: ${param.desktop_name_start_num}
     studentModeArr:
       type: TerminalTypeEnum[]
       required: true

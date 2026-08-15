@@ -35,11 +35,13 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: 教室ID
+      value: ${prev.listClassroom.output.classroomId}
     number:
       type: Integer
       required: true
       constraint: '@NotNull 非空'
       description: 座位数量（所需IP数）
+      value: ${param.number}
     vdiStartIP:
       type: String
       required: false

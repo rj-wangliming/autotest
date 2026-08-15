@@ -35,16 +35,19 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: 教室ID
+      value: ${prev.listClassroom.output.classroomId}
     clusterId:
       type: UUID
       required: true
       constraint: '@NotNull 非空'
       description: 计算集群ID
+      value: ${param.cluster_id}
     platformId:
       type: UUID
       required: true
       constraint: '@NotNull 非空'
       description: 云平台ID
+      value: ${param.platform_id}
     vdiStartIP:
       type: String
       required: false
