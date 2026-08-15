@@ -70,7 +70,7 @@ setup:
 - name: get_cluster
   api: POST /space/cluster/obtainComputeClusterList
   extract:
-    clusterId: $.content.itemArr[0].clusterId
+    clusterId: $.content.itemArr[0].computerClusterId
     platformId: $.content.itemArr[0].platformId
   purpose: 获取计算集群ID与云平台ID
 - name: get_storage_pool

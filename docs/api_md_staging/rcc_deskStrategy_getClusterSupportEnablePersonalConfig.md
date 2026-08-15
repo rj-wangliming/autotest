@@ -30,7 +30,7 @@ setup:
 - name: list_cluster
   api: POST /space/cluster/obtainComputeClusterList
   extract:
-    clusterId: $.content.itemArr[0].id
+    clusterId: $.content.itemArr[0].computerClusterId
   purpose: 按集群名过滤（matchArr.fieldName=clusterName）
   request:
     body:

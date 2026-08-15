@@ -61,7 +61,7 @@ setup:
 - name: get_cluster
   api: POST /space/cluster/obtainComputeClusterList
   extract:
-    clusterId: $.content.itemArr[0].clusterId
+    clusterId: $.content.itemArr[0].computerClusterId
     platformId: $.content.itemArr[0].platformId
   purpose: 按集群名过滤（matchArr.fieldName=clusterName）
   request:
@@ -145,7 +145,7 @@ upstream:
   produces: $.content.itemArr[0].id
   purpose: 课程云桌面策略B（VDI 策略）ID
 - api: POST /space/cluster/obtainComputeClusterList
-  produces: $.content.itemArr[0].clusterId + platformId
+  produces: $.content.itemArr[0].computerClusterId + platformId
   purpose: 计算节点集群与云平台ID
 downstream:
 - api: 内部调用:rcc/ClassroomImageAPI#updateTeacherImageStrategy
