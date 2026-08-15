@@ -31,6 +31,53 @@ setup:
   request:
     body:
       searchKeyword: ${param.classroom_name}
+- name: get_strategy
+  api: POST /rcc/classroom/strategy/list
+  extract:
+    strategyId: $.content.itemArr[0].classroomStrategyId
+  purpose: 按策略名精确过滤（matchArr.fieldName=classroomStrategyName）
+  request:
+    body:
+      matchArr:
+      - type: EXACT
+        fieldName: classroomStrategyName
+        valueArr:
+        - ${param.classroom_strategy_name}
+        matchRule: EQ
+- name: get_image
+  api: POST /rcc/classroom/image/assignImage/yetAssign/list
+  extract:
+    plusImageId:
+      from: $.content.itemArr
+      pick: max
+      sort_key: cbbImageTemplateDetailDTO.name
+      field: cbbImageTemplateDetailDTO.id
+  purpose: 按镜像名精确过滤（searchKeyword + matchArr.fieldName=imageName）；同名多版本取模板名最大
+  request:
+    body:
+      searchKeyword: ${param.student_image_name}
+      matchArr:
+      - type: EXACT
+        fieldName: imageName
+        valueArr:
+        - ${param.image_name}
+        matchRule: EQ
+- name: get_cluster
+  api: POST /space/cluster/obtainComputeClusterList
+  extract:
+    clusterId: $.content.itemArr[0].clusterId
+    platformId: $.content.itemArr[0].platformId
+  purpose: 获取计算集群ID与云平台ID
+- name: get_storage_pool
+  api: POST /space/storagePool/list
+  extract:
+    storagePoolId: $.content.itemArr[0].storagePoolId
+  purpose: 获取存储池ID（镜像分配用）
+- name: get_network
+  api: POST /space/clouddesktop/deskNetwork/list
+  extract:
+    networkId: $.content.itemArr[0].id
+  purpose: 获取网络ID（镜像分配用）
 - name: create_seat
   api: POST /rcc/classroom/seat/batchCreate
   purpose: 批量创建座位（异步批任务）；桌面在「分配学生机镜像」时批量创建，座位必须先存在
@@ -44,6 +91,24 @@ setup:
 - name: assign_student_image
   api: POST /rcc/classroom/image/student/create
   purpose: 分配学生机镜像——首镜像+有座位时批量创建云桌面（桌面在此诞生），轮询批任务完成后桌面存在
+  request:
+    body:
+      crId:
+        value: ${prev.select_classroom_id.output.classroomId}
+      plusImageId:
+        value: ${prev.get_image.output.plusImageId}
+      enableHide:
+        value: false
+      storagePoolIdList:
+        value: ${prev.get_storage_pool.output.storagePoolId}
+      clusterId:
+        value: ${prev.get_cluster.output.clusterId}
+      platformId:
+        value: ${prev.get_cluster.output.platformId}
+      strategyId:
+        value: ${prev.get_strategy.output.strategyId}
+      networkId:
+        value: ${prev.get_network.output.networkId}
   idempotent: recreate
   delete_api: /rcc/classroom/image/student/delete
   delete_param: id
