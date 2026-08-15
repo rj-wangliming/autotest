@@ -39,7 +39,7 @@ request:
       description: 是否强制刷新（真实请求样例默认 false）
     matchArr:
       type: Match[]
-      required: false
+      required: true
       constraint: '@NotNull，默认空数组'
       description: 精确/模糊查询条件数组
       value:
@@ -50,7 +50,7 @@ request:
         matchRule: EQ
     sortArr:
       type: Sort[]
-      required: false
+      required: true
       constraint: '@NotNull，默认空数组'
       description: 排序条件数组
     customData:
