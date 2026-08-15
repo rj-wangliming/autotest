@@ -39,9 +39,11 @@ setup:
   request:
     body:
       matchArr:
-      - fieldName: classroomStrategyName
-        matchType: EQUAL
-        value: ${param.classroom_strategy_name}
+      - type: EXACT
+        fieldName: classroomStrategyName
+        valueArr:
+        - ${param.classroom_strategy_name}
+        matchRule: EQ
 - name: get_image
   api: POST /rcc/classroom/image/assignImage/yetAssign/list
   extract:

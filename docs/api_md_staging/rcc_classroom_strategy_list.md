@@ -17,6 +17,20 @@ setup:
 - name: createStrategy
   api: POST /rcc/classroom/strategy/create
   purpose: 造策略数据以便列表有数据
+  request:
+    body:
+      classroomStrategyName:
+        value: ${param.classroom_strategy_name}
+      linkShutdown:
+        value: false
+      startPolicy:
+        value: START_ONLINE
+      defaultEnterImageSwitch:
+        value: false
+      defaultDisplayDeskType:
+        value: CLASSROOM_MODE
+      reservedStoragePolicy:
+        value: SYSTEM_DEFAULT
   extract:
     classroomStrategyName: auto_strategy_<ts>
   idempotent: reuse
@@ -24,9 +38,11 @@ setup:
     api: POST /rcc/classroom/strategy/list
     body:
       matchArr:
-      - fieldName: classroomStrategyName
-        matchType: EQUAL
-        value: ${param.classroom_strategy_name}
+      - type: EXACT
+        fieldName: classroomStrategyName
+        valueArr:
+        - ${param.classroom_strategy_name}
+        matchRule: EQ
     extract:
       classroomStrategyId: $.content.itemArr[0].classroomStrategyId
 request:
@@ -46,7 +62,13 @@ request:
       type: Match[]
       required: false
       constraint: '@NotNull'
-      description: 查询条件数组
+      description: '查询条件数组（元素格式：{type: EXACT, fieldName, valueArr: [值], matchRule: EQ}，精确匹配用 valueArr 数组 + matchRule；模糊用 type: FUZZY + value 单值）'
+      value:
+      - type: EXACT
+        fieldName: classroomStrategyName
+        valueArr:
+        - ${param.classroom_strategy_name}
+        matchRule: EQ
     sortArr:
       type: Sort[]
       required: false

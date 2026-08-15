@@ -17,6 +17,20 @@ setup:
 - name: createStrategy
   api: POST /rcc/classroom/strategy/create
   purpose: 被测接口本身（造策略数据）
+  request:
+    body:
+      classroomStrategyName:
+        value: ${param.classroom_strategy_name}
+      linkShutdown:
+        value: false
+      startPolicy:
+        value: START_ONLINE
+      defaultEnterImageSwitch:
+        value: false
+      defaultDisplayDeskType:
+        value: CLASSROOM_MODE
+      reservedStoragePolicy:
+        value: SYSTEM_DEFAULT
   extract:
     classroomStrategyName: auto_strategy_<ts>
   idempotent: reuse
@@ -24,9 +38,11 @@ setup:
     api: POST /rcc/classroom/strategy/list
     body:
       matchArr:
-      - fieldName: classroomStrategyName
-        matchType: EQUAL
-        value: ${param.classroom_strategy_name}
+      - type: EXACT
+        fieldName: classroomStrategyName
+        valueArr:
+        - ${param.classroom_strategy_name}
+        matchRule: EQ
     extract:
       classroomStrategyId: $.content.itemArr[0].classroomStrategyId
 request:
@@ -37,7 +53,7 @@ request:
       required: true
       constraint: '@NotBlank @Size(min=1, max=32)，且匹配名称规格正则'
       description: 教室策略名称
-      value: ${param.classroomStrategyName}
+      value: ${param.classroom_strategy_name}
     classroomStrategyDesc:
       type: String
       required: false
@@ -48,19 +64,19 @@ request:
       required: true
       constraint: '@NotNull'
       description: 终端联动关机开关
-      generated_by: config_generator
+      value: false
     startPolicy:
       type: DesktopStartPolicyEnum
       required: true
       constraint: '@NotNull'
-      description: 上课云桌面启动策略
-      generated_by: config_generator
+      description: 上课云桌面启动策略（可选值：START_ALL=启动所有云桌面 / START_ONLINE=仅启动终端连接的云桌面）
+      value: START_ONLINE
     defaultEnterImageSwitch:
       type: Boolean
       required: true
       constraint: '@NotNull'
       description: 默认进入指定云桌面开关
-      generated_by: config_generator
+      value: false
     defaultEnterImageSeconds:
       type: Integer
       required: false
@@ -70,14 +86,14 @@ request:
       type: DefaultDisplayDeskType
       required: true
       constraint: '@NotNull'
-      description: 默认展示桌面类型
-      generated_by: config_generator
+      description: 默认展示桌面类型（可选值：CLASSROOM_MODE=默认课程镜像桌面 / LOCAL_DESK_MODE=公共本地镜像 / PERSONAL_VDI_DESK_MODE=个人云桌面）
+      value: CLASSROOM_MODE
     reservedStoragePolicy:
       type: ReservedSpaceType
       required: true
       constraint: '@NotNull'
-      description: 预留空间类型（预留/自定义等）
-      generated_by: config_generator
+      description: 预留空间类型（可选值：SYSTEM_DEFAULT=系统默认 / USER_DEFINED=用户自定义，USER_DEFINED 时 reservedStorageSize 必填）
+      value: SYSTEM_DEFAULT
     reservedStorageSize:
       type: Integer
       required: false
@@ -222,12 +238,12 @@ graph LR
 |---|---|---|---|---|
 | classroomStrategyName | String | 是 | @NotBlank @Size(min=1, max=32)，且匹配名称规格正则 | 教室策略名称 |
 | classroomStrategyDesc | String | 否 | @Nullable @Size(max=128) | 教室策略描述 |
-| linkShutdown | Boolean | 是 | @NotNull | 终端联动关机开关 |
-| startPolicy | DesktopStartPolicyEnum | 是 | @NotNull | 上课云桌面启动策略 |
-| defaultEnterImageSwitch | Boolean | 是 | @NotNull | 默认进入指定云桌面开关 |
+| linkShutdown | Boolean | 是 | @NotNull | 终端联动关机开关（默认 false） |
+| startPolicy | DesktopStartPolicyEnum | 是 | @NotNull | 上课云桌面启动策略（START_ALL=启动所有云桌面 / START_ONLINE=仅启动终端连接的云桌面） |
+| defaultEnterImageSwitch | Boolean | 是 | @NotNull | 默认进入指定云桌面开关（默认 false） |
 | defaultEnterImageSeconds | Integer | 否 | @Nullable @Range(min=1, max=60)；开关开启时逻辑必填 | 默认进入指定云桌面倒计时（秒） |
-| defaultDisplayDeskType | DefaultDisplayDeskType | 是 | @NotNull | 默认展示桌面类型 |
-| reservedStoragePolicy | ReservedSpaceType | 是 | @NotNull | 预留空间类型（预留/自定义等） |
+| defaultDisplayDeskType | DefaultDisplayDeskType | 是 | @NotNull | 默认展示桌面类型（CLASSROOM_MODE=默认课程镜像桌面 / LOCAL_DESK_MODE=公共本地镜像 / PERSONAL_VDI_DESK_MODE=个人云桌面） |
+| reservedStoragePolicy | ReservedSpaceType | 是 | @NotNull | 预留空间类型（SYSTEM_DEFAULT=系统默认 / USER_DEFINED=用户自定义，USER_DEFINED 时 reservedStorageSize 必填） |
 | reservedStorageSize | Integer | 否 | @Nullable @Range(min=1, max=1024)；预留策略为 USER_DEFINED 时逻辑必填 | 磁盘预留空间大小（GB） |
 | creatorUserName | String | 否 | @Nullable；服务端从 sessionContext.getUserName() 注入 | 创建者登录名 |
 | createTime | Date | 否 | @Nullable；构造时默认 new Date() | 创建时间 |

@@ -17,14 +17,30 @@ setup:
 - name: createStrategy
   api: POST /rcc/classroom/strategy/create
   purpose: 创建教室策略以便关联教室数据
+  request:
+    body:
+      classroomStrategyName:
+        value: ${param.classroom_strategy_name}
+      linkShutdown:
+        value: false
+      startPolicy:
+        value: START_ONLINE
+      defaultEnterImageSwitch:
+        value: false
+      defaultDisplayDeskType:
+        value: CLASSROOM_MODE
+      reservedStoragePolicy:
+        value: SYSTEM_DEFAULT
   idempotent: reuse
   reuse_query:
     api: POST /rcc/classroom/strategy/list
     body:
       matchArr:
-      - fieldName: classroomStrategyName
-        matchType: EQUAL
-        value: ${param.classroom_strategy_name}
+      - type: EXACT
+        fieldName: classroomStrategyName
+        valueArr:
+        - ${param.classroom_strategy_name}
+        matchRule: EQ
     extract:
       classroomStrategyId: $.content.itemArr[0].classroomStrategyId
 request:
