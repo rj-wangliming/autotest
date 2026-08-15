@@ -528,8 +528,19 @@ class Orchestrator:
         method = raw.split(" ", 1)[0] if " " in raw else "POST"
         sname = item.get("name") or dep_api.rstrip("/").split("/")[-1]
         body = dict((item.get("request") or {}).get("body") or {})
-        extract = {k: v for k, v in (item.get("extract") or {}).items()
-                   if (isinstance(v, str) and v.startswith("$")) or isinstance(v, dict)}
+        ex_raw = item.get("extract") or {}
+        if isinstance(ex_raw, list):
+            # SETUP_PARAM_SPEC §2.2：list 格式（多 extract / assert）
+            # 每项 {var, from, jsonpath}，产出 var -> jsonpath
+            extract = {}
+            for it in ex_raw:
+                if isinstance(it, dict) and it.get("var") and it.get("jsonpath"):
+                    extract[it["var"]] = it["jsonpath"]
+        elif isinstance(ex_raw, dict):
+            extract = {k: v for k, v in ex_raw.items()
+                       if (isinstance(v, str) and v.startswith("$")) or isinstance(v, dict)}
+        else:
+            extract = {}
         dep_meta = self.index.get(dep_api) or {}          # setup 项对应接口的 polling
         step = {"step_name": sname, "name": (item.get("purpose") or sname)[:24],
                 "api": dep_api, "method": method, "body": body,
@@ -659,6 +670,12 @@ class Orchestrator:
             if isinstance(ex, dict) and ex:
                 extract = {k: jp for k, jp in ex.items() if isinstance(jp, str) and jp.startswith("$")}
                 break
+            if isinstance(ex, list):
+                for it in ex:
+                    if isinstance(it, dict) and it.get("var") and it.get("jsonpath"):
+                        extract[it["var"]] = it["jsonpath"]
+                if extract:
+                    break
         # polling：接口 polling 配置
         poll = meta.get("polling") or None
         step = {"name": item[:20], "api": api, "body": body, "extract": extract, "poll": poll}
