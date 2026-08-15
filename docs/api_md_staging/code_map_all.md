@@ -802,6 +802,115 @@
 
 ---
 
+### ClassroomBusinessKey（补全）
+
+| 常量名 | key 值 |
+|---|---|
+| RCDC_ASSIGN_CLASSROOM_STUDENT_IMAGE_FAIL_LOG | rcdc_assign_classroom_student_image_fail_log |
+| RCDC_ASSIGN_CLASSROOM_TEACHER_IMAGE_FAIL_NOT_FIND_IMAGE_LOG | rcdc_assign_classroom_teacher_image_fail_not_find_image_log |
+| RCDC_RCC_CLASSROOM_DELETING_TEACHER_DESKTOP | rcdc_rcc_classroom_deleting_teacher_desktop |
+| RCDC_RCC_CLASSROOM_SEAT_NOT_OPEN_LOCAL_DISK | rcdc_rcc_classroom_seat_not_open_local_disk |
+| RCDC_RCC_CLASSROOM_TEACHER_NOT_OPEN_LOCAL_DISK | rcdc_rcc_classroom_teacher_not_open_local_disk |
+| RCDC_RCC_SEAT_BATCH_CONFIG_TIME_OUT | rcdc_rcc_seat_batch_config_time_out |
+| RCDC_RCC_SEAT_IN_LESSON | rcdc_rcc_seat_in_lesson |
+| RCDC_RCC_SEAT_IN_RUNNING | rcdc_rcc_seat_in_running |
+
+### ClassroomImageBusinessKey（补全）
+
+| 常量名 | key 值 |
+|---|---|
+| RCDC_RCC_CLASSROOM_IMAGE_NOT_FOUND | rcdc_rcc_classroom_image_not_found |
+| RCDC_RCC_IMAGE_BIND_CLASSROOM_PERSONAL_DESK_STRATEGY | rcdc_rcc_image_bind_classroom_personal_desk_strategy |
+| RCDC_RCC_IMAGE_HAS_BE_DELETE | rcdc_rcc_image_has_be_delete |
+| RCDC_RCC_IMAGE_STRATEGY_NOT_SAME_TYPE | rcdc_rcc_image_strategy_not_same_type |
+
+### ClassroomLessonBusinessKey（补全）
+
+| 常量名 | key 值 |
+|---|---|
+| RCDC_CLASSROOM_END_LESSOON_LIMIT_TIME | rcdc_classroom_end_lessoon_limit_time |
+| RCDC_RCC_CLASSROOM_ENDING_CLASS_FORCE_DESC_FOR_CLASSROOM_NO_SEAT | rcdc_rcc_classroom_ending_class_force_desc_for_classroom_no_seat |
+| RCDC_RCC_CLASSROOM_FORCE_ENDING_CLASS_DESC_FOR_PLATFORM_UNAVAILABLE | rcdc_rcc_classroom_force_ending_class_desc_for_platform_unavailable |
+| RCDC_RCC_CLASSROOM_START_LESSON_IMAGE_STATE_NOT_ALLOWED | rcdc_rcc_classroom_start_lesson_image_state_not_allowed |
+| RCDC_RCC_CLASSROOM_VALIDATE_FORCE_ENDING_CLASS_DESC_FOR_PLATFORM_UNAVAILABLE_CMR | rcdc_rcc_classroom_validate_force_ending_class_desc_for_platform_unavailable_cmr |
+| RCDC_RCC_CLASSROOM_VALIDATE_FORCE_ENDING_CLASS_DESC_FOR_PLATFORM_UNAVAILABLE_SERVER | rcdc_rcc_classroom_validate_force_ending_class_desc_for_platform_unavailable_server |
+
+### CloudDesktopBusinessKey（补全）
+
+| 常量名 | key 值 |
+|---|---|
+| RCDC_RCC_DESKTOP_BUSINESS_TYPE_OR_CREATE_SOURCE_NOT_SUPPORT | rcdc_rcc_desktop_business_type_or_create_source_not_support |
+| RCDC_RCC_DESKTOP_COLLECT_LOG_ERROR | rcdc_rcc_desktop_collect_log_error |
+| RCDC_RCC_DESKTOP_FAULT_NULL | rcdc_rcc_desktop_fault_null |
+| RCDC_RCC_DESKTOP_FORCE_WAKE_UP_FAIL_LOG | rcdc_rcc_desktop_force_wake_up_fail_log |
+| RCDC_RCC_DESKTOP_NETWORK_IP_CONFLICT_WITH_DESKTOP | rcdc_rcc_desktop_network_ip_conflict_with_desktop |
+| RCDC_RCC_DESKTOP_POWEROFF_FAIL_LOG | rcdc_rcc_desktop_poweroff_fail_log |
+| RCDC_RCC_DESKTOP_RESTART_FAIL_LOG | rcdc_rcc_desktop_restart_fail_log |
+| RCDC_RCC_DESKTOP_SHUTDOWN_FAIL_LOG | rcdc_rcc_desktop_shutdown_fail_log |
+
+### RccSpaceBusinessKey（补全）
+
+| 常量名 | key 值 |
+|---|---|
+| RCC_RESTORE_TCI_DESKTOP_TASK_DEFAULT_FAIL_LOG | rcc_restore_tci_desktop_task_default_fail_log |
+
+### TCIDesktopBusinessKey（补全）
+
+| 常量名 | key 值 |
+|---|---|
+| RCDC_RCC_TCI_DESKTOP_COLLECT_LOG_FAIL | rcdc_rcc_tci_desktop_collect_log_fail |
+| RCDC_RCC_TCI_DESKTOP_RESTART_FAIL_LOG | rcdc_rcc_tci_desktop_restart_fail_log |
+
+### TCILessonImageBusinessKey（补全）
+
+| 常量名 | key 值 |
+|---|---|
+| SPACETCI_LESSONIMAGE_ASSIGN_STUDENT_IMAGE_FAIL_LOG | spacetci_lessonimage_assign_student_image_fail_log |
+| SPACETCI_LESSONIMAGE_ASSIGN_STUDENT_IMAGE_SUCCESS_LOG | spacetci_lessonimage_assign_student_image_success_log |
+| SPACETCI_LESSONIMAGE_ASSIGN_TEACHER_IMAGE_FAIL_LOG | spacetci_lessonimage_assign_teacher_image_fail_log |
+| SPACETCI_LESSONIMAGE_ASSIGN_TEACHER_IMAGE_SUCCESS_LOG | spacetci_lessonimage_assign_teacher_image_success_log |
+| SPACETCI_LESSONIMAGE_CHANGE_STUDENT_IMAGE_LESSONSTRATEGY_FAIL_LOG | spacetci_lessonimage_change_student_image_lessonstrategy_fail_log |
+| SPACETCI_LESSONIMAGE_CHANGE_STUDENT_IMAGE_LESSONSTRATEGY_SUCCESS_LOG | spacetci_lessonimage_change_student_image_lessonstrategy_success_log |
+| SPACETCI_LESSONIMAGE_CHANGE_TEACHER_IMAGE_LESSONSTRATEGY_FAIL_LOG | spacetci_lessonimage_change_teacher_image_lessonstrategy_fail_log |
+| SPACETCI_LESSONIMAGE_CHANGE_TEACHER_IMAGE_LESSONSTRATEGY_SUCCESS_LOG | spacetci_lessonimage_change_teacher_image_lessonstrategy_success_log |
+| SPACETCI_LESSONIMAGE_DELETE_STUDENT_IMAGE_SUCCESS_LOG | spacetci_lessonimage_delete_student_image_success_log |
+| SPACETCI_LESSONIMAGE_DELETE_TEACHER_IMAGE_FAIL_LOG | spacetci_lessonimage_delete_teacher_image_fail_log |
+| SPACETCI_LESSONIMAGE_DELETE_TEACHER_IMAGE_SUCCESS_LOG | spacetci_lessonimage_delete_teacher_image_success_log |
+| SPACETCI_LESSONIMAGE_HIDE_STUDENT_IMAGE_FAIL_LOG | spacetci_lessonimage_hide_student_image_fail_log |
+| SPACETCI_LESSONIMAGE_HIDE_STUDENT_IMAGE_SUCCESS_LOG | spacetci_lessonimage_hide_student_image_success_log |
+| SPACETCI_LESSONIMAGE_HIDE_TEACHER_IMAGE_FAIL_LOG | spacetci_lessonimage_hide_teacher_image_fail_log |
+| SPACETCI_LESSONIMAGE_HIDE_TEACHER_IMAGE_SUCCESS_LOG | spacetci_lessonimage_hide_teacher_image_success_log |
+| SPACETCI_LESSONIMAGE_OPERATE_RUNNING | spacetci_lessonimage_operate_running |
+| SPACETCI_LESSONIMAGE_SHOW_STUDENT_IMAGE_FAIL_LOG | spacetci_lessonimage_show_student_image_fail_log |
+| SPACETCI_LESSONIMAGE_SHOW_STUDENT_IMAGE_SUCCESS_LOG | spacetci_lessonimage_show_student_image_success_log |
+| SPACETCI_LESSONIMAGE_SHOW_TEACHER_IMAGE_FAIL_LOG | spacetci_lessonimage_show_teacher_image_fail_log |
+| SPACETCI_LESSONIMAGE_SHOW_TEACHER_IMAGE_SUCCESS_LOG | spacetci_lessonimage_show_teacher_image_success_log |
+| SPACETCI_LESSONIMAGE_UPDATE_STUDENT_IMAGE_FAIL_LOG | spacetci_lessonimage_update_student_image_fail_log |
+| SPACETCI_LESSONIMAGE_UPDATE_STUDENT_IMAGE_SUCCESS_LOG | spacetci_lessonimage_update_student_image_success_log |
+| SPACETCI_LESSONIMAGE_UPDATE_TEACHER_IMAGE_FAIL_LOG | spacetci_lessonimage_update_teacher_image_fail_log |
+| SPACETCI_LESSONIMAGE_UPDATE_TEACHER_IMAGE_SUCCESS_LOG | spacetci_lessonimage_update_teacher_image_success_log |
+
+### TeacherOperateBusinessKey（补全）
+
+| 常量名 | key 值 |
+|---|---|
+| RCDC_RCC_TEACHER_COLLECT_LOG_FAIL_LOG | rcdc_rcc_teacher_collect_log_fail_log |
+| RCDC_RCC_TEACHER_OPERATE_CLASSROOM_NOT_FOUND | rcdc_rcc_teacher_operate_classroom_not_found |
+| RCDC_RCC_TEACHER_OPERATE_CLASSROOM_TERCHER_TERMINAL_ID_IS_NULL | rcdc_rcc_teacher_operate_classroom_tercher_terminal_id_is_null |
+| RCDC_RCC_TEACHER_OPERATE_TEACHER_CONFIG_NOT_FOUND | rcdc_rcc_teacher_operate_teacher_config_not_found |
+| RCDC_RCC_TEACHER_OPERATE_TERMINAL_NOT_FOUND | rcdc_rcc_teacher_operate_terminal_not_found |
+
+### TerminalBusinessKey（补全）
+
+| 常量名 | key 值 |
+|---|---|
+| RCDC_RCC_TERMINAL_HAVE_NOT_CLOCK | rcdc_rcc_terminal_have_not_clock |
+| RCDC_RCC_TERMINAL_NOT_SEAT | rcdc_rcc_terminal_not_seat |
+| RCDC_RCC_TERMINAL_NOT_TEACHER | rcdc_rcc_terminal_not_teacher |
+| RCDC_RCC_TERMINAL_SHINE_ERROR_GET_SHINE_LOG_FAIL | rcdc_rcc_terminal_shine_error_get_shine_log_fail |
+| RCDC_RCC_TERMINAL_UNLOCK_FAIL_LOG | rcdc_rcc_terminal_unlock_fail_log |
+| RCDC_RCC_TERMINAL_UNLOCK_TERMINAL_OFFLINE | rcdc_rcc_terminal_unlock_terminal_offline |
+
 ## 3. 成功 key
 
 | 常量名 | key 值 |
