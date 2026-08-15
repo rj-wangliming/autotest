@@ -93,11 +93,18 @@
           valueArr:
           - ${param.student_image_name}
           matchRule: EQ
+        - type: FUZZY                             # 模糊匹配（LIKE %value%）
+          fieldNameArr:
+          - computerName
+          value: ${param.computer_name}
+          matchRule: LIKE
   extract:
     imageId: $.content.itemArr[0].id               # 过滤后取第一个（名称唯一）
   assert:
     - path: $.content.itemArr
       op: not_empty
+```
+> matchArr 元素：`type` 为 EXACT（精确，valueArr 数组 + matchRule: EQ）或 FUZZY（模糊，fieldNameArr 数组 + value 单值 + matchRule: LIKE）。matchRule 为对称性标注：EXACT 后端读 matchRule（EQ），FUZZY 后端仅读 fieldNameArr/value（matchRule 不消费，LIKE 为语义标注，经源码 handleFuzzyMatch 确认）。
 ```
 
 ## 5. 执行接口绑定前置产出
