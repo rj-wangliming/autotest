@@ -85,7 +85,7 @@ request:
       type: DesktopStartPolicyEnum
       required: true
       constraint: '@NotNull'
-      description: 上课云桌面启动策略
+      description: 上课云桌面启动策略（可选值：START_ALL/START_ONLINE）
     defaultEnterImageSwitch:
       type: Boolean
       required: true

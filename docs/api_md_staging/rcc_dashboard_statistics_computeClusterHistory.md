@@ -34,7 +34,7 @@ request:
       type: ServerResourceTypeEnum
       required: true
       constraint: '@NotNull 非空'
-      description: 资源类型
+      description: 资源类型（可选值：CPU/MEM/DISK）
     clusterId:
       type: UUID
       required: true
@@ -44,7 +44,7 @@ request:
       type: TimeQueryTypeEnum
       required: true
       constraint: '@NotNull 非空'
-      description: 时间查询类型
+      description: 时间查询类型（可选值：HOUR/DAY/MONTHLY/YEAR/WEEK）
     platformId:
       type: UUID
       required: false

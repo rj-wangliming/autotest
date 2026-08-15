@@ -78,7 +78,7 @@ request:
       type: TerminalTypeEnum[]
       required: true
       constraint: '@NotNull'
-      description: 学生机工作模式
+      description: 学生机工作模式（可选值：NONE/PC/VDI/IDV/VOI(TCI)/APP/UNKNOWN）
     vdiDesktopIp:
       type: String
       required: false

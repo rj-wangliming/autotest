@@ -48,7 +48,7 @@ request:
       type: TerminalTypeEnum
       required: true
       constraint: '@NotNull'
-      description: 教师机工作模式
+      description: 教师机工作模式（可选值：NONE/PC/VDI/IDV/VOI(TCI)/APP/UNKNOWN）
 response:
   wrapper:
     status: String

@@ -50,7 +50,7 @@ request:
       type: TimeQueryTypeEnum
       required: true
       constraint: '@NotNull 非空'
-      description: 时间查询类型
+      description: 时间查询类型（可选值：HOUR/DAY/MONTHLY/YEAR/WEEK）
       value: ${param.time_query_type}
 response:
   wrapper:

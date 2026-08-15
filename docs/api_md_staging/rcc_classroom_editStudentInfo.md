@@ -56,7 +56,7 @@ request:
       type: TerminalTypeEnum[]
       required: true
       constraint: '@NotNull'
-      description: 学生机类型数组
+      description: 学生机类型数组（可选值：NONE/PC/VDI/IDV/VOI(TCI)/APP/UNKNOWN）
     studentStartIp:
       type: String
       required: false

@@ -55,7 +55,7 @@ request:
       type: TerminalTypeEnum[]
       required: true
       constraint: '@NotEmpty'
-      description: 学生机工作模式数组
+      description: 学生机工作模式数组（可选值：NONE/PC/VDI/IDV/VOI(TCI)/APP/UNKNOWN）
       generated_by: config_generator
     vdiDesktopIp:
       type: String

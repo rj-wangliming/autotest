@@ -31,7 +31,7 @@ request:
       type: TerminalTypeEnum[]
       required: true
       constraint: '@NotNull'
-      description: 学生机工作模式数组
+      description: 学生机工作模式数组（可选值：NONE/PC/VDI/IDV/VOI(TCI)/APP/UNKNOWN）
     desktopNum:
       type: Integer
       required: false
@@ -46,7 +46,7 @@ request:
       type: TerminalTypeEnum
       required: true
       constraint: '@NotNull'
-      description: 教师机工作模式
+      description: 教师机工作模式（可选值：NONE/PC/VDI/IDV/VOI(TCI)/APP/UNKNOWN）
 response:
   wrapper:
     status: String

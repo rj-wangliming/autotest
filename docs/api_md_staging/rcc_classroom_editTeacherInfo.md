@@ -56,7 +56,7 @@ request:
       type: TerminalTypeEnum
       required: false
       constraint: '@Nullable'
-      description: 教师机终端类型
+      description: 教师机终端类型（可选值：NONE/PC/VDI/IDV/VOI(TCI)/APP/UNKNOWN）
     teacherIp:
       type: String
       required: true
