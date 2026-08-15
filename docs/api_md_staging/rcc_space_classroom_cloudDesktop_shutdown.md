@@ -125,7 +125,7 @@ request:
       required: true
       constraint: '@NotNull @NotEmpty'
       description: 教室ID数组，取 idArr[0]
-      value: ${prev.query_desktop.output.desktopIdArr}
+      value: ${prev.select_classroom_id.output.classroomId}
 response:
   wrapper:
     status: String
