@@ -37,11 +37,26 @@ request:
       required: false
       constraint: '@Nullable'
       description: 精确匹配条件；支持 poolModel/createSource/businessType/poolState/platformType/platformSta
+    matchArr:
+      type: Match[]
+      required: false
+      constraint: '@Nullable'
+      description: 精确匹配条件（新格式，type/fieldName/valueArr/matchRule；真实请求默认空数组）
     sortArr:
       type: Sort[]
       required: false
       constraint: '@Nullable'
       description: 排序条件
+    needForceRefresh:
+      type: Boolean
+      required: false
+      constraint: '@Nullable，默认 false（样例值）'
+      description: 是否强制刷新
+    isAutomaticRefresh:
+      type: Boolean
+      required: false
+      constraint: '@Nullable，默认 true（样例值）'
+      description: 是否自动刷新
 response:
   wrapper:
     status: String
