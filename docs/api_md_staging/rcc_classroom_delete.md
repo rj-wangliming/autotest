@@ -39,6 +39,7 @@ request:
       required: true
       constraint: '@NotEmpty'
       description: 待删除教室ID数组
+      value: ${param.id_arr}
 response:
   wrapper:
     status: String

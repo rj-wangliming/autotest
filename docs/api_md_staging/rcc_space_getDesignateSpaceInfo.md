@@ -22,6 +22,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 业务类型与创建来源：RCC_CLASSROOM=教学桌面池、RCO_SPACE=实训桌面池、RCO_COMMON=办公桌面
+      value: ${param.type}
 response:
   wrapper:
     status: String

@@ -87,6 +87,7 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: TCI云桌面ID
+      value: ${prev.query_classroom.output.classroomId}
 response:
   wrapper:
     status: String

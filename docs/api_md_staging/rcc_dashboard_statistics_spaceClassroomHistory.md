@@ -51,6 +51,7 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: 时间查询类型
+      value: ${param.time_query_type}
 response:
   wrapper:
     status: String

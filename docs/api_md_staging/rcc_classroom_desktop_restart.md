@@ -113,6 +113,7 @@ request:
       required: true
       constraint: '@NotEmpty 非空'
       description: 云桌面ID数组
+      value: ${param.id_arr}
 response:
   wrapper:
     status: String

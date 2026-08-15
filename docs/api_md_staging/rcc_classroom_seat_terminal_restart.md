@@ -74,6 +74,7 @@ request:
       required: true
       constraint: '@NotEmpty + @Size(min=1) 至少一台终端'
       description: 终端ID数组（终端标识，支持 MAC 或终端SN）
+      value: ${param.id_arr}
 response:
   wrapper:
     status: String

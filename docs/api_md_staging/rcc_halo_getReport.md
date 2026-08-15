@@ -24,6 +24,7 @@ request:
       required: true
       constraint: URL query 参数（非DTO）
       description: Halo体检报告文件名
+      value: ${param.file_name}
 response:
   wrapper:
     result: String

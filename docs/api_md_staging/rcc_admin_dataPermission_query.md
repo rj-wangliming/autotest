@@ -27,6 +27,7 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: 管理员ID
+      value: ${prev.listAdmin.output.adminId}
 response:
   wrapper:
     status: String

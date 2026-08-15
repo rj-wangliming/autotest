@@ -87,11 +87,13 @@ request:
       required: true
       constraint: '@NotBlank 非空白'
       description: 日志文件名（带后缀）
+      value: ${param.log_file_name}
     deskId:
       type: UUID
       required: true
       constraint: '@NotNull 非空'
       description: TCI云桌面ID
+      value: ${param.desk_id}
 response:
   wrapper:
     status: String

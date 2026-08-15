@@ -24,11 +24,13 @@ request:
       required: true
       constraint: '@NotNull，教室ID'
       description: 教室ID
+      value: ${param.classroom_id}
     token:
       type: String
       required: true
       constraint: '@NotNull，AES加密TOKEN'
       description: 由@ClassroomCef拦截器校验
+      value: ${param.token}
     lessonTaskId:
       type: UUID
       required: false

@@ -31,11 +31,13 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: 网络策略ID
+      value: ${param.network_id}
     number:
       type: Integer
       required: true
       constraint: '@NotNull 非空'
       description: 所需IP数目
+      value: ${param.number}
     vdiStartIP:
       type: String
       required: false

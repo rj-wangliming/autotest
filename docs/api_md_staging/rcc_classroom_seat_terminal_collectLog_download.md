@@ -74,6 +74,7 @@ request:
       required: true
       constraint: '@NotBlank'
       description: 已收集的日志文件名
+      value: ${param.log_name}
 response:
   wrapper:
     status: String

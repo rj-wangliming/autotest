@@ -46,6 +46,7 @@ request:
       required: true
       constraint: controller 断言非空（Assert.isTrue length>0）
       description: 教室ID数组
+      value: ${param.id_arr}
 response:
   wrapper:
     status: String

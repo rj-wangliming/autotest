@@ -87,6 +87,7 @@ request:
       required: true
       constraint: '@NotEmpty 非空'
       description: 云桌面ID数组，支持终端ID或桌面ID，通过 TerminalIdMappingUtils 映射为桌面UUID
+      value: ${param.id_arr}
 response:
   wrapper:
     status: String

@@ -35,6 +35,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 桌面池/实训空间ID数组，取 idArr[0]
+      value: ${param.id_arr}
 response:
   wrapper:
     status: String

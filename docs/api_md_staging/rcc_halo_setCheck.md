@@ -24,6 +24,7 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: true=禁用Halo体检，false=启用
+      value: ${param.disable_halo_check}
 response:
   wrapper:
     status: String

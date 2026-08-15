@@ -60,6 +60,7 @@ request:
       required: true
       constraint: '@NotEmpty'
       description: 实训空间ID数组（删除对象，去重后逐项删除）
+      value: ${param.id_arr}
     shouldOnlyDeleteDataFromDb:
       type: Boolean
       required: false

@@ -44,6 +44,7 @@ request:
       required: true
       constraint: '@NotBlank 非空白'
       description: 教师终端ID（由 collectLog 接口返回）
+      value: ${param.terminal_id}
 response:
   wrapper:
     status: String

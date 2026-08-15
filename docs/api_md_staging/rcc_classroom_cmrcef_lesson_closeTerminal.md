@@ -24,11 +24,13 @@ request:
       required: true
       constraint: '@NotNull，教室ID'
       description: 要关闭终端的教室
+      value: ${param.classroom_id}
     token:
       type: String
       required: true
       constraint: '@NotNull，AES加密的TOKEN'
       description: AES加密后内容为classroomId，由@ClassroomCef拦截器校验
+      value: ${param.token}
 response:
   wrapper:
     status: String

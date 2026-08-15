@@ -27,6 +27,7 @@ request:
       required: true
       constraint: '@NotBlank @TextShort @TextName'
       description: 待校验的实训空间名称
+      value: ${param.name}
 response:
   wrapper:
     status: String

@@ -22,6 +22,7 @@ request:
       required: true
       constraint: '@NotNull（支持 EST、HEST）'
       description: 协议类型，用于拼接全局参数 key
+      value: ${param.protocol_type}
 response:
   wrapper:
     status: String

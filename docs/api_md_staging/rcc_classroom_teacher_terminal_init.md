@@ -44,11 +44,13 @@ request:
       required: true
       constraint: '@NotEmpty @Size(min=1)'
       description: 终端ID数组
+      value: ${param.id_arr}
     enableForceInitPublic:
       type: Boolean
       required: true
       constraint: '@NotNull 非空'
       description: 是否强制初始化公共终端
+      value: ${param.enable_force_init_public}
 response:
   wrapper:
     status: String

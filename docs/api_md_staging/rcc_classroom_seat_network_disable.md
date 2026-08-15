@@ -74,11 +74,13 @@ request:
       required: true
       constraint: '@NotEmpty 至少一个座位'
       description: 待禁网的座位ID数组
+      value: ${prev.query_seat.output.seatId}
     disableNetwork:
       type: Boolean
       required: true
       constraint: '@NotNull'
       description: 禁网状态：true=禁网，false=联网
+      value: ${param.disable_network}
 response:
   wrapper:
     status: String

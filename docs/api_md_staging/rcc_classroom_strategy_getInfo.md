@@ -66,6 +66,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 教室策略ID
+      value: ${prev.listStrategy.output.classroomStrategyId}
 response:
   wrapper:
     status: String

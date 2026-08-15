@@ -38,6 +38,7 @@ request:
       required: true
       constraint: '@NotNull，子系统标识'
       description: 子系统名称，用于定位version.json文件
+      value: ${param.sub_system}
 response:
   wrapper:
     status: String

@@ -32,6 +32,7 @@ request:
       required: true
       constraint: '@NotNull，rpm包名'
       description: 要查询下载地址的rpm包名称
+      value: ${param.rpm_name}
 response:
   wrapper:
     status: String

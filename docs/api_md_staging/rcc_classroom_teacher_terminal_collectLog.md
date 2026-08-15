@@ -47,6 +47,7 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: 教室ID
+      value: ${prev.query_classroom.output.classroomId}
 response:
   wrapper:
     status: String

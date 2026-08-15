@@ -36,6 +36,7 @@ request:
       required: true
       constraint: '@NotNull，课程镜像ID'
       description: 课程镜像主键ID
+      value: ${prev.list_lesson_image.output.lessonImageId}
 response:
   wrapper:
     status: String

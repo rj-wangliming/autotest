@@ -44,6 +44,7 @@ request:
       required: true
       constraint: '@NotBlank 非空'
       description: 日志文件名
+      value: ${param.log_name}
 response:
   wrapper:
     status: String

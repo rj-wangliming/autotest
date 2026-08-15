@@ -163,11 +163,13 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: 目标镜像模板ID
+      value: ${prev.get_image.output.plusImageId}
     desktopIdList:
       type: List<UUID>
       required: true
       constraint: '@NotEmpty 非空'
       description: 待还原的桌面ID列表
+      value: ${prev.query_desktop.output.desktopId}
 response:
   wrapper:
     status: String

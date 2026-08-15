@@ -22,6 +22,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 云桌面类型，决定返回的 USB 设备类型集合
+      value: ${param.cloud_desk_type}
 response:
   wrapper:
     status: String

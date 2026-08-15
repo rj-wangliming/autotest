@@ -36,6 +36,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 云桌面ID
+      value: ${prev.list_desktop.output.desktopId}
 response:
   wrapper:
     status: String

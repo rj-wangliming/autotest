@@ -35,6 +35,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 实训空间ID
+      value: ${prev.list_space.output.spaceId}
 response:
   wrapper:
     status: String

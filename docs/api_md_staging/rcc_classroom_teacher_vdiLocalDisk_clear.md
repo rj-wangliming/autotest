@@ -87,6 +87,7 @@ request:
       required: true
       constraint: '@NotEmpty 非空'
       description: 教室ID数组
+      value: ${param.id_arr}
 response:
   wrapper:
     status: String

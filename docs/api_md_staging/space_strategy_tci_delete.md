@@ -47,6 +47,7 @@ request:
       required: true
       constraint: 非空（Assert.notNull(webRequest)）
       description: 待删除 TCI 课程策略 id 数组
+      value: ${prev.list_tci_strategy.output.strategyIdArr}
 response:
   wrapper:
     status: String

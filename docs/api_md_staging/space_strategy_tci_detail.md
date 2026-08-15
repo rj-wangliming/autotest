@@ -15,6 +15,7 @@ request:
       type: UUID
       required: true
       description: 策略组ID（来自 /space/strategy/tci/list 或 create）
+      value: ${param.id}
   dto: IdWebRequest
 response:
   wrapper:

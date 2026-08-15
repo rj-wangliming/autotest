@@ -74,6 +74,7 @@ request:
       required: true
       constraint: '@NotNull + @NotEmpty（框架校验）'
       description: 座位ID数组
+      value: ${param.id_arr}
 response:
   wrapper:
     status: String

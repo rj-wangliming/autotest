@@ -17,6 +17,7 @@ request:
       type: UUID
       required: true
       description: 策略组ID
+      value: ${param.id}
 response:
   wrapper:
     status: String

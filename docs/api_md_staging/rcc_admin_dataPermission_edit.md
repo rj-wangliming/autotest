@@ -61,6 +61,7 @@ request:
       required: true
       constraint: '@NotBlank 非空'
       description: 目标管理员用户名
+      value: ${param.user_name}
     spaceArr:
       type: UUID[]
       required: false

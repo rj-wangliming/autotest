@@ -36,6 +36,7 @@ request:
       required: true
       constraint: 非空（Assert.notNull(webRequest)）
       description: 待删除课程策略 id 数组
+      value: ${prev.list_vdi_strategy.output.strategyIdArr}
 response:
   wrapper:
     status: String

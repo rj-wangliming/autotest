@@ -22,6 +22,7 @@ request:
       required: true
       constraint: 非空（validateNameDuplication 内 Assert.hasText）
       description: 待校验的策略名称
+      value: ${param.name}
     id:
       type: UUID
       required: false

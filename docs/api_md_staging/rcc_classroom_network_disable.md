@@ -46,11 +46,13 @@ request:
       required: true
       constraint: '@NotEmpty 非空'
       description: 教室ID列表
+      value: ${prev.listClassroom.output.classroomId}
     disableNetwork:
       type: Boolean
       required: true
       constraint: '@NotNull 非空'
       description: true=禁网，false=解禁/恢复网络
+      value: ${param.disable_network}
 response:
   wrapper:
     status: String
