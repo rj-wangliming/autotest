@@ -58,6 +58,11 @@ request:
       required: false
       constraint: '@Range(min=1, max=2000)'
       description: 每页条数
+    searchKeyword:
+      type: String
+      required: false
+      constraint: '@Nullable'
+      description: 搜索关键字
     matchArr:
       type: Match[]
       required: false
@@ -73,12 +78,30 @@ request:
       type: Sort[]
       required: false
       constraint: '@NotNull'
-      description: 排序条件数组
+      description: '排序条件数组（真实请求默认 sortArr=[{fieldName: createTime, direction: DESC}]）'
+      value:
+      - fieldName: createTime
+        direction: DESC
+    exactMatchArr:
+      type: ExactMatch[]
+      required: false
+      constraint: '@Nullable（旧格式，name+valueArr）'
+      description: 精确匹配条件数组（真实请求默认空数组）
     customData:
       type: String
       required: false
       constraint: '@Nullable'
       description: 自定义扩展数据
+    needForceRefresh:
+      type: Boolean
+      required: false
+      constraint: '@Nullable，默认 true（样例值）'
+      description: 是否强制刷新
+    isAutomaticRefresh:
+      type: Boolean
+      required: false
+      constraint: '@Nullable，默认 false（样例值）'
+      description: 是否自动刷新
 response:
   wrapper:
     status: String

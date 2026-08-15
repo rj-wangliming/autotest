@@ -27,6 +27,16 @@ request:
       required: false
       constraint: '@Range(min=1, max=2000)，默认1'
       description: 每页条数
+    searchKeyword:
+      type: String
+      required: false
+      constraint: '@Nullable'
+      description: 搜索关键字（模糊搜索教室名）
+    needForceRefresh:
+      type: Boolean
+      required: false
+      constraint: '@Nullable，默认 false'
+      description: 是否强制刷新（真实请求样例默认 false）
     matchArr:
       type: Match[]
       required: false

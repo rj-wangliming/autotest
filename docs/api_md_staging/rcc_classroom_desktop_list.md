@@ -47,16 +47,41 @@ request:
       type: Integer
       required: false
       description: 页码与每页条数（limit）
+    searchKeyword:
+      type: String
+      required: false
+      description: 搜索关键字（模糊搜索）
     matchArr:
       type: Match[]
       required: false
       constraint: 可选，精确/模糊匹配条件
       description: 查询过滤条件数组
+      value:
+      - type: EXACT
+        fieldName: classroomId
+        valueArr:
+        - ${param.classroom_id}
+        matchRule: EQ
     sortArr:
       type: Sort[]
       required: false
       constraint: 可选
       description: 排序条件
+    exactMatchArr:
+      type: ExactMatch[]
+      required: false
+      constraint: 可选（旧格式，name+valueArr）
+      description: 精确匹配条件数组（与 matchArr 并行，真实请求同时携带）
+    needForceRefresh:
+      type: Boolean
+      required: false
+      constraint: '@Nullable，默认 false'
+      description: 是否强制刷新
+    isAutomaticRefresh:
+      type: Boolean
+      required: false
+      constraint: '@Nullable，默认 true'
+      description: 是否自动刷新
 response:
   wrapper:
     status: String

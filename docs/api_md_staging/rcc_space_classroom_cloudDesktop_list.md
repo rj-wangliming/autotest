@@ -58,17 +58,34 @@ request:
       type: Sort[]
       required: false
       constraint: '@Nullable'
-      description: 排序条件
+      description: 排序条件（真实请求默认 faultState DESC + latestLoginTime DESC + createTime DESC）
+      value:
+      - fieldName: faultState
+        direction: DESC
+      - fieldName: latestLoginTime
+        direction: DESC
+      - fieldName: createTime
+        direction: DESC
     exactMatchArr:
       type: ExactMatch[]
       required: false
       constraint: '@Nullable'
-      description: 精确匹配条件
+      description: 精确匹配条件（真实请求携带 classroomId + isDelete）
     customData:
       type: String
       required: false
       constraint: '@Nullable'
       description: 扩展透传数据
+    needForceRefresh:
+      type: Boolean
+      required: false
+      constraint: '@Nullable，默认 false（样例值）'
+      description: 是否强制刷新
+    isAutomaticRefresh:
+      type: Boolean
+      required: false
+      constraint: '@Nullable，默认 true（样例值）'
+      description: 是否自动刷新
 response:
   wrapper:
     status: String

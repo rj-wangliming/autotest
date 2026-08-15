@@ -27,6 +27,11 @@ request:
       required: true
       constraint: 每页条数上限
       description: pageQueryRequest.getLimit()
+    searchKeyword:
+      type: String
+      required: false
+      constraint: '@Nullable'
+      description: 搜索关键字（模糊搜索）
     matchArr:
       type: Match[]
       required: false
@@ -37,6 +42,21 @@ request:
       required: false
       constraint: 排序条件
       description: 框架透传
+    exactMatchArr:
+      type: ExactMatch[]
+      required: false
+      constraint: 可选（旧格式，name+valueArr）
+      description: 精确匹配条件数组（真实请求与 matchArr 并行携带，如 strategyType=VDI）
+    needForceRefresh:
+      type: Boolean
+      required: false
+      constraint: '@Nullable，默认 true（样例值）'
+      description: 是否强制刷新
+    isAutomaticRefresh:
+      type: Boolean
+      required: false
+      constraint: '@Nullable，默认 false（样例值）'
+      description: 是否自动刷新
 response:
   wrapper:
     status: String
