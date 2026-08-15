@@ -45,7 +45,7 @@ setup:
         valueArr:
         - ${param.teacher_image_name}
         matchRule: EQ
-- name: get_strategy
+- name: get_vdi_strategy
   api: POST /space/strategygroup/vdi/list
   extract:
     deskStrategyId: $.content.itemArr[0].id
@@ -102,7 +102,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 课程云桌面策略Id
-      value: ${prev.get_strategy.output.deskStrategyId}
+      value: ${prev.get_vdi_strategy.output.deskStrategyId}
     clusterId:
       type: UUID
       required: true

@@ -31,7 +31,7 @@ setup:
   request:
     body:
       searchKeyword: ${param.classroom_name}
-- name: get_strategy
+- name: get_vdi_strategy
   api: POST /space/strategygroup/vdi/list
   extract:
     strategyId: $.content.itemArr[0].id
@@ -122,7 +122,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 云桌面策略ID；ID 来自前置步骤 setup 产出（${prev.*}）
-      value: ${prev.get_strategy.output.strategyId}
+      value: ${prev.get_vdi_strategy.output.strategyId}
     networkId:
       type: UUID
       required: true

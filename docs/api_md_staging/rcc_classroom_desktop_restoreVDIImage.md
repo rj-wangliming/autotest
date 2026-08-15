@@ -24,9 +24,9 @@ setup:
   delete_api: /rcc/classroom/delete
   delete_param: classroomId
 - name: query_classroom
-  api: POST /rcc/classroom/terminal/list
+  api: POST /rcc/classroom/select
   extract:
-    classroomId: $.content.itemArr[0].classroomId
+    classroomId: $.content[0].classroomId
   purpose: 查询教室列表获取classroomId（ViewClassroomInfoEntity.classroomId）；按教室名精确过滤查询教室列表（matchArr.fieldName=classroomName），取 classroomId
   request:
     body:
