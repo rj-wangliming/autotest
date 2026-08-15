@@ -221,6 +221,51 @@ request:
       type: String
       required: false
       example: QXL
+    vgpuExtraInfo:
+      type: Object
+      required: false
+      constraint: '@Nullable'
+      description: vGPU 配置信息（model/parentGpuModel/vgpuModelType/memory/graphicsMemorySize）
+    deskCreateMode:
+      type: String
+      required: false
+      constraint: '@Nullable'
+      description: 云桌面创建方式（LINK_CLONE/FULL_CLONE/OTHER）
+    haPriority:
+      type: Integer
+      required: false
+      constraint: '@Nullable @Range(0,10)'
+      description: 配置HA优先级（VDI生效）
+    shutDownDeleteSystemDisk:
+      type: Boolean
+      required: false
+      constraint: '@Nullable'
+      description: VDI还原类型桌面关机后是否删除系统盘
+    state:
+      type: SpaceStrategyGroupState
+      required: false
+      constraint: '@Nullable'
+      description: 策略状态
+    deskPersonalConfigStrategyType:
+      type: CbbDeskPersonalConfigStrategyType
+      required: false
+      constraint: '@Nullable'
+      description: 浮动个性配置类型
+    personalConfigDiskSize:
+      type: Integer
+      required: false
+      constraint: '@Nullable @Range(1,2048)'
+      description: 浮动个性盘大小
+    studentAccountPreName:
+      type: String
+      required: false
+      constraint: '@Nullable @Size(1,15)'
+      description: 学生端账号前缀（归属space）
+    studentAccountPassword:
+      type: String
+      required: false
+      constraint: '@Nullable'
+      description: 学生端密码（归属space）
     enableStudentAccount:
       type: Boolean
       required: false

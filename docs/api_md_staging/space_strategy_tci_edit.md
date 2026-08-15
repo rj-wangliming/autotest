@@ -112,6 +112,16 @@ request:
       required: true
       constraint: '@NotNull'
       description: 联网
+    desktopOccupyDriveArr:
+      type: String[]
+      required: false
+      constraint: '@Nullable'
+      description: 第三方应用盘符数组
+    state:
+      type: SpaceStrategyGroupState
+      required: false
+      constraint: '@Nullable'
+      description: 策略状态
 response:
   wrapper:
     status: String

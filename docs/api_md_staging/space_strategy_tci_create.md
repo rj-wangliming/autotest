@@ -104,6 +104,16 @@ request:
       constraint: '@NotNull'
       description: 是否联网
       value: 'true'
+    desktopOccupyDriveArr:
+      type: String[]
+      required: false
+      constraint: '@Nullable'
+      description: 第三方应用盘符数组
+    state:
+      type: SpaceStrategyGroupState
+      required: false
+      constraint: '@Nullable'
+      description: 策略状态
     enableDiskConfig:
       type: Boolean
       required: true
