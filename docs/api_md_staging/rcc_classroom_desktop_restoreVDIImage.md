@@ -255,6 +255,15 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: computer_name
+  - name: desktopNameStartNum
+    desc: ''
+    used_by: 见 setup/request
+  - name: desktopPreName
+    desc: ''
+    used_by: 见 setup/request
+  - name: seatNum
+    desc: ''
+    used_by: 见 setup/request
     desc: ''
     used_by: setup/request
 ---

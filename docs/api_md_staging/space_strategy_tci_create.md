@@ -281,6 +281,9 @@ idempotency:
 params:
   required:
   - name: strategy_name
+  - name: systemSize
+    desc: ''
+    used_by: 见 setup/request
     desc: ''
     used_by: 见 setup/request
 ---

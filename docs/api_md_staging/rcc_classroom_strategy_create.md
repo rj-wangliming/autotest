@@ -10,6 +10,11 @@ api:
   exec_mode: 同步
   async: false
   description: 创建教室策略：注入 creatorUserName 后调 classroomStrategyAPI.createClassroomStrategy（内部执行 ClassroomStrategyRequest.validate 校验），成功记录创建审计日志并返回成功消息；失败记录失败审计日志并返回失败响应。
+params:
+  required:
+  - name: classroom_strategy_name
+    desc: ''
+    used_by: 见 setup/request
 setup:
 - name: login
   api: POST /rco/admin/loginAdmin

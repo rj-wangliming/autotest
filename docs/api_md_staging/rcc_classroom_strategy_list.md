@@ -10,6 +10,11 @@ api:
   exec_mode: 同步分页查询（PageQuery）
   async: false
   description: 分页获取教室策略列表。调 classroomStrategyAPI.getClassroomStrategyList(pageQueryRequest) 返回 PageQueryResponse<ViewClassroomStrategyDTO>。
+params:
+  required:
+  - name: classroom_strategy_name
+    desc: ''
+    used_by: 见 setup/request
 setup:
 - name: login
   api: POST /rco/admin/loginAdmin

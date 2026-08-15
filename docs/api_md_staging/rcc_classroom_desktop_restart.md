@@ -195,6 +195,15 @@ params:
     desc: ''
     used_by: setup（分配学生镜像按名精确过滤）
   - name: student_start_ip
+  - name: desktopNameStartNum
+    desc: ''
+    used_by: 见 setup/request
+  - name: desktopPreName
+    desc: ''
+    used_by: 见 setup/request
+  - name: seatNum
+    desc: ''
+    used_by: 见 setup/request
     desc: ''
     used_by: setup（分配学生镜像 desktopStartIp）
 ---

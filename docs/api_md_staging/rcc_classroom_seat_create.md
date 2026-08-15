@@ -180,6 +180,9 @@ idempotency:
 params:
   required:
   - name: classroom_name
+  - name: desktopName
+    desc: ''
+    used_by: 见 setup/request
     desc: ''
     used_by: 见 setup/request
 ---

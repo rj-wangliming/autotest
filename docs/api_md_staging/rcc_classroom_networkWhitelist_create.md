@@ -110,6 +110,12 @@ idempotency:
 params:
   required:
   - name: classroom_name
+  - name: endIp
+    desc: ''
+    used_by: 见 setup/request
+  - name: startIp
+    desc: ''
+    used_by: 见 setup/request
     desc: ''
     used_by: 见 setup/request
 ---

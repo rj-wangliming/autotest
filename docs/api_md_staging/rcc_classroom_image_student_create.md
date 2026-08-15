@@ -253,6 +253,9 @@ params:
     desc: ''
     used_by: setup/request
   - name: classroom_strategy_name
+  - name: student_start_ip
+    desc: ''
+    used_by: 见 setup/request
     desc: ''
     used_by: setup/request
 ---

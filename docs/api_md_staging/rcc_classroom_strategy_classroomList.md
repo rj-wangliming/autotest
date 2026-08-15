@@ -10,6 +10,11 @@ api:
   exec_mode: 同步分页查询（PageSearch + 数据权限过滤）
   async: false
   description: 查询教室策略关联的教室列表。将 PageWebRequest 包装为 PageSearchRequest；管理员拥有全部终端组权限时直接 findClassroomList(空权限过滤)；否则查询可见终端组ID列表，无任何权限返回空页，有权限则作为权限过滤传入 findClassroomList。返回 DefaultPageResponse<ClassroomStrategyUsedByClass
+params:
+  required:
+  - name: classroom_strategy_name
+    desc: ''
+    used_by: 见 setup/request
 setup:
 - name: login
   api: POST /rco/admin/loginAdmin

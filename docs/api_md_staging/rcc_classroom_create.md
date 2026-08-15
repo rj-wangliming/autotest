@@ -231,6 +231,24 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: classroom_strategy_name
+  - name: desktopNameStartNum
+    desc: ''
+    used_by: 见 setup/request
+  - name: desktopPreName
+    desc: ''
+    used_by: 见 setup/request
+  - name: studentEndIp
+    desc: ''
+    used_by: 见 setup/request
+  - name: studentStartIp
+    desc: ''
+    used_by: 见 setup/request
+  - name: teacherIp
+    desc: ''
+    used_by: 见 setup/request
+  - name: teacher_mode
+    desc: ''
+    used_by: 见 setup/request
     desc: ''
     used_by: setup/request
 ---
