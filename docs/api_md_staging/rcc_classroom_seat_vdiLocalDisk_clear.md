@@ -39,6 +39,18 @@ setup:
 - name: create_seat
   api: POST /rcc/classroom/seat/batchCreate
   purpose: 批量创建座位（异步批处理任务）
+  request:
+    body:
+      classroomId:
+        value: ${prev.query_classroom.output.classroomId}
+      desktopPreName:
+        value: ${param.desktopPreName}
+      desktopNameStartNum:
+        value: ${param.desktopNameStartNum}
+      seatNum:
+        value: ${param.seatNum}
+      studentModeArr:
+        value: [VDI]
   idempotent: recreate
   delete_api: /rcc/classroom/seat/delete
   delete_param: seatIdArr
