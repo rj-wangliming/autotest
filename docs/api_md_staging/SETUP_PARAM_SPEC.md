@@ -88,9 +88,11 @@
       teaTerminal: true
       searchKeyword: ${param.student_image_name}   # 按名称过滤
       matchArr:                                     # 精确匹配（若接口支持）
-        - fieldName: imageName
-          matchType: EQUAL
-          value: ${param.student_image_name}
+        - type: EXACT
+          fieldName: imageName
+          valueArr:
+          - ${param.student_image_name}
+          matchRule: EQ
   extract:
     imageId: $.content.itemArr[0].id               # 过滤后取第一个（名称唯一）
   assert:
