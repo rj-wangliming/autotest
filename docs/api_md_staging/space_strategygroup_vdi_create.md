@@ -692,7 +692,7 @@ graph LR
 
 | 项目 | 内容 |
 |---|---|
-| URL | POST /space/strategygroup/vdi/create |
+| URL | /space/strategygroup/vdi/create |
 | Controller | SpaceDeskStrategyGroupVDIController.java |
 | 方法名 | create |
 | 权限注解 | @EnableAuthority |
