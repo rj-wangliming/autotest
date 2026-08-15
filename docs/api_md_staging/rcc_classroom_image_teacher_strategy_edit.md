@@ -67,9 +67,11 @@ setup:
   request:
     body:
       matchArr:
-      - fieldName: clusterName
-        matchType: LIKE
+      - type: FUZZY
+        fieldNameArr:
+        - clusterName
         value: ${param.cluster_name}
+        matchRule: LIKE
 request:
   dto: UpdateImageStrategyWebRequest
   body:

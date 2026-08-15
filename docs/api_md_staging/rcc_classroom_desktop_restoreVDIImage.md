@@ -73,9 +73,11 @@ setup:
   request:
     body:
       matchArr:
-      - fieldName: computerName
-        matchType: LIKE
+      - type: FUZZY
+        fieldNameArr:
+        - computerName
         value: ${param.computer_name}
+        matchRule: LIKE
 request:
   dto: RccRestoreVDIImageWebRequest
   body:

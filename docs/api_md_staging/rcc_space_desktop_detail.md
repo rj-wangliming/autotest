@@ -23,9 +23,11 @@ setup:
     body:
       searchKeyword: ${param.desktop_name}
       matchArr:
-      - fieldName: desktopName
-        matchType: LIKE
+      - type: FUZZY
+        fieldNameArr:
+        - desktopName
         value: ${param.desktop_name}
+        matchRule: LIKE
 request:
   dto: IdWebRequest
   body:

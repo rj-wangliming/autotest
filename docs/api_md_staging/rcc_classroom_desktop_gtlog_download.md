@@ -62,9 +62,11 @@ setup:
   request:
     body:
       matchArr:
-      - fieldName: computerName
-        matchType: LIKE
+      - type: FUZZY
+        fieldNameArr:
+        - computerName
         value: ${param.computer_name}
+        matchRule: LIKE
 request:
   dto: DownloadGtLogWebRequest (GET 查询参数)
   body:

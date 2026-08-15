@@ -39,9 +39,11 @@ setup:
   request:
     body:
       matchArr:
-      - fieldName: startIp
-        matchType: LIKE
+      - type: FUZZY
+        fieldNameArr:
+        - startIp
         value: ${param.start_ip}
+        matchRule: LIKE
 request:
   dto: EditNetworkWhiteListRequest
   body:
