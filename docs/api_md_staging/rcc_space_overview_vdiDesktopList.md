@@ -47,6 +47,11 @@ request:
       required: false
       constraint: '@Nullable'
       description: 精确匹配条件
+    noPermission:
+      type: Boolean
+      required: false
+      constraint: '@Nullable'
+      description: 是否不需要权限
     customData:
       type: String
       required: false
