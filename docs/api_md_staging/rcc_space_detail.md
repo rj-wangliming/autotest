@@ -44,27 +44,193 @@ response:
     msgArgArr: String[]
     content: Object
   body:
-    spaceId/spaceName/classroomId/classroomName:
-      type: UUID/String
-      description: 空间及所属教室信息
-    rccSpaceImageDTOList:
-      type: List<RccSpaceImageDTO>
-      description: 空间绑定的镜像列表
-    enableAllowMaxUseTime/allowMaxUseTime/beforeRecycleNotifyTime:
-      type: Boolean/Integer
-      description: 单次允许接入最大时间配置
-    enableAllowUseTimeInfo/allowUseTimeInfoArr:
-      type: Boolean/RccAllowUseTimeInfoDTO
-      description: 云桌面允许登录时间配置
-    poolState/desktopNum/preStartDesktopNum/idleDesktopRecover:
-      type: 枚举/Integer
-      description: 桌面池状态与数量配置
-    running/free/close/fault/bindUserNum/desktopAssignedNum/connectedNum:
+    allowMaxUseTime:
       type: Integer
-      description: 桌面运行/空闲/关机/报障/绑定用户/已分配/连接数统计
+      description: allowMaxUseTime（源码 RccSpaceDetailDTO）
+    allowUseTimeInfoArr:
+      type: RccAllowUseTimeInfoDTO
+      description: allowUseTimeInfoArr（源码 RccSpaceDetailDTO）
+    beforeRecycleNotifyTime:
+      type: Integer
+      description: beforeRecycleNotifyTime（源码 RccSpaceDetailDTO）
+    bindUserNum:
+      type: Integer
+      description: bindUserNum（源码 RccSpaceDetailDTO）
+    businessType:
+      type: BusinessType
+      description: businessType（源码 RccSpaceDetailDTO）
+    canUsed:
+      type: Boolean
+      description: canUsed（源码 RccSpaceDetailDTO）
+    canUsedMessage:
+      type: String
+      description: canUsedMessage（源码 RccSpaceDetailDTO）
+    classroomId:
+      type: UUID
+      description: classroomId（源码 RccSpaceDetailDTO）
+    classroomName:
+      type: String
+      description: classroomName（源码 RccSpaceDetailDTO）
+    close:
+      type: Integer
+      description: close（源码 RccSpaceDetailDTO）
+    clusterId:
+      type: UUID
+      description: clusterId（源码 RccSpaceDetailDTO）
+    clusterInfo:
+      type: ClusterInfoDTO
+      description: clusterInfo（源码 RccSpaceDetailDTO）
+    conflictDeskNum:
+      type: Integer
+      description: conflictDeskNum（源码 RccSpaceDetailDTO）
+    connectedNum:
+      type: Integer
+      description: connectedNum（源码 RccSpaceDetailDTO）
+    cpu:
+      type: Integer
+      description: cpu（源码 RccSpaceDetailDTO）
+    createSource:
+      type: CreateSource
+      description: createSource（源码 RccSpaceDetailDTO）
+    description:
+      type: String
+      description: description（源码 RccSpaceDetailDTO）
+    deskCreateMode:
+      type: DeskCreateMode
+      description: deskCreateMode（源码 RccSpaceDetailDTO）
+    desktopAssignedNum:
+      type: Integer
+      description: desktopAssignedNum（源码 RccSpaceDetailDTO）
+    desktopNamePrefix:
+      type: String
+      description: desktopNamePrefix（源码 RccSpaceDetailDTO）
+    desktopNum:
+      type: Integer
+      description: desktopNum（源码 RccSpaceDetailDTO）
+    desktopPoolCreateTime:
+      type: Date
+      description: desktopPoolCreateTime（源码 RccSpaceDetailDTO）
+    desktopPoolUpdateTime:
+      type: Date
+      description: desktopPoolUpdateTime（源码 RccSpaceDetailDTO）
+    desktopType:
+      type: CbbCloudDeskPattern
+      description: desktopType（源码 RccSpaceDetailDTO）
+    enableAllowMaxUseTime:
+      type: Boolean
+      description: enableAllowMaxUseTime（源码 RccSpaceDetailDTO）
+    enableAllowUseTimeInfo:
+      type: Boolean
+      description: enableAllowUseTimeInfo（源码 RccSpaceDetailDTO）
+    enableMultipleVersion:
+      type: Boolean
+      description: enableMultipleVersion（源码 RccSpaceDetailDTO）
     enableSpecifiedIpRange:
       type: Boolean
-      description: 是否开启指定终端IP访问
+      description: enableSpecifiedIpRange（源码 RccSpaceDetailDTO）
+    fault:
+      type: Integer
+      description: fault（源码 RccSpaceDetailDTO）
+    free:
+      type: Integer
+      description: free（源码 RccSpaceDetailDTO）
+    idleDesktopRecover:
+      type: Integer
+      description: idleDesktopRecover（源码 RccSpaceDetailDTO）
+    imageRoleType:
+      type: ImageRoleType
+      description: imageRoleType（源码 RccSpaceDetailDTO）
+    imageTemplateId:
+      type: UUID
+      description: imageTemplateId（源码 RccSpaceDetailDTO）
+    imageTemplateName:
+      type: String
+      description: imageTemplateName（源码 RccSpaceDetailDTO）
+    isOpenMaintenance:
+      type: Boolean
+      description: isOpenMaintenance（源码 RccSpaceDetailDTO）
+    memory:
+      type: Double
+      description: memory（源码 RccSpaceDetailDTO）
+    networkId:
+      type: UUID
+      description: networkId（源码 RccSpaceDetailDTO）
+    networkName:
+      type: String
+      description: networkName（源码 RccSpaceDetailDTO）
+    osType:
+      type: CbbOsType
+      description: osType（源码 RccSpaceDetailDTO）
+    platformId:
+      type: UUID
+      description: platformId（源码 RccSpaceDetailDTO）
+    platformName:
+      type: String
+      description: platformName（源码 RccSpaceDetailDTO）
+    platformStatus:
+      type: CloudPlatformStatus
+      description: platformStatus（源码 RccSpaceDetailDTO）
+    platformType:
+      type: CloudPlatformType
+      description: platformType（源码 RccSpaceDetailDTO）
+    poolState:
+      type: CbbDesktopPoolState
+      description: poolState（源码 RccSpaceDetailDTO）
+    preStartDesktopNum:
+      type: Integer
+      description: preStartDesktopNum（源码 RccSpaceDetailDTO）
+    rccSpaceImageDTOList:
+      type: List<RccSpaceImageDTO>
+      description: rccSpaceImageDTOList（源码 RccSpaceDetailDTO）
+    rootImageId:
+      type: UUID
+      description: rootImageId（源码 RccSpaceDetailDTO）
+    rootImageName:
+      type: String
+      description: rootImageName（源码 RccSpaceDetailDTO）
+    running:
+      type: Integer
+      description: running（源码 RccSpaceDetailDTO）
+    softwareStrategyId:
+      type: UUID
+      description: softwareStrategyId（源码 RccSpaceDetailDTO）
+    softwareStrategyName:
+      type: String
+      description: softwareStrategyName（源码 RccSpaceDetailDTO）
+    spaceCreateTime:
+      type: Date
+      description: spaceCreateTime（源码 RccSpaceDetailDTO）
+    spaceId:
+      type: UUID
+      description: spaceId（源码 RccSpaceDetailDTO）
+    spaceName:
+      type: String
+      description: spaceName（源码 RccSpaceDetailDTO）
+    spaceUpdateTime:
+      type: Date
+      description: spaceUpdateTime（源码 RccSpaceDetailDTO）
+    storagePool:
+      type: StoragePoolDetailDTO
+      description: storagePool（源码 RccSpaceDetailDTO）
+    storagePoolId:
+      type: UUID
+      description: storagePoolId（源码 RccSpaceDetailDTO）
+    strategyId:
+      type: UUID
+      description: strategyId（源码 RccSpaceDetailDTO）
+    strategyName:
+      type: String
+      description: strategyName（源码 RccSpaceDetailDTO）
+    systemDisk:
+      type: Integer
+      description: systemDisk（源码 RccSpaceDetailDTO）
+    userProfileStrategyId:
+      type: UUID
+      description: userProfileStrategyId（源码 RccSpaceDetailDTO）
+    userProfileStrategyName:
+      type: String
+      description: userProfileStrategyName（源码 RccSpaceDetailDTO）
+
 upstream:
 - api: POST /rcc/space/list
   produces: $.content.id

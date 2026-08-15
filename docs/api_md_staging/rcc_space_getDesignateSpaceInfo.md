@@ -31,9 +31,187 @@ response:
     msgArgArr: String[]
     content: Object
   body:
-    itemArr/list:
-      type: List<RccSpaceInfoDTO>
-      description: 空间列表，每条含 id/spaceId/spaceName/classroomId/desktopPoolId/desk
+    content:
+      type: RccSpaceInfoDTO[]
+      description: 指定业务类型的空间列表（元素字段见下）
+    allowMaxUseTime::
+      type: Integer
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.allowMaxUseTime）
+    allowUseTimeInfo::
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.allowUseTimeInfo）
+    allowUseTimeInfoDTOArr::
+      type: RccAllowUseTimeInfoDTO[]
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.allowUseTimeInfoDTOArr）
+    beforeRecycleNotifyTime::
+      type: Integer
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.beforeRecycleNotifyTime）
+    businessType::
+      type: BusinessType
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.businessType）
+    canUsed::
+      type: Boolean
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.canUsed）
+    canUsedMessage::
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.canUsedMessage）
+    classroomId::
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.classroomId）
+    classroomName::
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.classroomName）
+    clusterId::
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.clusterId）
+    clusterInfo::
+      type: ClusterInfoDTO
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.clusterInfo）
+    conflictDeskNum::
+      type: Integer
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.conflictDeskNum）
+    connectedNum::
+      type: Integer
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.connectedNum）
+    cpu::
+      type: Integer
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.cpu）
+    createSource::
+      type: CreateSource
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.createSource）
+    description::
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.description）
+    deskCreateMode::
+      type: DeskCreateMode
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.deskCreateMode）
+    desktopNum::
+      type: Integer
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.desktopNum）
+    desktopPoolCreateTime::
+      type: Date
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.desktopPoolCreateTime）
+    desktopPoolId::
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.desktopPoolId）
+    desktopPoolName::
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.desktopPoolName）
+    desktopPoolNamePrefix::
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.desktopPoolNamePrefix）
+    desktopPoolUpdateTime::
+      type: Date
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.desktopPoolUpdateTime）
+    desktopType::
+      type: CbbCloudDeskPattern
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.desktopType）
+    enableAllowMaxUseTime::
+      type: Boolean
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.enableAllowMaxUseTime）
+    enableAllowUseTimeInfo::
+      type: Boolean
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.enableAllowUseTimeInfo）
+    enableSpecifiedIpRange::
+      type: Boolean
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.enableSpecifiedIpRange）
+    id::
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.id）
+    idleDesktopRecover::
+      type: Integer
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.idleDesktopRecover）
+    imageTemplateId::
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.imageTemplateId）
+    imageTemplateName::
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.imageTemplateName）
+    isOpenMaintenance::
+      type: Boolean
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.isOpenMaintenance）
+    memory::
+      type: Double
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.memory）
+    name::
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.name）
+    networkId::
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.networkId）
+    networkName::
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.networkName）
+    osType::
+      type: CbbOsType
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.osType）
+    platformId::
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.platformId）
+    platformName::
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.platformName）
+    platformStatus::
+      type: CloudPlatformStatus
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.platformStatus）
+    platformType::
+      type: CloudPlatformType
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.platformType）
+    poolModel::
+      type: CbbDesktopPoolModel
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.poolModel）
+    poolState::
+      type: CbbDesktopPoolState
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.poolState）
+    preStartDesktopNum::
+      type: Integer
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.preStartDesktopNum）
+    rootImageId::
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.rootImageId）
+    rootImageName::
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.rootImageName）
+    softwareStrategyId::
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.softwareStrategyId）
+    softwareStrategyName::
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.softwareStrategyName）
+    spaceCreateTime::
+      type: Date
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.spaceCreateTime）
+    spaceId::
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.spaceId）
+    spaceName::
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.spaceName）
+    spaceUpdateTime::
+      type: Date
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.spaceUpdateTime）
+    storagePool::
+      type: StoragePoolDetailDTO
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.storagePool）
+    storagePoolId::
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.storagePoolId）
+    strategyId::
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.strategyId）
+    strategyName::
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.strategyName）
+    systemDisk::
+      type: Integer
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.systemDisk）
+    userProfileStrategyId::
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.userProfileStrategyId）
+    userProfileStrategyName::
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.userProfileStrategyName）
+
 upstream:
 - api: 内部调用:rcc/RccSpaceAPI
   purpose: RCC_CLASSROOM 时查询全部教学实训空间

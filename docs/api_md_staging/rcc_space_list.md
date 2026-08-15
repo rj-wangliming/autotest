@@ -67,187 +67,188 @@ response:
   body:
     itemArr:
       type: RccSpaceInfoDTO[]
-      description: 实训空间分页记录（位于 content 下：$.content.itemArr）
+      description: 空间列表（元素字段见下）
     total:
       type: Integer
-      description: 符合条件的总记录数（$.content.total）
-    itemArr[]_id:
-      type: UUID
-      description: 桌面池ID
-    itemArr[]_name:
-      type: String
-      description: 名称
-    itemArr[]_spaceId:
-      type: UUID
-      description: 实训空间ID
-    itemArr[]_spaceName:
-      type: String
-      description: 实训空间名称
-    itemArr[]_classroomId:
-      type: UUID
-      description: 绑定的教室ID
-    itemArr[]_enableAllowMaxUseTime:
-      type: Boolean
-      description: 是否开启单次最大访问时长
+      description: 总条数
     itemArr[]_allowMaxUseTime:
       type: Integer
-      description: 单次最大访问时长（分钟）
-    itemArr[]_beforeRecycleNotifyTime:
-      type: Integer
-      description: 断开连接前提示时间
-    itemArr[]_enableAllowUseTimeInfo:
-      type: Boolean
-      description: 是否开启登录时间限制
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.allowMaxUseTime）
     itemArr[]_allowUseTimeInfo:
       type: String
-      description: 允许登录时间限制说明
-    itemArr[]_spaceCreateTime:
-      type: Date
-      description: 空间创建时间
-    itemArr[]_spaceUpdateTime:
-      type: Date
-      description: 空间更新时间
-    itemArr[]_desktopPoolId:
-      type: UUID
-      description: 桌面池ID
-    itemArr[]_desktopPoolName:
-      type: String
-      description: 桌面池名称
-    itemArr[]_desktopPoolNamePrefix:
-      type: String
-      description: 桌面池名称前缀
-    itemArr[]_poolModel:
-      type: CbbDesktopPoolModel
-      description: 桌面池模式
-    itemArr[]_idleDesktopRecover:
-      type: Integer
-      description: 空闲桌面回收时间
-    itemArr[]_description:
-      type: String
-      description: 描述
-    itemArr[]_strategyId:
-      type: UUID
-      description: 策略ID
-    itemArr[]_networkId:
-      type: UUID
-      description: 网络ID
-    itemArr[]_poolState:
-      type: CbbDesktopPoolState
-      description: 桌面池状态
-    itemArr[]_preStartDesktopNum:
-      type: Integer
-      description: 预启动桌面数
-    itemArr[]_isOpenMaintenance:
-      type: Boolean
-      description: 是否开启维护模式
-    itemArr[]_desktopPoolCreateTime:
-      type: Date
-      description: 桌面池创建时间
-    itemArr[]_desktopPoolUpdateTime:
-      type: Date
-      description: 桌面池更新时间
-    itemArr[]_softwareStrategyId:
-      type: UUID
-      description: 软件策略ID
-    itemArr[]_userProfileStrategyId:
-      type: UUID
-      description: 用户配置策略ID
-    itemArr[]_clusterId:
-      type: UUID
-      description: 计算集群ID
-    itemArr[]_platformId:
-      type: UUID
-      description: 云平台ID
-    itemArr[]_storagePoolId:
-      type: UUID
-      description: 存储池ID
-    itemArr[]_businessType:
-      type: BusinessType
-      description: 业务类型
-    itemArr[]_createSource:
-      type: CreateSource
-      description: 创建来源
-    itemArr[]_enableSpecifiedIpRange:
-      type: Boolean
-      description: 是否开启指定终端IP访问
-    itemArr[]_canUsed:
-      type: Boolean
-      description: 是否可用
-    itemArr[]_canUsedMessage:
-      type: String
-      description: 不可用原因
-    itemArr[]_conflictDeskNum:
-      type: Integer
-      description: 冲突桌面数
-    itemArr[]_clusterInfo:
-      type: ClusterInfoDTO
-      description: 集群信息
-    itemArr[]_storagePool:
-      type: StoragePoolDetailDTO
-      description: 存储池信息
-    itemArr[]_classroomName:
-      type: String
-      description: 教室名称
-    itemArr[]_strategyName:
-      type: String
-      description: 策略名称
-    itemArr[]_desktopType:
-      type: CbbCloudDeskPattern
-      description: 桌面类型
-    itemArr[]_memory:
-      type: Double
-      description: 内存（GB）
-    itemArr[]_cpu:
-      type: Integer
-      description: CPU核数
-    itemArr[]_systemDisk:
-      type: Integer
-      description: 系统盘大小（GB）
-    itemArr[]_deskCreateMode:
-      type: DeskCreateMode
-      description: 桌面创建模式
-    itemArr[]_networkName:
-      type: String
-      description: 网络名称
-    itemArr[]_imageTemplateId:
-      type: UUID
-      description: 镜像模板ID
-    itemArr[]_imageTemplateName:
-      type: String
-      description: 镜像模板名称
-    itemArr[]_rootImageId:
-      type: UUID
-      description: 根镜像ID
-    itemArr[]_rootImageName:
-      type: String
-      description: 根镜像名称
-    itemArr[]_osType:
-      type: CbbOsType
-      description: 操作系统类型
-    itemArr[]_desktopNum:
-      type: Integer
-      description: 桌面总数
-    itemArr[]_softwareStrategyName:
-      type: String
-      description: 软件策略名称
-    itemArr[]_userProfileStrategyName:
-      type: String
-      description: 用户配置策略名称
-    itemArr[]_connectedNum:
-      type: Integer
-      description: 已连接桌面数
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.allowUseTimeInfo）
     itemArr[]_allowUseTimeInfoDTOArr:
       type: RccAllowUseTimeInfoDTO[]
-      description: 允许登录时间范围数组
-    itemArr[]_platformType:
-      type: CloudPlatformType
-      description: 云平台类型（父类）
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.allowUseTimeInfoDTOArr）
+    itemArr[]_beforeRecycleNotifyTime:
+      type: Integer
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.beforeRecycleNotifyTime）
+    itemArr[]_businessType:
+      type: BusinessType
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.businessType）
+    itemArr[]_canUsed:
+      type: Boolean
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.canUsed）
+    itemArr[]_canUsedMessage:
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.canUsedMessage）
+    itemArr[]_classroomId:
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.classroomId）
+    itemArr[]_classroomName:
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.classroomName）
+    itemArr[]_clusterId:
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.clusterId）
+    itemArr[]_clusterInfo:
+      type: ClusterInfoDTO
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.clusterInfo）
+    itemArr[]_conflictDeskNum:
+      type: Integer
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.conflictDeskNum）
+    itemArr[]_connectedNum:
+      type: Integer
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.connectedNum）
+    itemArr[]_cpu:
+      type: Integer
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.cpu）
+    itemArr[]_createSource:
+      type: CreateSource
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.createSource）
+    itemArr[]_description:
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.description）
+    itemArr[]_deskCreateMode:
+      type: DeskCreateMode
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.deskCreateMode）
+    itemArr[]_desktopNum:
+      type: Integer
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.desktopNum）
+    itemArr[]_desktopPoolCreateTime:
+      type: Date
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.desktopPoolCreateTime）
+    itemArr[]_desktopPoolId:
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.desktopPoolId）
+    itemArr[]_desktopPoolName:
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.desktopPoolName）
+    itemArr[]_desktopPoolNamePrefix:
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.desktopPoolNamePrefix）
+    itemArr[]_desktopPoolUpdateTime:
+      type: Date
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.desktopPoolUpdateTime）
+    itemArr[]_desktopType:
+      type: CbbCloudDeskPattern
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.desktopType）
+    itemArr[]_enableAllowMaxUseTime:
+      type: Boolean
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.enableAllowMaxUseTime）
+    itemArr[]_enableAllowUseTimeInfo:
+      type: Boolean
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.enableAllowUseTimeInfo）
+    itemArr[]_enableSpecifiedIpRange:
+      type: Boolean
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.enableSpecifiedIpRange）
+    itemArr[]_id:
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.id）
+    itemArr[]_idleDesktopRecover:
+      type: Integer
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.idleDesktopRecover）
+    itemArr[]_imageTemplateId:
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.imageTemplateId）
+    itemArr[]_imageTemplateName:
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.imageTemplateName）
+    itemArr[]_isOpenMaintenance:
+      type: Boolean
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.isOpenMaintenance）
+    itemArr[]_memory:
+      type: Double
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.memory）
+    itemArr[]_name:
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.name）
+    itemArr[]_networkId:
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.networkId）
+    itemArr[]_networkName:
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.networkName）
+    itemArr[]_osType:
+      type: CbbOsType
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.osType）
+    itemArr[]_platformId:
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.platformId）
     itemArr[]_platformName:
       type: String
-      description: 云平台名称（父类）
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.platformName）
     itemArr[]_platformStatus:
       type: CloudPlatformStatus
-      description: 云平台状态（父类）
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.platformStatus）
+    itemArr[]_platformType:
+      type: CloudPlatformType
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.platformType）
+    itemArr[]_poolModel:
+      type: CbbDesktopPoolModel
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.poolModel）
+    itemArr[]_poolState:
+      type: CbbDesktopPoolState
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.poolState）
+    itemArr[]_preStartDesktopNum:
+      type: Integer
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.preStartDesktopNum）
+    itemArr[]_rootImageId:
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.rootImageId）
+    itemArr[]_rootImageName:
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.rootImageName）
+    itemArr[]_softwareStrategyId:
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.softwareStrategyId）
+    itemArr[]_softwareStrategyName:
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.softwareStrategyName）
+    itemArr[]_spaceCreateTime:
+      type: Date
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.spaceCreateTime）
+    itemArr[]_spaceId:
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.spaceId）
+    itemArr[]_spaceName:
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.spaceName）
+    itemArr[]_spaceUpdateTime:
+      type: Date
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.spaceUpdateTime）
+    itemArr[]_storagePool:
+      type: StoragePoolDetailDTO
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.storagePool）
+    itemArr[]_storagePoolId:
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.storagePoolId）
+    itemArr[]_strategyId:
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.strategyId）
+    itemArr[]_strategyName:
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.strategyName）
+    itemArr[]_systemDisk:
+      type: Integer
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.systemDisk）
+    itemArr[]_userProfileStrategyId:
+      type: UUID
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.userProfileStrategyId）
+    itemArr[]_userProfileStrategyName:
+      type: String
+      description: 空间列表元素字段（源码 RccSpaceInfoDTO.userProfileStrategyName）
+
 upstream:
 - api: 内部调用:pa/PlatformAdminDataPermissionAPI
   purpose: 非超管管理员获取终端组数据权限ID列表

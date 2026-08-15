@@ -96,6 +96,9 @@ response:
       type: Integer
       description: 数据盘大小 GB
     canUsed:
+    canUsedMessage:
+    createTime:
+    version:
       type: Boolean
       description: 是否可用（state='AVAILABLE'）
     deskStrategyState:

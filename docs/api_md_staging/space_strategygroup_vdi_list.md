@@ -80,7 +80,13 @@ response:
     desktopType:
       type: CbbCloudDeskPattern
       description: 桌面类型
-    systemDisk/cpu/memory:
+    systemDisk:
+    cpu:
+    memory:
+    deskStrategyId:
+    creatorUserName:
+    createTime:
+    version:
       type: Integer
       description: 系统盘/CPU/内存
     deskCreateMode:
