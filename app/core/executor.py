@@ -346,9 +346,11 @@ class Executor:
                 self._collect_param_refs(v, refs)
 
     def _batch_size(self, step, ctx):
-        """扫描 step body 的 ${param.xxx} 引用，返回最长列表长度（0=无批量）"""
+        """扫描 step body 及 reuse_query body 的 ${param.xxx} 引用，返回最长列表长度（0=无批量）"""
         refs = set()
         self._collect_param_refs(step.get("body", {}), refs)
+        rq = step.get("reuse_query") or {}
+        self._collect_param_refs(rq.get("body", {}), refs)
         sizes = [len(ctx["params"][r]) for r in refs
                  if r in ctx.get("params", {}) and isinstance(ctx["params"][r], list)]
         return max(sizes) if sizes else 0
@@ -377,7 +379,7 @@ class Executor:
                 self.log("step", "[Step%d] %s %s" % (i, step.get("name", ""), step.get("api", "")))
                 st = time.time()
                 bs = self._batch_size(step, ctx)
-                if bs > 1:
+                if bs > 0:
                     self.log("info", "[batch] 参数含列表，展开 %d 次" % bs)
                     last = None
                     for bi in range(bs):
