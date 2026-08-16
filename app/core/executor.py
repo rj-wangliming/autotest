@@ -401,28 +401,55 @@ class Executor:
         return "skip"
 
     def _poll_classroom_delete(self, task_id, ctx):
-        """轮询教室删除批任务至终态"""
-        path = "/common/getMsgctDetailInfo"
-        interval = 3
-        timeout = 30  # 缩短到 30 秒
-        ok_states = ["SUCCESS"]
-        fail_states = ["FAILURE", "CANCELED"]
+        """轮询教室删除异步任务至终态。
+
+        参考 pytest 测试框架的 common_get_msgct_detail_info：
+        1. 先调 CDC 接口 /msgct/detail（msgType=BATCH_MSG）
+        2. 若返回"任务消息不存在"，自动切换 IAC 接口 /gss/iac/admin/msgct/detail
+        """
+        interval = 1
+        timeout = 120
         deadline = time.time() + timeout
+        msg_relation_id = task_id
+        msg_type = "BATCH_MSG"
+
+        # CDC 接口
+        cdc_url = "/msgct/detail"
+        # IAC 接口（fallback）
+        iac_url = "/gss/iac/admin/msgct/detail"
+        use_iac = False
+
         while time.time() < deadline:
-            status, data = self.http_request("POST", path, {"msgrelationid": task_id}, ctx)
-            # 404 表示任务已过期/不存在 → 删除已完成
-            if status == 404:
-                self.log("info", "[poll-delete] 任务不存在，视为删除完成")
+            url = iac_url if use_iac else cdc_url
+            body = {"msgrelationid": msg_relation_id, "msgtype": msg_type}
+            status, data = self.http_request("POST", url, body, ctx)
+
+            msg = (data.get("message") or "") if isinstance(data, dict) else ""
+            content = data.get("content") if isinstance(data, dict) else {}
+
+            # "任务消息不存在" → 切换 IAC 接口
+            if "任务消息不存在" in msg:
+                self.log("info", "[poll-delete] CDC 任务不存在，切换 IAC 接口")
+                use_iac = True
+                continue
+
+            if not content:
+                self.log("warning", "[poll-delete] 响应无 content，切换 IAC 接口")
+                use_iac = True
+                continue
+
+            msg_state = content.get("msgState")
+            self.log("info", "[poll-delete] msgState=%s (url=%s)" % (msg_state, url))
+
+            if msg_state in ("SUCCESS", "PARTIAL_SUCCESS"):
+                self.log("info", "[poll-delete] 删除完成: %s" % msg_state)
                 return True
-            st = jsonpath_get(data, "$.content.taskStatus") or jsonpath_get(data, "$.content.status")
-            self.log("info", "[poll-delete] taskStatus=%s" % st)
-            if st in ok_states:
-                self.log("info", "[poll-delete] 删除成功")
-                return True
-            if st in fail_states:
-                self.log("warning", "[poll-delete] 删除失败: taskId=%s" % task_id)
+            if msg_state in ("FAILURE", "CANCELED"):
+                self.log("warning", "[poll-delete] 删除失败: %s" % msg_state)
                 return False
+            # PROCESSING → 继续轮询
             time.sleep(interval)
+
         self.log("warning", "[poll-delete] 删除轮询超时: taskId=%s" % task_id)
         return False
 
