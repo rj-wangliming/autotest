@@ -187,7 +187,9 @@ def _cleanup_sessions():
 def _run_use_case(sid, use_case, params, base_url):
     from app.core.logger import new_case_log, CaseFileLogger
     first_line = (use_case.strip().splitlines()[0][:30] if use_case.strip() else "case")
-    log_path = new_case_log("web_" + first_line)
+    # 用执行开始时的精确时间戳命名（秒级），避免并发同用例冲突
+    ts_name = time.strftime("%H%M%S")
+    log_path = new_case_log("web_" + ts_name)
     flog = CaseFileLogger(log_path)
     exec_sessions[sid]["log_file"] = log_path
     exec_sessions[sid]["log_path"] = log_path  # 供外部获取
