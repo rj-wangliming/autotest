@@ -531,6 +531,8 @@ class Executor:
 
         注意：当前环境异步轮询接口路径可能不存在（返回 404），
         连续 3 次 404 时自动跳过轮询（假设任务已执行）。
+
+        轮询间隔 2 秒，超时 240 秒；期间每 2 秒检查一次任务状态。
         """
         api = poll.get("api", "common_get_msgct_detail_info")
         path = api if api.startswith("/") else "/" + api
@@ -562,10 +564,20 @@ class Executor:
                 return True
             if st in fail_states:
                 raise AssertionError("轮询任务失败: taskId=%s" % task_id)
-            # 业务状态为 ERROR 且没有 taskStatus（说明轮询接口不匹配），跳过轮询
-            biz_err = jsonpath_get(data, "$.status")
-            if biz_err == "ERROR" and st is None:
-                self.log("info", "[poll] 业务状态 ERROR 且无 taskStatus，跳过轮询")
+            # content 为 null 且无 taskStatus（说明轮询接口不匹配），跳过轮询
+            content = data.get("content") if isinstance(data, dict) else None
+            if content is None and st is None:
+                consecutive_404 += 1
+                self.log("warning", "[poll] content 为 null 且无 taskStatus (%d/3)，跳过轮询" % consecutive_404)
+                if consecutive_404 >= 3:
+                    self.log("info", "[poll] 连续 3 次 content 为空，跳过轮询")
+                    return True
+                time.sleep(interval)
+                continue
+            # content 有值但无 taskStatus（业务状态为 ERROR/SUCCESS 但无异步字段），跳过
+            biz_status = jsonpath_get(data, "$.status")
+            if biz_status and st is None:
+                self.log("info", "[poll] 有业务状态(%s)但无taskStatus，跳过轮询" % biz_status)
                 return True
             time.sleep(interval)
         raise AssertionError("轮询超时: taskId=%s" % task_id)
