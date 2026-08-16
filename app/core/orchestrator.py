@@ -523,11 +523,21 @@ class Orchestrator:
         _stack.discard(api)
 
     def _build_setup_step(self, item, dep_api):
-        """setup 声明项 → 可执行 step（扁平 body + 按 step_name 关联 extract）"""
+        """setup 声明项 → 可执行 step（从接口文档填充 body + 按 step_name 关联 extract）"""
         raw = item.get("api", "")
         method = raw.split(" ", 1)[0] if " " in raw else "POST"
         sname = item.get("name") or dep_api.rstrip("/").split("/")[-1]
-        body = dict((item.get("request") or {}).get("body") or {})
+        # 从接口文档填充 body（包含必填字段），setup 项的 body 作为覆盖/补充
+        base_step = self._build_step(dep_api, item.get("purpose") or sname)
+        body = base_step.get("body") or {}
+        # setup 项声明的 body 覆盖文档默认值
+        setup_body = dict((item.get("request") or {}).get("body") or {})
+        for k, v in setup_body.items():
+            if isinstance(v, dict):
+                body[k] = v
+            else:
+                # 裸值（如 ${param.xxx}）→ 包装为 {value: ...}
+                body[k] = {"value": v}
         ex_raw = item.get("extract") or {}
         if isinstance(ex_raw, list):
             # SETUP_PARAM_SPEC §2.2：list 格式（多 extract / assert）
@@ -696,6 +706,26 @@ class Orchestrator:
                 if s.get("reuse_query"):
                     step["reuse_query"] = s["reuse_query"]
                 break
+        # 特殊处理：desktop/list 若无 body 内容，注入最小查询条件（classroomId）
+        if api == "/rcc/classroom/desktop/list" and not body:
+            step["body"] = {
+                "exactMatchArr": {
+                    "value": [
+                        {"name": "classroomId", "valueArr": ["${prev.classroomQuery.output.classroomId}"]}
+                    ]
+                }
+            }
+        # 特殊处理：desktop/list 若已有 body 但 matchArr 的 valueArr 为空，注入最小查询条件
+        elif api == "/rcc/classroom/desktop/list" and "matchArr" in body:
+            ma_val = body["matchArr"]
+            if isinstance(ma_val, dict):
+                mv = ma_val.get("value")
+                if mv is None or (isinstance(mv, list) and len(mv) == 0):
+                    body["exactMatchArr"] = {
+                        "value": [
+                            {"name": "classroomId", "valueArr": ["${prev.classroomQuery.output.classroomId}"]}
+                        ]
+                    }
         return step
 
     def _infer_body_value(self, field, spec, meta):

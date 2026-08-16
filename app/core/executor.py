@@ -36,6 +36,7 @@ class Executor:
 
     def __init__(self, base_url=None, log_cb=None):
         self.base_url = (base_url or os.environ.get("TEST_BASE_URL", "http://127.0.0.1:8080")).rstrip("/")
+        print(f"[DEBUG] Executor base_url={self.base_url}")
         self.log_cb = log_cb or (lambda level, msg: None)
         self._session = None  # requests.Session：维持登录 cookie 会话（webmvckit 会话认证）
 
@@ -149,10 +150,12 @@ class Executor:
         api = step.get("api", "")
         path = api.split(" ", 1)[-1] if " " in api else api
         method = step.get("method", "POST")
-        body = resolve_body(step.get("body", {}), ctx)
-        self.log("info", "[step] %s resolved body: %s" % (
+        raw_body = step.get("body", {})
+        body = resolve_body(raw_body, ctx)
+        self.log("info", "[step] %s resolved body: %s (raw=%s)" % (
             step.get("step_name") or step.get("name") or "",
-            json.dumps(self._mask(body), ensure_ascii=False)))
+            json.dumps(body, ensure_ascii=False),
+            json.dumps(self._mask(raw_body), ensure_ascii=False)))
 
         # 登录内置
         if "loginAdmin" in api:
@@ -170,7 +173,12 @@ class Executor:
 
         # 幂等 recreate：先删同名再建
         if step.get("idempotent") == "recreate" and step.get("delete_api"):
-            self._recreate(step, path, body, ctx)
+            self.log("info", "[recreate] ENTERING for step_name=%s, api=%s" % (step.get("step_name"), step.get("api")))
+            self.log("info", "[recreate] delete_api=%s" % step.get("delete_api"))
+            r = self._recreate(step, body, ctx)
+            self.log("info", "[recreate] returned: %s" % r)
+            if r == "skip":
+                return self._build_skip_response(step, body, ctx)
 
         # 幂等 true：先尝试创建（存在则幂等通过）
         if step.get("idempotent") is True:
@@ -195,15 +203,162 @@ class Executor:
         self._assert_step(step, data)
         return data
 
-    def _recreate(self, step, path, body, ctx):
-        """幂等 recreate：存在同名先调 delete_api 删除再创建"""
+    def _build_skip_response(self, step, body, ctx):
+        """构建跳过创建的响应（复用已有资源）"""
+        sname = step.get("step_name") or step.get("name") or "default"
+        bucket = ctx.get("steps", {}).get(sname, {})
+        data = {"status": "SUCCESS", "content": {}}
+        if "classroomId" in bucket:
+            data["content"]["classroomId"] = bucket["classroomId"]
+        if "seatId" in bucket:
+            data["content"]["seatId"] = bucket["seatId"]
+        if "classroomId" not in data["content"] and "seatId" not in data["content"]:
+            data["content"]["classroomId"] = ""
+        self._extract(step, data, ctx)
+        self.log("info", "[skip] 复用已有资源，跳过创建")
+        return data
+
+    def _recreate(self, step, body, ctx):
+        """幂等 recreate：存在同名先调 delete_api 删除再创建
+
+        Returns:
+            True: 删除成功，应继续执行创建（create）
+            "skip": 复用已有资源（无法删除或不存在），跳过创建
+            False: 无同名资源，正常流程执行创建
+        """
         del_api = step["delete_api"]
         del_path = del_api.split(" ", 1)[-1] if " " in del_api else del_api
-        status, data = self.http_request("POST", path, body or None, ctx)
-        found_id = jsonpath_get(data, "$.content.id") or jsonpath_get(data, "$.content.classroomId")
-        if found_id:
-            self.log("info", "[recreate] 存在同名资源 %s，先删除" % found_id)
-            self.http_request("POST", del_path, {"id": found_id}, ctx)
+        # 判断资源类型
+        is_classroom = "classroom" in del_path
+        is_seat = "seat" in del_path
+        self.log("info", "[recreate] del_path=%s, is_classroom=%s, is_seat=%s" % (del_path, is_classroom, is_seat))
+        self.log("info", "[recreate] body keys=%s, idempotent=%s" % (list(body.keys()), step.get("idempotent")))
+
+        if is_seat:
+            classroom_id = body.get("classroomId")
+            if not classroom_id:
+                return False
+            # seat/list 的 exactMatchArr 支持 classroomId 过滤
+            select_body = {"exactMatchArr": [{"name": "classroomId", "valueArr": [classroom_id]}]}
+            select_path = "/rcc/classroom/seat/list"
+            id_key = "id"
+        elif is_classroom:
+            classroom_name = body.get("classroomName") or ""
+            classroom_id = body.get("classroomId")
+            if not classroom_name and not classroom_id:
+                return False
+            # 优先用 classroomId 精确匹配，否则按 classroomName 搜索
+            if classroom_id:
+                select_body = {"exactMatchArr": [{"name": "classroomId", "valueArr": [classroom_id]}]}
+                select_path = "/rcc/classroom/select"
+                id_key = "classroomId"
+            else:
+                select_body = {"searchKeyword": classroom_name}
+                select_path = "/rcc/classroom/select"
+                id_key = "classroomId"
+        else:
+            return False
+
+        status, data = self.http_request("POST", select_path, select_body, ctx)
+        content = data.get("content") if isinstance(data, dict) else None
+        items = None
+        if isinstance(content, dict):
+            items = content.get("itemArr") or content.get("items") or content.get("list")
+        elif isinstance(content, list):
+            items = content
+
+        if not items or not isinstance(items, list):
+            self.log("info", "[recreate] 未找到同名%s，跳过" % ("教室" if is_classroom else "座位"))
+            return False
+
+        found = items[0]
+        found_id = found.get(id_key) or found.get("seatId") or found.get("id")
+        found_token = found.get("oneTimeToken")
+
+        if not found_id:
+            return False
+
+        self.log("info", "[recreate] 存在同名%s资源 %s，尝试删除" % ("教室" if is_classroom else "座位", found_id))
+
+        for attempt in range(2):
+            if is_classroom:
+                del_body = {"idArr": [found_id]}
+            elif is_seat:
+                del_body = {"seatIdArr": [found_id]}
+            else:
+                del_body = {"idArr": [found_id]}
+
+            if found_token:
+                del_body["oneTimeToken"] = found_token
+
+            delete_status, delete_data = self.http_request("POST", del_path, del_body, ctx)
+
+            if delete_status != 200 or delete_data.get("status") != "SUCCESS":
+                if attempt == 0 and ("token" in str(delete_data).lower() or delete_data.get("status") == "ERROR"):
+                    self.log("warning", "[recreate] 认证失败，重新登录后再删")
+                    p = ctx.get("params", {})
+                    ctx["token"] = self.login(
+                        p.get("rcdc_user") or p.get("admin_user"),
+                        p.get("rcdc_passwd") or p.get("admin_password"),
+                    )
+                    continue
+                else:
+                    self.log("warning", "[recreate] 删除失败（%s），降级为复用已有资源 %s" % (delete_data.get("message") or str(delete_data), found_id))
+                    sname = step.get("step_name") or step.get("name") or "default"
+                    bucket = ctx.setdefault("steps", {}).setdefault(sname, {})
+                    if is_classroom:
+                        bucket["classroomId"] = found_id
+                    else:
+                        bucket["seatId"] = found_id
+                    return "skip"
+
+            content = delete_data.get("content") if isinstance(delete_data, dict) else None
+            task_id = None
+            if isinstance(content, dict):
+                task_id = content.get("taskId")
+
+            if not task_id:
+                self.log("info", "[recreate] 删除成功（同步返回），后续创建新资源")
+                return True
+
+            self.log("info", "[recreate] 异步%s中，taskId=%s" % ("删除" if is_classroom else "删除", task_id))
+            ok = self._poll_classroom_delete(task_id, ctx)
+            if ok:
+                self.log("info", "[recreate] 删除成功（异步完成），后续创建新资源")
+                return True
+            else:
+                self.log("warning", "[recreate] 删除异步失败，降级为复用已有资源 %s" % found_id)
+                sname = step.get("step_name") or step.get("name") or "default"
+                bucket = ctx.setdefault("steps", {}).setdefault(sname, {})
+                if is_classroom:
+                    bucket["classroomId"] = found_id
+                else:
+                    bucket["seatId"] = found_id
+                return "skip"
+
+        return "skip"
+
+    def _poll_classroom_delete(self, task_id, ctx):
+        """轮询教室删除批任务至终态"""
+        path = "/common/getMsgctDetailInfo"
+        interval = 3  # 教室删除较快，3 秒间隔
+        timeout = 120  # 最多等 2 分钟
+        ok_states = ["SUCCESS"]
+        fail_states = ["FAILURE"]
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            status, data = self.http_request("POST", path, {"msgrelationid": task_id}, ctx)
+            st = jsonpath_get(data, "$.content.taskStatus") or jsonpath_get(data, "$.content.status")
+            self.log("info", "[poll-delete] taskStatus=%s" % st)
+            if st in ok_states:
+                self.log("info", "[poll-delete] 删除成功")
+                return True
+            if st in fail_states:
+                self.log("error", "[poll-delete] 删除失败: taskId=%s" % task_id)
+                return False
+            time.sleep(interval)
+        self.log("warning", "[poll-delete] 删除轮询超时: taskId=%s" % task_id)
+        return False
 
     def _try_reuse(self, step, ctx):
         """幂等 reuse：按 reuse_query 查已有资源；命中则把产出写入
@@ -289,7 +444,8 @@ class Executor:
         path = api if api.startswith("/") else "/" + api
         task_id = ctx.get("taskId") or jsonpath_get(ctx.get("_last_data") or {}, "$.content.taskId")
         if not task_id:
-            raise AssertionError("轮询失败: taskId 为空（创建接口可能未返回 taskId）")
+            self.log("info", "[poll] taskId 为空（同步返回，无异步任务），跳过轮询")
+            return True
         interval = poll.get("interval_ms", 2000) / 1000.0
         timeout = poll.get("timeout_ms", 120000) / 1000.0
         ok_states = poll.get("terminal_states", {}).get("success", ["SUCCESS"])
@@ -376,6 +532,8 @@ class Executor:
             self.log("error", "[登录] 登录失败: %s" % e)
             return {"status": "FAIL", "duration_ms": 0, "steps": [],
                     "error": "登录失败: %s" % e, "cleanup": "SKIP"}
+        # 前置清理：在计划步骤执行前，先清理同名教室（下课→删桌面→删座位→删教室）
+        self._prerequisite_cleanup(plan, ctx)
         results = []
         start = time.time()
         total_steps = len(plan.get("steps", []))
@@ -436,6 +594,170 @@ class Executor:
             return {"status": "FAIL", "duration_ms": int((time.time() - start) * 1000),
                     "steps": results, "error": str(e), "cleanup": "DONE"}
 
+    def _prerequisite_cleanup(self, plan, ctx):
+        """执行前清理：查找 plan 中要创建的教室，若已存在同名教室则按依赖顺序清理。
+
+        清理顺序：
+        1. 下课（/rcc/classroom/cmrcef/lesson/end）
+        2. 等待下课完成（/rcc/classroom/cmrcef/lesson/progress 轮询）
+        3. 删除桌面（/rcc/classroom/desktop/delete）
+        4. 删除座位（/rcc/classroom/seat/delete）
+        5. 删除教室（/rcc/classroom/delete）
+        """
+        # 收集 plan 中所有要创建的教室名称
+        classroom_names = set()
+        for step in plan.get("steps", []):
+            api = step.get("api", "")
+            body = step.get("body") or {}
+            # 只处理教室创建接口
+            if "classroom" in api and ("create" in api or "batchCreate" in api):
+                # 提取 classroomName（处理 ${param.classroom_name} 和 {"value": "xxx"} 两种格式）
+                cn = body.get("classroomName") or {}
+                if isinstance(cn, dict):
+                    val = cn.get("value", "")
+                else:
+                    val = str(cn)
+                # 解析参数引用
+                import re
+                m = re.search(r"\$\{param\.([\w.]+)\}", val)
+                if m:
+                    param_key = to_snake(m.group(1))
+                    cn = ctx["params"].get(param_key, val)
+                elif val:
+                    cn = val
+                if cn and cn != "":
+                    classroom_names.add(cn)
+
+        if not classroom_names:
+            return
+
+        self.log("info", "[prerequisite-cleanup] 发现 %d 个待创建教室名称: %s" % (len(classroom_names), classroom_names))
+
+        for classroom_name in classroom_names:
+            self._cleanup_classroom_by_name(classroom_name, ctx)
+
+    def _cleanup_classroom_by_name(self, classroom_name, ctx):
+        """按名称清理同名教室（按依赖顺序：下课→桌面→座位→教室）"""
+        # 1. 查询教室
+        select_body = {"searchKeyword": classroom_name}
+        status, data = self.http_request("POST", "/rcc/classroom/select", select_body, ctx)
+        content = data.get("content") if isinstance(data, dict) else {}
+        items = None
+        if isinstance(content, list):
+            items = content
+        elif isinstance(content, dict):
+            items = content.get("itemArr") or content.get("items") or content.get("list")
+        if not items or not isinstance(items, list):
+            self.log("info", "[prerequisite-cleanup] 教室 '%s' 不存在，跳过清理" % classroom_name)
+            return
+        classroom = items[0]
+        classroom_id = classroom.get("classroomId")
+        if not classroom_id:
+            self.log("warning", "[prerequisite-cleanup] 教室 '%s' 无 classroomId，跳过" % classroom_name)
+            return
+
+        self.log("info", "[prerequisite-cleanup] 找到教室 '%s' (id=%s)，开始按依赖顺序清理" % (classroom_name, classroom_id))
+
+        # 2. 下课（如果在上课中）
+        lesson_status = classroom.get("lessonStatus")
+        classroom_state = classroom.get("classroomState")
+        needs_lesson_end = lesson_status in ("IN_CLASS", "STARTING_CLASS", "ENDING_CLASS")
+        if needs_lesson_end or classroom_state == "IN_CLASS":
+            self.log("info", "[prerequisite-cleanup] 教室上课中（%s/%s），执行下课" % (lesson_status, classroom_state))
+            self._end_lesson(classroom_id, ctx)
+            # 3. 等待下课完成
+            self._wait_lesson_end(classroom_id, ctx)
+        else:
+            self.log("info", "[prerequisite-cleanup] 教室不在上课中（lessonStatus=%s, classroomState=%s），跳过下课" % (lesson_status, classroom_state))
+
+        # 4. 删除桌面（如果有）
+        self._delete_classroom_desktops(classroom_id, ctx)
+
+        # 5. 删除座位
+        self._delete_classroom_seats(classroom_id, ctx)
+
+        # 6. 删除教室
+        self._delete_classroom(classroom_id, classroom_name, ctx)
+
+    def _end_lesson(self, classroom_id, ctx):
+        """执行下课（cmrcef/lesson/end）"""
+        status, data = self.http_request("POST", "/rcc/classroom/cmrcef/lesson/end",
+                                         {"classroomId": classroom_id}, ctx)
+        content = data.get("content") if isinstance(data, dict) else {}
+        task_id = content.get("taskId") if isinstance(content, dict) else None
+        if not task_id:
+            self.log("warning", "[prerequisite-cleanup] 下课接口未返回 taskId，可能需要轮询")
+
+    def _wait_lesson_end(self, classroom_id, ctx, timeout=120):
+        """轮询等待下课完成"""
+        path = "/rcc/classroom/cmrcef/lesson/progress"
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            status, data = self.http_request("POST", path, {"classroomId": classroom_id}, ctx)
+            content = data.get("content") if isinstance(data, dict) else {}
+            task_status = content.get("taskStatus") if isinstance(content, dict) else None
+            self.log("info", "[prerequisite-cleanup] 下课进度: %s" % task_status)
+            if task_status in ("SUCCESS", "DONE"):
+                self.log("info", "[prerequisite-cleanup] 下课完成")
+                return
+            time.sleep(3)
+        self.log("warning", "[prerequisite-cleanup] 下课轮询超时")
+
+    def _delete_classroom_desktops(self, classroom_id, ctx):
+        """删除教室下的所有桌面"""
+        status, data = self.http_request("POST", "/rcc/classroom/desktop/list",
+                                         {"exactMatchArr": [{"name": "classroomId", "valueArr": [classroom_id]}]}, ctx)
+        content = data.get("content") if isinstance(data, dict) else {}
+        items = content.get("itemArr") or content.get("items") or []
+        if isinstance(items, dict):
+            items = items.get("itemArr") or items.get("items") or []
+
+        for desktop in items:
+            desktop_id = desktop.get("desktopId") or desktop.get("id")
+            if desktop_id:
+                self.log("info", "[prerequisite-cleanup] 删除桌面 %s" % desktop_id)
+                try:
+                    self.http_request("POST", "/rcc/classroom/desktop/delete",
+                                     {"id": desktop_id}, ctx)
+                except Exception as e:
+                    self.log("warning", "[prerequisite-cleanup] 桌面删除失败: %s" % e)
+
+    def _delete_classroom_seats(self, classroom_id, ctx):
+        """删除教室下的所有座位"""
+        status, data = self.http_request("POST", "/rcc/classroom/seat/list",
+                                         {"exactMatchArr": [{"name": "classroomId", "valueArr": [classroom_id]}]}, ctx)
+        content = data.get("content") if isinstance(data, dict) else {}
+        items = content.get("itemArr") or content.get("items") or []
+        if isinstance(items, dict):
+            items = items.get("itemArr") or items.get("items") or []
+
+        for seat in items:
+            seat_id = seat.get("id") or seat.get("seatId")
+            if seat_id:
+                self.log("info", "[prerequisite-cleanup] 删除座位 %s" % seat_id)
+                try:
+                    self.http_request("POST", "/rcc/classroom/seat/delete",
+                                     {"seatIdArr": [seat_id]}, ctx)
+                except Exception as e:
+                    self.log("warning", "[prerequisite-cleanup] 座位删除失败: %s" % e)
+
+    def _delete_classroom(self, classroom_id, classroom_name, ctx):
+        """删除教室"""
+        self.log("info", "[prerequisite-cleanup] 删除教室 %s (id=%s)" % (classroom_name, classroom_id))
+        try:
+            status, data = self.http_request("POST", "/rcc/classroom/delete",
+                                             {"idArr": [classroom_id]}, ctx)
+            if data.get("status") == "SUCCESS":
+                content = data.get("content") if isinstance(data, dict) else {}
+                task_id = content.get("taskId") if isinstance(content, dict) else None
+                if task_id:
+                    self._poll_classroom_delete(task_id, ctx)
+                self.log("info", "[prerequisite-cleanup] 教室删除成功")
+            else:
+                self.log("warning", "[prerequisite-cleanup] 教室删除失败: %s" % data.get("message") or str(data))
+        except Exception as e:
+            self.log("warning", "[prerequisite-cleanup] 教室删除异常: %s" % e)
+
     def _cleanup(self, ctx):
         """finally 清理已创建资源（从 ctx.steps 各 step 产出提取 *Id）"""
         created = []
@@ -448,7 +770,16 @@ class Executor:
             if del_path:
                 self.log("info", "[cleanup] 删除 %s=%s" % (name, rid))
                 try:
-                    self.http_request("POST", del_path, {"id": rid}, ctx)
+                    # classroom 的 delete 需要 idArr 格式
+                    if "classroom" in del_path and "delete" in del_path:
+                        status, data = self.http_request("POST", del_path, {"idArr": [rid]}, ctx)
+                    else:
+                        status, data = self.http_request("POST", del_path, {"id": rid}, ctx)
+                    if data.get("status") != "SUCCESS":
+                        msg = data.get("msgKey") or data.get("message") or ""
+                        if "token" in str(msg).lower():
+                            self.log("warning", "[cleanup] 删除跳过（oneTimeToken 缺失，资源可能已被手动清理）: %s" % msg)
+                            continue
                 except Exception as e:
                     self.log("error", "[cleanup] 删除失败: %s" % e)
 

@@ -13,8 +13,8 @@ def to_snake(name):
 
 
 def _random_prefix():
-    """随机桌面名前缀：字母开头、8 位小写字母数字（命名规则范围）"""
-    return "vd" + "".join(random.choices(string.ascii_lowercase + string.digits, k=6))
+    """随机桌面名前缀：字母开头、5 位小写字母数字（服务端限制 1-5 字符）"""
+    return "vd" + "".join(random.choices(string.ascii_lowercase + string.digits, k=3))
 
 
 def materialize_naming(params, log=None):
@@ -73,7 +73,7 @@ def _lookup(kind, name, ctx, idx=None):
     """取引用原始值（保留类型）；idx 支持 ${param.x[N]} / ${prev.step.output.y[N]} 显式索引；
     param 值为列表且 ctx 有 _batch_index 时，隐式取当前批量索引（批量展开用）"""
     if kind == "param":
-        v = ctx.get("params", {}).get(to_snake(name), "")
+        v = ctx.get("params", {}).get(to_snake(name), None)
         if idx is not None:
             return v[idx] if isinstance(v, list) and idx < len(v) else None
         if isinstance(v, list) and "_batch_index" in ctx:
@@ -90,6 +90,13 @@ def _lookup(kind, name, ctx, idx=None):
             v = ctx.get(name, "")
         if idx is not None and isinstance(v, list):
             return v[idx] if idx < len(v) else None
+        # 批量上下文：prev 值为列表时取当前批量索引
+        if isinstance(v, list) and "_batch_index" in ctx:
+            i = ctx["_batch_index"]
+            return v[i] if i < len(v) else None
+        # 非批量上下文：prev 值为列表时自动取首元素（跨步骤引用场景）
+        if isinstance(v, list):
+            return v[0] if v else v
         return v
     if kind == "context":
         return ctx.get("context", {}).get(name, "")
@@ -105,13 +112,21 @@ def resolve_value(val, ctx):
         m = re.fullmatch(r"\$\{(param|prev|context)\.([\w.]+)(?:\[(\d+)\])?\}", val)
         if m:
             idx = int(m.group(3)) if m.group(3) else None
-            return _lookup(m.group(1), m.group(2), ctx, idx)
+            raw = _lookup(m.group(1), m.group(2), ctx, idx)
+            # 解析结果为空字符串 → 返回 None（调用方可跳过该字段）
+            if raw == "":
+                return None
+            return raw
         # 字符串内插值 → str 替换
         def repl(mm):
             idx = int(mm.group(3)) if mm.group(3) else None
             raw = _lookup(mm.group(1), mm.group(2), ctx, idx)
             return "" if raw is None else str(raw)
-        return re.sub(r"\$\{(param|prev|context)\.([\w.]+)(?:\[\d+\])?\}", repl, val)
+        result = re.sub(r"\$\{(param|prev|context)\.([\w.]+)(?:\[\d+\])?\}", repl, val)
+        # 如果结果是空字符串 → 返回 None
+        if result == "":
+            return None
+        return result
     if isinstance(val, dict):
         # 仅字段描述符（含 type）折叠取 value；
         # 业务对象自带的 value 字段（如 matchArr 的 Match.value）须保留结构
@@ -129,7 +144,22 @@ def resolve_body(body, ctx):
     out = {}
     for k, v in body.items():
         if isinstance(v, dict) and "value" in v:
-            out[k] = resolve_value(v["value"], ctx)
+            result = resolve_value(v["value"], ctx)
+            # 值为 None 或空字符串时表示参数缺失；若为 Boolean 类型则用默认值 True
+            if result is None or result == "":
+                field_type = v.get("type", "")
+                if "Boolean" in str(field_type) or "boolean" in str(field_type):
+                    result = True
+                else:
+                    continue
+            # 先清理 None（含空列表变 None）
+            result = _clean_none(result)
+            # 特殊处理：matchArr/exactMatchArr 中的元素若无 valueArr（参数未提供），跳过整个字段
+            if k in ("matchArr", "exactMatchArr") and isinstance(result, list):
+                result = [elem for elem in result if isinstance(elem, dict) and elem.get("valueArr") is not None]
+                if not result:
+                    continue
+            out[k] = result
         elif isinstance(v, dict) and v.get("generated_by"):
             out[k] = gen_config_value(k, v, ctx)
         elif isinstance(v, dict) and "type" in v and "value" not in v and not v.get("generated_by"):
@@ -137,7 +167,28 @@ def resolve_body(body, ctx):
             continue
         else:
             out[k] = resolve_value(v, ctx)
-    return out
+    # 最终清理：递归移除所有 None 值
+    return _clean_none(out)
+
+
+def _clean_none(obj):
+    """递归清理 None 值：None → 被移除/替换为默认；空列表/空字典 → 视为无效返回 None"""
+    if isinstance(obj, dict):
+        cleaned = {}
+        for k, v in obj.items():
+            if v is None:
+                continue
+            cv = _clean_none(v)
+            if cv is not None:
+                cleaned[k] = cv
+        # 空字典视为无效（无意义的空 body 段）
+        return cleaned if cleaned else None
+    if isinstance(obj, list):
+        cleaned = [_clean_none(item) for item in obj]
+        cleaned = [c for c in cleaned if c is not None]
+        # 空列表视为无效（如 matchArr.valueArr: [] 应跳过）
+        return cleaned if cleaned else None
+    return obj
 
 
 def gen_config_value(field, spec, ctx):
@@ -158,6 +209,8 @@ def gen_config_value(field, spec, ctx):
         return False
     if field == "studentModeArr":
         return ["VDI"]  # 学生机类型数组默认
+    if field == "enableTeacher":
+        return True   # 教师机默认 true
     if field == "desktopNum":
         return 1
     if field == "studentClassroomStrategyId":
