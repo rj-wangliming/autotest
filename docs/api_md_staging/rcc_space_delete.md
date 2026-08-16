@@ -47,11 +47,9 @@ setup:
   request:
     body:
       exactMatchArr:
-      - type: EXACT
-        fieldName: spaceName
+      - name: spaceName
         valueArr:
         - ${param.space_name}
-        matchRule: EQ
 request:
   dto: RccDeleteSpaceRequest
   body:

@@ -22,11 +22,9 @@ setup:
   request:
     body:
       exactMatchArr:
-      - type: EXACT
-        fieldName: spaceName
+      - name: spaceName
         valueArr:
         - ${param.space_name}
-        matchRule: EQ
 - name: listVdiStrategy
   api: POST /space/strategygroup/vdi/list
   purpose: 按策略名精确过滤（matchArr.fieldName=strategyName）
