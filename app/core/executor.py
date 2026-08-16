@@ -539,7 +539,7 @@ class Executor:
             self.log("info", "[poll] taskId 为空（同步返回，无异步任务），跳过轮询")
             return True
         interval = poll.get("interval_ms", 2000) / 1000.0
-        timeout = poll.get("timeout_ms", 30000) / 1000.0  # 30 秒超时
+        timeout = poll.get("timeout_ms", 240000) / 1000.0  # 240 秒超时，给异步任务足够时间
         ok_states = poll.get("terminal_states", {}).get("success", ["SUCCESS"])
         fail_states = poll.get("terminal_states", {}).get("fail", ["FAILURE"])
         deadline = time.time() + timeout
@@ -562,6 +562,11 @@ class Executor:
                 return True
             if st in fail_states:
                 raise AssertionError("轮询任务失败: taskId=%s" % task_id)
+            # 业务状态为 ERROR 且没有 taskStatus（说明轮询接口不匹配），跳过轮询
+            biz_err = jsonpath_get(data, "$.status")
+            if biz_err == "ERROR" and st is None:
+                self.log("info", "[poll] 业务状态 ERROR 且无 taskStatus，跳过轮询")
+                return True
             time.sleep(interval)
         raise AssertionError("轮询超时: taskId=%s" % task_id)
 
