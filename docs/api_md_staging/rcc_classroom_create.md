@@ -120,7 +120,7 @@ request:
       required: true
       constraint: '@NotNull（字段声明；getter 标注 @Nullable）'
       description: 学生机教室策略ID
-      generated_by: config_generator
+      value: ${prev.get_strategy.output.studentClassroomStrategyId}
     creatorUserId:
       type: UUID
       required: false
