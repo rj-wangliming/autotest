@@ -342,6 +342,22 @@ class Executor:
 
         self.log("info", "[recreate] 存在同名%s资源 %s，尝试删除" % ("教室" if is_classroom else "座位", found_id))
 
+        # 获取 oneTimeToken（教室/座位删除可能需要）
+        if is_classroom or is_seat:
+            p = ctx.get("params", {})
+            admin_password = p.get("rcdc_passwd") or p.get("admin_password")
+            if admin_password:
+                try:
+                    encrypted_pwd = encrypt(admin_password, "ADMINPASSWORDKEY")
+                    status, token_data = self.http_request("POST", "/gss/iac/admin/applyOneTimeToken",
+                        {"password": encrypted_pwd}, ctx)
+                    token_val = token_data.get("content", {}).get("oneTimeToken", "") if isinstance(token_data, dict) else ""
+                    if token_val:
+                        ctx["oneTimeToken"] = token_val
+                        self.log("info", "[recreate] oneTimeToken 已获取")
+                except Exception as e:
+                    self.log("warning", "[recreate] oneTimeToken 获取失败: %s" % e)
+
         for attempt in range(2):
             if is_classroom:
                 del_body = {"idArr": [found_id]}
@@ -403,12 +419,31 @@ class Executor:
         return "skip"
 
     def _poll_classroom_delete(self, task_id, ctx):
-        """教室删除是异步任务，但当前环境异步轮询接口路径未知（所有已验证路径均返回404）。
+        """教室删除是异步任务，但当前环境异步轮询接口路径未知。
 
-        策略：直接返回 True（假设删除成功，因为 delete 接口本身返回了 SUCCESS）。
-        如果后续需要轮询，需要确认正确的异步任务查询路径。
+        策略：获取 oneTimeToken 后等待 10 秒，假设删除完成。
         """
-        self.log("info", "[poll-delete] 跳过轮询（路径未知，假设删除成功）: taskId=%s" % task_id)
+        self.log("info", "[poll-delete] 获取 oneTimeToken 并等待删除完成: taskId=%s" % task_id)
+
+        # 获取 oneTimeToken
+        p = ctx.get("params", {})
+        admin_password = p.get("rcdc_passwd") or p.get("admin_password")
+        if admin_password:
+            try:
+                encrypted_pwd = encrypt(admin_password, "ADMINPASSWORDKEY")
+                status, token_data = self.http_request("POST", "/gss/iac/admin/applyOneTimeToken",
+                    {"password": encrypted_pwd}, ctx)
+                token_val = token_data.get("content", {}).get("oneTimeToken", "") if isinstance(token_data, dict) else ""
+                if token_val:
+                    ctx["oneTimeToken"] = token_val
+                    self.log("info", "[poll-delete] oneTimeToken 已获取")
+            except Exception as e:
+                self.log("warning", "[poll-delete] oneTimeToken 获取失败: %s" % e)
+
+        # 等待删除操作完成（异步）
+        self.log("info", "[poll-delete] 等待 10 秒...")
+        time.sleep(10)
+        self.log("info", "[poll-delete] 等待完成，假设删除成功")
         return True
 
     def _try_reuse(self, step, ctx):
@@ -809,6 +844,9 @@ class Executor:
         """删除教室"""
         self.log("info", "[prerequisite-cleanup] 删除教室 %s (id=%s)" % (classroom_name, classroom_id))
         try:
+            # 获取 oneTimeToken
+            self._get_once_token(ctx)
+
             status, data = self.http_request("POST", "/rcc/classroom/delete",
                                              {"classroomId": classroom_id, "idArr": [classroom_id]}, ctx)
             if data.get("status") == "SUCCESS":
@@ -816,6 +854,8 @@ class Executor:
                 task_id = content.get("taskId") if isinstance(content, dict) else None
                 if task_id:
                     self._poll_classroom_delete(task_id, ctx)
+                else:
+                    time.sleep(5)
                 self.log("info", "[prerequisite-cleanup] 教室删除成功")
             else:
                 self.log("warning", "[prerequisite-cleanup] 教室删除失败: %s" % data.get("message") or str(data))
