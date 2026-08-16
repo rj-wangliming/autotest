@@ -440,9 +440,11 @@ class Executor:
             except Exception as e:
                 self.log("warning", "[poll-delete] oneTimeToken 获取失败: %s" % e)
 
-        # 等待删除操作完成（异步）
-        self.log("info", "[poll-delete] 等待 10 秒...")
-        time.sleep(10)
+        # 等待删除操作完成（异步）— 每 2 秒输出一次日志防止超时
+        self.log("info", "[poll-delete] 等待 10 秒（删除中）...")
+        for i in range(5):
+            time.sleep(2)
+            self.log("info", "[poll-delete] 等待中... %d/5" % (i + 1))
         self.log("info", "[poll-delete] 等待完成，假设删除成功")
         return True
 
@@ -855,7 +857,10 @@ class Executor:
                 if task_id:
                     self._poll_classroom_delete(task_id, ctx)
                 else:
-                    time.sleep(5)
+                    self.log("info", "[prerequisite-cleanup] 删除同步返回，等待 5 秒...")
+                    for i in range(5):
+                        time.sleep(1)
+                        self.log("info", "[prerequisite-cleanup] 等待中... %d/5" % (i + 1))
                 self.log("info", "[prerequisite-cleanup] 教室删除成功")
             else:
                 self.log("warning", "[prerequisite-cleanup] 教室删除失败: %s" % data.get("message") or str(data))
