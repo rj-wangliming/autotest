@@ -220,8 +220,8 @@ assertions:
     expect: status==ERROR；msgKey==CLASSROOM_IP_CHECK_CONFLICT_WITH_CLASSROOM
 cleanup:
 - api: POST /rcc/classroom/delete
-  purpose: 删除创建的教室（需先取 classroomId）
-  depends_on: classroomId（create 为异步任务，响应仅含 taskId，需通过 POST /rcc/classroom/select 按名称查询获取）
+  purpose: 删除创建的教室（需先通过 select 按名称查询获取 classroomId）
+  depends_on: 轮询终态后经 select 查询获得 classroomId
 idempotency:
   level: data_level
   note: 每次请求生成新随机 itemId 并完整创建新教室；重复提交会重复创建，仅靠名称唯一校验兜底
@@ -250,7 +250,7 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: teacher_mode
-    desc: ''
+    desc: 教师机工作模式（PC/VDI/IDV/TCI），默认 PC
     used_by: 见 setup/request
 ---
 # POST /rcc/classroom/create
@@ -307,7 +307,7 @@ graph LR
 |---|---|---|---|---|
 | classroomName | String | 是 | @NotNull @Size(min=3, max=20) | 教室名称 |
 | classroomDesc | String | 否 | @Nullable @Size(max=200) | 教室描述 |
-| teacherMode | TerminalTypeEnum | 是 | @NotNull | 教师机工作模式（PC/VDI/IDV/TCI） |
+| teacherMode | TerminalTypeEnum | 是 | @NotNull | 教师机工作模式（PC/VDI/IDV/TCI）；默认 PC（无需分配镜像） |
 | teacherIp | String | 是 | @NotNull | 教师机终端IP |
 | teacherPreName | String | 否 | @Nullable | 教师机主机名前缀 |
 | diskRequiredSize | Integer | 否 | @Nullable @Range(min=59, max=10000) | 学生机终端磁盘容量要求（GB） |

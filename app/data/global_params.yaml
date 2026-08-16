@@ -11,7 +11,7 @@
 # ── 测试环境 ──
 base_url: https://10.51.167.250:8443/     # 目标环境地址（也可 --base-url 或环境变量 BASE_URL 注入）
 rcdc_user: admin9
-rcdc_passwd: Admin123                     # 登录密码（环境变量 TEST_ADMIN_PASSWORD 优先覆盖）
+rcdc_passwd: 9q7DP0GUzDDkHyGsYijcku37wEA4cbgDjH03M6F2T/g=      # 登录密码（环境变量 TEST_ADMIN_PASSWORD 优先覆盖）
 
 # ── 教室（可多个：值填列表）──
 classroom_name: [a_classroom_01]              # 教室名，多个: [c1, c2]
@@ -19,6 +19,7 @@ classroom_strategy_name: [a_cl_strategy_01]   # 教室策略名
 teacher_mode: PC                              # 教师机工作模式（PC/VDI/IDV/TCI）。默认 PC：教师机无需分配镜像；
                                               #   用例需要 TCI/VDI/IDV 教师机时在 cases/*.yaml 覆盖此参数，
                                               #   且该用例流程须包含教师机镜像分配（lessonImage/image teacher create）
+student_mode_arr: [VDI]                       # 学生机类型数组（PC/VDI/IDV/TCI/APP），默认 VDI
 
 # ── 策略（可多个）──
 strategy_name: [a_strategy_01]                         # VDI 策略名

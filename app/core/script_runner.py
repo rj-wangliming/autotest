@@ -103,6 +103,10 @@ class ScriptRunner:
                               encoding="utf-8", errors="replace", timeout=timeout)
                 logs = proc.stdout.strip().splitlines() if proc.stdout else []
                 rc = proc.returncode
+                # 通过 log_cb 实时回传（让父进程能显示并落盘）
+                if log_cb:
+                    for line in logs:
+                        log_cb("info", line)
             except sp.TimeoutExpired as e:
                 out = e.stdout or b""
                 if isinstance(out, bytes):

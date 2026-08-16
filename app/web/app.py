@@ -187,9 +187,12 @@ def _cleanup_sessions():
 def _run_use_case(sid, use_case, params, base_url):
     from app.core.logger import new_case_log, CaseFileLogger
     first_line = (use_case.strip().splitlines()[0][:30] if use_case.strip() else "case")
-    log_path = new_case_log("web_" + first_line)
+    # 用执行开始时的精确时间戳命名（秒级），避免并发同用例冲突
+    ts_name = time.strftime("%H%M%S")
+    log_path = new_case_log("web_" + ts_name)
     flog = CaseFileLogger(log_path)
     exec_sessions[sid]["log_file"] = log_path
+    exec_sessions[sid]["log_path"] = log_path  # 供外部获取
 
     def log(level, msg):
         exec_sessions[sid]["logs"].append({"level": level, "msg": msg, "ts": _ts()})
@@ -204,6 +207,8 @@ def _run_use_case(sid, use_case, params, base_url):
             log("error", "用例编排失败: %s" % e)
             exec_sessions[sid]["status"] = "ERROR"
             exec_sessions[sid]["result"] = {"status": "ERROR", "error": str(e)}
+            # 编排失败也要落盘结果摘要
+            _write_summary(flog, sid, use_case, base_url, params, {"status": "ERROR", "error": str(e)})
             return
         # subprocess 隔离执行（executor.run_plan 方法调用，无字符串拼装）
         runner = ScriptRunner()
@@ -222,16 +227,59 @@ def _run_use_case(sid, use_case, params, base_url):
             exec_sessions[sid]["result"] = result
             exec_sessions[sid]["status"] = result["status"]
             log("info", "执行完成：%s (exit=%s)" % (result["status"], result["exit_code"]))
+            # 结果落盘摘要
+            _write_summary(flog, sid, use_case, base_url, params, result)
+            # 完整 result JSON 落盘
+            _save_result_json(log_path, result)
         except Exception as e:
             log("error", "执行异常: %s" % e)
             exec_sessions[sid]["status"] = "ERROR"
             exec_sessions[sid]["result"] = {"status": "ERROR", "error": str(e)}
+            _write_summary(flog, sid, use_case, base_url, params, {"status": "ERROR", "error": str(e)})
+            _save_result_json(log_path, {"status": "ERROR", "error": str(e)})
     finally:
         flog.close()
 
 
+def _save_result_json(log_path, result):
+    """将完整 result JSON 保存到日志文件同目录下（HHMMSS_result.json）"""
+    try:
+        result_path = log_path.replace(".log", "_result.json")
+        with open(result_path, "w", encoding="utf-8") as f:
+            json.dump(result, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+
+def _write_summary(flog, sid, use_case, base_url, params, result):
+    """将执行摘要写入日志文件（便于事后回溯，不污染实时滚动日志）"""
+    flog.write("info", "=" * 60)
+    flog.write("info", "[summary] session=%s 用例='%s' 环境=%s 参数=%s"
+               % (sid, use_case.strip().splitlines()[0][:50], base_url,
+                  json.dumps(params, ensure_ascii=False, default=str)[:200]))
+    flog.write("info", "[summary] 最终结果: %s" % result.get("status", "?"))
+    if result.get("error"):
+        flog.write("error", "[summary] 错误: %s" % result["error"])
+    steps = result.get("steps", [])
+    if steps:
+        pass_count = sum(1 for s in steps if s.get("status") == "PASS")
+        fail_count = sum(1 for s in steps if s.get("status") != "PASS")
+        flog.write("info", "[summary] 步骤: 共%d 通过%d 失败%d" % (len(steps), pass_count, fail_count))
+    duration = result.get("duration_ms", 0)
+    if duration:
+        flog.write("info", "[summary] 耗时: %dms (%.1fs)" % (duration, duration / 1000))
+    if result.get("exit_code") is not None:
+        flog.write("info", "[summary] exit_code=%s" % result["exit_code"])
+    if result.get("script"):
+        flog.write("info", "[summary] 编排计划已记录在 log 文件中")
+    flog.write("info", "=" * 60)
+    flog.write("info", "")
+
+
 def _map_log_level(line):
     """子进程日志行前缀 → 前端分级 level"""
+    if line.startswith("[Step"):
+        return "step"
     if line.startswith("[req]"):
         return "req"
     if line.startswith("[resp]"):

@@ -184,9 +184,12 @@ class Executor:
         # extract 产出（多变量）
         self._extract(step, data, ctx)
 
-        # polling 异步任务
-        if step.get("poll") and status in (200, 201):
+        # polling 异步任务：仅在业务成功时才轮询（ERROR 状态不轮询）
+        biz_status = jsonpath_get(data, "$.status") if isinstance(data, dict) else None
+        if step.get("poll") and status in (200, 201) and biz_status == "SUCCESS":
             self._poll(step["poll"], ctx)
+        elif step.get("poll") and biz_status != "SUCCESS":
+            self.log("warning", "[poll] 业务状态非 SUCCESS（%s），跳过轮询" % biz_status)
 
         # 断言
         self._assert_step(step, data)
@@ -285,6 +288,8 @@ class Executor:
         api = poll.get("api", "common_get_msgct_detail_info")
         path = api if api.startswith("/") else "/" + api
         task_id = ctx.get("taskId") or jsonpath_get(ctx.get("_last_data") or {}, "$.content.taskId")
+        if not task_id:
+            raise AssertionError("轮询失败: taskId 为空（创建接口可能未返回 taskId）")
         interval = poll.get("interval_ms", 2000) / 1000.0
         timeout = poll.get("timeout_ms", 120000) / 1000.0
         ok_states = poll.get("terminal_states", {}).get("success", ["SUCCESS"])
@@ -346,9 +351,11 @@ class Executor:
                 self._collect_param_refs(v, refs)
 
     def _batch_size(self, step, ctx):
-        """扫描 step body 的 ${param.xxx} 引用，返回最长列表长度（0=无批量）"""
+        """扫描 step body 及 reuse_query body 的 ${param.xxx} 引用，返回最长列表长度（0=无批量）"""
         refs = set()
         self._collect_param_refs(step.get("body", {}), refs)
+        rq = step.get("reuse_query") or {}
+        self._collect_param_refs(rq.get("body", {}), refs)
         sizes = [len(ctx["params"][r]) for r in refs
                  if r in ctx.get("params", {}) and isinstance(ctx["params"][r], list)]
         return max(sizes) if sizes else 0
@@ -371,27 +378,55 @@ class Executor:
                     "error": "登录失败: %s" % e, "cleanup": "SKIP"}
         results = []
         start = time.time()
+        total_steps = len(plan.get("steps", []))
         try:
             steps = plan.get("steps", [])
             for i, step in enumerate(steps, 1):
-                self.log("step", "[Step%d] %s %s" % (i, step.get("name", ""), step.get("api", "")))
+                step_name = step.get("name", "")
+                step_api = step.get("api", "")
+                section = step.get("section", "")
+                idempotent = step.get("idempotent")
+                purpose = step.get("purpose", "")
+
+                # 步骤开始：输出完整步骤信息
+                self.log("step", "[Step %d/%d] %s" % (i, total_steps, step_name or step_api))
+                if purpose:
+                    self.log("info", "  目的: %s" % purpose)
+                if section:
+                    self.log("info", "  来源: %s" % section)
+                self.log("info", "  接口: %s" % step_api)
+                if idempotent == "reuse":
+                    self.log("info", "  模式: 幂等复用（存在同名直接复用）")
+                elif idempotent == "recreate":
+                    self.log("info", "  模式: 幂等重建（先删同名再创建）")
+                elif idempotent is True:
+                    self.log("info", "  模式: 幂等（存在则通过）")
+                if step.get("poll"):
+                    self.log("info", "  异步: 含轮询等待")
+
                 st = time.time()
                 bs = self._batch_size(step, ctx)
-                if bs > 1:
-                    self.log("info", "[batch] 参数含列表，展开 %d 次" % bs)
+                if bs > 0:
+                    self.log("info", "  批量: 参数含列表，展开 %d 次" % bs)
                     last = None
                     for bi in range(bs):
                         ctx["_batch_index"] = bi
-                        self.log("info", "[batch] 第 %d/%d 次" % (bi + 1, bs))
+                        self.log("info", "  [batch] 第 %d/%d 次" % (bi + 1, bs))
                         last = self.execute_step(step, ctx)
                     ctx.pop("_batch_index", None)
                     data = last
                 else:
                     data = self.execute_step(step, ctx)
                 ctx["_last_data"] = data
-                results.append({"step": i, "name": step.get("name", ""),
-                                "api": step.get("api", ""), "status": "PASS",
-                                "duration_ms": int((time.time() - st) * 1000)})
+
+                # 步骤结束：输出结果摘要
+                resp_status = jsonpath_get(data, "$.status") if isinstance(data, dict) else "?"
+                step_duration = int((time.time() - st) * 1000)
+                self.log("info", "  结果: %s (%dms)" % (resp_status or "PASS", step_duration))
+
+                results.append({"step": i, "name": step_name,
+                                "api": step_api, "status": "PASS",
+                                "duration_ms": step_duration})
             return {"status": "PASS", "duration_ms": int((time.time() - start) * 1000),
                     "steps": results, "cleanup": "PASS"}
         except Exception as e:

@@ -663,6 +663,9 @@ class Orchestrator:
                     elif inferred is not None:
                         body[k] = dict(v, value=inferred)
                 # 纯描述（无 value 无 generated_by 且无法推断）→ 跳过
+            # 兜底：必填字段若未被包含且有 value 声明，强制加入（防止 YAML 解析异常导致丢失）
+            if isinstance(v, dict) and v.get("required") and k not in body and v.get("value") is not None:
+                body[k] = v
         # extract：取接口 setup 中第一个有产出变量的步骤（若无显式 extract 则用其首个）
         extract = {}
         for s in meta.get("setup") or []:
