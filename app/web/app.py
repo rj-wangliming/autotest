@@ -229,13 +229,26 @@ def _run_use_case(sid, use_case, params, base_url):
             log("info", "执行完成：%s (exit=%s)" % (result["status"], result["exit_code"]))
             # 结果落盘摘要
             _write_summary(flog, sid, use_case, base_url, params, result)
+            # 完整 result JSON 落盘
+            _save_result_json(log_path, result)
         except Exception as e:
             log("error", "执行异常: %s" % e)
             exec_sessions[sid]["status"] = "ERROR"
             exec_sessions[sid]["result"] = {"status": "ERROR", "error": str(e)}
             _write_summary(flog, sid, use_case, base_url, params, {"status": "ERROR", "error": str(e)})
+            _save_result_json(log_path, {"status": "ERROR", "error": str(e)})
     finally:
         flog.close()
+
+
+def _save_result_json(log_path, result):
+    """将完整 result JSON 保存到日志文件同目录下（HHMMSS_result.json）"""
+    try:
+        result_path = log_path.replace(".log", "_result.json")
+        with open(result_path, "w", encoding="utf-8") as f:
+            json.dump(result, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
 
 
 def _write_summary(flog, sid, use_case, base_url, params, result):
