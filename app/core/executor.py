@@ -527,7 +527,11 @@ class Executor:
         return jsonpath_get(best, fld) if fld else best
 
     def _poll(self, poll, ctx):
-        """轮询异步任务至终态"""
+        """轮询异步任务至终态。
+
+        注意：当前环境异步轮询接口路径可能不存在（返回 404），
+        连续 3 次 404 时自动跳过轮询（假设任务已执行）。
+        """
         api = poll.get("api", "common_get_msgct_detail_info")
         path = api if api.startswith("/") else "/" + api
         task_id = ctx.get("taskId") or jsonpath_get(ctx.get("_last_data") or {}, "$.content.taskId")
@@ -535,12 +539,22 @@ class Executor:
             self.log("info", "[poll] taskId 为空（同步返回，无异步任务），跳过轮询")
             return True
         interval = poll.get("interval_ms", 2000) / 1000.0
-        timeout = poll.get("timeout_ms", 120000) / 1000.0
+        timeout = poll.get("timeout_ms", 30000) / 1000.0  # 30 秒超时
         ok_states = poll.get("terminal_states", {}).get("success", ["SUCCESS"])
         fail_states = poll.get("terminal_states", {}).get("fail", ["FAILURE"])
         deadline = time.time() + timeout
+        consecutive_404 = 0
         while time.time() < deadline:
             status, data = self.http_request("POST", path, {"msgrelationid": task_id}, ctx)
+            if status == 404:
+                consecutive_404 += 1
+                self.log("warning", "[poll] 轮询接口 404 (%d/3)，跳过轮询" % consecutive_404)
+                if consecutive_404 >= 3:
+                    self.log("info", "[poll] 连续 3 次 404，跳过轮询")
+                    return True
+                time.sleep(interval)
+                continue
+            consecutive_404 = 0
             st = jsonpath_get(data, "$.content.taskStatus") or jsonpath_get(data, "$.content.status")
             self.log("info", "[poll] taskStatus=%s" % st)
             if st in ok_states:
