@@ -248,6 +248,8 @@ class Executor:
             return data
 
         status, data = self.http_request(method, path, body or None, ctx)
+        # 设置 _last_data（_poll 需要读取当前步骤响应中的 taskId）
+        ctx["_last_data"] = data
 
         # extract 产出（多变量）
         self._extract(step, data, ctx)
