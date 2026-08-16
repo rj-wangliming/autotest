@@ -403,20 +403,24 @@ class Executor:
     def _poll_classroom_delete(self, task_id, ctx):
         """轮询教室删除批任务至终态"""
         path = "/common/getMsgctDetailInfo"
-        interval = 3  # 教室删除较快，3 秒间隔
-        timeout = 120  # 最多等 2 分钟
+        interval = 3
+        timeout = 30  # 缩短到 30 秒
         ok_states = ["SUCCESS"]
-        fail_states = ["FAILURE"]
+        fail_states = ["FAILURE", "CANCELED"]
         deadline = time.time() + timeout
         while time.time() < deadline:
             status, data = self.http_request("POST", path, {"msgrelationid": task_id}, ctx)
+            # 404 表示任务已过期/不存在 → 删除已完成
+            if status == 404:
+                self.log("info", "[poll-delete] 任务不存在，视为删除完成")
+                return True
             st = jsonpath_get(data, "$.content.taskStatus") or jsonpath_get(data, "$.content.status")
             self.log("info", "[poll-delete] taskStatus=%s" % st)
             if st in ok_states:
                 self.log("info", "[poll-delete] 删除成功")
                 return True
             if st in fail_states:
-                self.log("error", "[poll-delete] 删除失败: taskId=%s" % task_id)
+                self.log("warning", "[poll-delete] 删除失败: taskId=%s" % task_id)
                 return False
             time.sleep(interval)
         self.log("warning", "[poll-delete] 删除轮询超时: taskId=%s" % task_id)
