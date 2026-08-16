@@ -184,9 +184,12 @@ class Executor:
         # extract 产出（多变量）
         self._extract(step, data, ctx)
 
-        # polling 异步任务
-        if step.get("poll") and status in (200, 201):
+        # polling 异步任务：仅在业务成功时才轮询（ERROR 状态不轮询）
+        biz_status = jsonpath_get(data, "$.status") if isinstance(data, dict) else None
+        if step.get("poll") and status in (200, 201) and biz_status == "SUCCESS":
             self._poll(step["poll"], ctx)
+        elif step.get("poll") and biz_status != "SUCCESS":
+            self.log("warning", "[poll] 业务状态非 SUCCESS（%s），跳过轮询" % biz_status)
 
         # 断言
         self._assert_step(step, data)
@@ -285,6 +288,8 @@ class Executor:
         api = poll.get("api", "common_get_msgct_detail_info")
         path = api if api.startswith("/") else "/" + api
         task_id = ctx.get("taskId") or jsonpath_get(ctx.get("_last_data") or {}, "$.content.taskId")
+        if not task_id:
+            raise AssertionError("轮询失败: taskId 为空（创建接口可能未返回 taskId）")
         interval = poll.get("interval_ms", 2000) / 1000.0
         timeout = poll.get("timeout_ms", 120000) / 1000.0
         ok_states = poll.get("terminal_states", {}).get("success", ["SUCCESS"])
