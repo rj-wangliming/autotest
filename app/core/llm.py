@@ -71,7 +71,7 @@ class LlmClient:
             "给定接口清单（url + 中文名 + body 字段），把【前置】和【执行/操作】的每个步骤映射到一个接口 url，必须从清单选取，不得编造。"
             "用例文本若明确含量化条件（时长/数量/规格等，如\"保持开机30分钟\"\"创建3台\"），把该值作为固定值写入对应字段的 param_map；其余参数从全局参数清单选取。对每个步骤的必填 body 字段，用 param_map 声明来源："
             "前置步骤产出用 ${prev.<step_name>.output.<field>}；全局参数用 ${param.<参数名>}；固定值直接写。"
-            "若某查询步骤需产出数组（如多个ID供后续批量操作），用 extract_override 声明 JSONPath（如 $.content.itemArr[*].id）覆盖默认产出。"
+            "若某查询步骤需产出数组（如多个ID供后续批量操作），用 extract_override 声明 JSONPath 覆盖默认产出。extract_override 的 JSONPath 必须从清单「产出」列选取，不得编造清单外路径。"
             "若某步骤是纯环境状态描述且无需调接口即可满足，可省略；若需查询确认，映射为查询/list 接口。"
             "为每个步骤起唯一的英文 snake_case 名 step_name。保留出现顺序与所属段（section=pre|action）。"
             "把【预测/预期】转为断言表达式列表（如 $.status==SUCCESS）。"
@@ -87,9 +87,10 @@ class LlmClient:
             + ("、".join(param_names) if param_names else "（空）") + "。"
         )
         catalog_text = "\n".join(
-            "%s  |  %s  |  body: %s" % (
+            "%s  |  %s  |  body: %s  |  产出: %s" % (
                 a["url"], (a["name"] or "")[:50],
-                ", ".join(a.get("fields") or []) if a.get("fields") else "无"
+                ", ".join(a.get("fields") or []) if a.get("fields") else "无",
+                ", ".join(a.get("produce") or []) if a.get("produce") else "无"
             ) for a in api_catalog
         )
         # 三段拼接（前置可空：为空则不出现该段）

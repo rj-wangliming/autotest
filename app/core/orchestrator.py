@@ -462,7 +462,9 @@ class Orchestrator:
                     flds.append("%s(%s)" % (k, "必填" if v.get("required") else "可选"))
                 else:
                     flds.append(str(k))
-            catalog.append({"url": m["url"], "name": (m.get("name") or "")[:50], "fields": flds})
+            produce = self._collect_produce(m)
+            catalog.append({"url": m["url"], "name": (m.get("name") or "")[:50],
+                            "fields": flds, "produce": produce})
         intent = client.parse_use_case(sections, catalog, sorted((params or {}).keys()))
 
         steps = []
@@ -697,6 +699,43 @@ class Orchestrator:
                     step["reuse_query"] = s["reuse_query"]
                 break
         return step
+
+    def _collect_produce(self, meta):
+        """收集接口的「产出 jsonpath」（供 LLM 写 extract_override 时从清单选取，而非猜）：
+        1. setup 各步骤 extract 的 jsonpath（编排器实际提取路径，真实）
+        2. 本接口 upstream 的 produces 字段（上游接口的产出，供跨接口关联）
+        返回去重后的 jsonpath 列表（截断防止 prompt 过长）。"""
+        seen = []
+        # 1. setup extract jsonpath
+        for s in meta.get("setup") or []:
+            ex = s.get("extract")
+            if isinstance(ex, dict):
+                for var, jp in ex.items():
+                    if isinstance(jp, str) and jp.startswith("$") and jp not in seen:
+                        seen.append(jp)
+            elif isinstance(ex, list):
+                for it in ex:
+                    if isinstance(it, dict) and it.get("jsonpath") and str(it["jsonpath"]).startswith("$") \
+                            and str(it["jsonpath"]) not in seen:
+                        seen.append(str(it["jsonpath"]))
+        # 2. response.body 的 itemArr 元素字段（分页列表的真实产出，如 itemArr[]_desktopId）
+        resp_body = (meta.get("response") or {}).get("body") or {}
+        if isinstance(resp_body, dict):
+            for k in resp_body:
+                if k.startswith("itemArr[]_") and k not in ("itemArr[]",):
+                    jp = "$.content.itemArr[*]." + k[len("itemArr[]_"):]
+                    if jp not in seen:
+                        seen.append(jp)
+        # 3. upstream produces（上游产出 jsonpath，来自 field_map 关联）
+        for u in meta.get("upstream") or []:
+            p = u.get("produces")
+            if isinstance(p, str) and p.startswith("$") and p not in seen:
+                seen.append(p)
+            elif isinstance(p, list):
+                for x in p:
+                    if isinstance(x, str) and x.startswith("$") and x not in seen:
+                        seen.append(x)
+        return seen[:8]
 
     def _infer_body_value(self, field, spec, meta):
         """推断裸请求字段的 value 引用（确定性规则，非 AI）：
