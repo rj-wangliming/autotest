@@ -88,6 +88,7 @@ idempotency:
 params:
   required:
   - name: classroom_name
+  - name: enable_teacher
     desc: ''
     used_by: 见 setup/request
 ---

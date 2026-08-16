@@ -1,0 +1,1394 @@
+{
+ "rcc_classroom_checkClassroomNameDuplicate": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId",
+   "matched_by": "same_name"
+  }
+ ],
+ "rcc_classroom_checkStudentIpDuplicate": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId",
+   "matched_by": "same_name"
+  }
+ ],
+ "rcc_classroom_checkTeacherIpDuplicate": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId",
+   "matched_by": "same_name"
+  }
+ ],
+ "rcc_classroom_cmr_download_getUrl": [
+  {
+   "api": "https://{cluster_virtual_ip}:9274/api (Index/Download/getBtUrl)",
+   "from_jsonpath": "UpdaterResponse.data{url,checkSum}",
+   "external": true
+  },
+  {
+   "api": "https://{cluster_virtual_ip}:9274/api (Index/Download/getInstallUrl)",
+   "from_jsonpath": "UpdaterResponse.data{url,checkSum}",
+   "external": true
+  }
+ ],
+ "rcc_classroom_cmr_version_getRpmAndSubsystemVersion": [
+  {
+   "api": "file:///config/packet/{rpmName}.ini",
+   "from_jsonpath": "Properties[version]",
+   "external": true
+  }
+ ],
+ "rcc_classroom_create": [
+  {
+   "api": "POST /rcc/classroom/strategy/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomStrategyId",
+   "to": "studentClassroomStrategyId",
+   "matched_by": "extract_var_same_name"
+  }
+ ],
+ "rcc_classroom_delete": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "idArr",
+   "matched_by": "generic_idArr"
+  }
+ ],
+ "rcc_classroom_desktop_forceWakeUp": [
+  {
+   "api": "POST /rcc/classroom/desktop/list",
+   "from_jsonpath": "$.content.itemArr[*].desktopId",
+   "to": "idArr"
+  }
+ ],
+ "rcc_classroom_desktop_gtlog_collectLog": [
+  {
+   "api": "POST /rcc/classroom/desktop/list",
+   "from_jsonpath": "$.content.itemArr[0].desktopId",
+   "to": "id"
+  }
+ ],
+ "rcc_classroom_desktop_gtlog_download": [
+  {
+   "api": "POST /rcc/classroom/desktop/gtlog/collectLog",
+   "from_jsonpath": "$.content.logFileName",
+   "to": "logFileName",
+   "matched_by": "same_name"
+  },
+  {
+   "api": "POST /rcc/classroom/desktop/list",
+   "from_jsonpath": "$.content.itemArr[0].desktopId",
+   "to": "deskId",
+   "matched_by": "api_rule"
+  }
+ ],
+ "rcc_classroom_desktop_gtlog_getState": [
+  {
+   "api": "POST /rcc/classroom/desktop/list",
+   "from_jsonpath": "$.content.itemArr[0].desktopId",
+   "to": "id"
+  }
+ ],
+ "rcc_classroom_desktop_list": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomId",
+   "resolve_via": "查询过滤（matchArr/searchKeyword）"
+  }
+ ],
+ "rcc_classroom_desktop_powerOff": [
+  {
+   "api": "POST /rcc/classroom/desktop/list",
+   "from_jsonpath": "$.content.itemArr[*].desktopId",
+   "to": "idArr"
+  }
+ ],
+ "rcc_classroom_desktop_restart": [
+  {
+   "api": "POST /rcc/classroom/desktop/list",
+   "from_jsonpath": "$.content.itemArr[*].desktopId",
+   "to": "idArr",
+   "matched_by": "generic_idArr"
+  }
+ ],
+ "rcc_classroom_desktop_restoreVDIImage": [
+  {
+   "api": "POST /rcc/classroom/image/list",
+   "from_jsonpath": "$.content.itemArr[0].imageId",
+   "to": "imageId",
+   "matched_by": "same_name"
+  },
+  {
+   "api": "POST /rcc/classroom/desktop/list",
+   "from_jsonpath": "$.content.itemArr[*].desktopId",
+   "to": "desktopIdList",
+   "matched_by": "array_list"
+  }
+ ],
+ "rcc_classroom_desktop_shutdown": [
+  {
+   "api": "POST /rcc/classroom/desktop/list",
+   "from_jsonpath": "$.content.itemArr[*].desktopId",
+   "to": "idArr"
+  }
+ ],
+ "rcc_classroom_desktop_tci_collectLog": [
+  {
+   "api": "POST /rcc/classroom/desktop/list",
+   "from_jsonpath": "$.content.itemArr[0].desktopId",
+   "to": "id"
+  }
+ ],
+ "rcc_classroom_desktop_tci_collectLog_download": [
+  {
+   "api": "POST /rcc/classroom/desktop/tci/collectLog",
+   "from_jsonpath": "$.content.logFileName",
+   "to": "logFileName",
+   "matched_by": "same_name"
+  },
+  {
+   "api": "POST /rcc/classroom/desktop/list",
+   "from_jsonpath": "$.content.itemArr[0].desktopId",
+   "to": "deskId",
+   "matched_by": "api_rule"
+  }
+ ],
+ "rcc_classroom_desktop_tci_collectLog_getState": [
+  {
+   "api": "POST /rcc/classroom/desktop/list",
+   "from_jsonpath": "$.content.itemArr[0].desktopId",
+   "to": "id"
+  }
+ ],
+ "rcc_classroom_desktop_tci_list": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomId",
+   "to": "matchArr[0]"
+  }
+ ],
+ "rcc_classroom_desktop_tci_restart": [
+  {
+   "api": "POST /rcc/classroom/desktop/list",
+   "from_jsonpath": "$.content.itemArr[*].desktopId",
+   "to": "idArr"
+  }
+ ],
+ "rcc_classroom_desktop_tci_shutdown": [
+  {
+   "api": "POST /rcc/classroom/desktop/list",
+   "from_jsonpath": "$.content.itemArr[*].desktopId",
+   "to": "idArr"
+  }
+ ],
+ "rcc_classroom_editClassroomBasicInfo": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId"
+  }
+ ],
+ "rcc_classroom_editStudentInfo": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId"
+  },
+  {
+   "api": "POST /rcc/classroom/strategy/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomStrategyId",
+   "to": "studentClassroomStrategy.classroomStrategyId",
+   "matched_by": "nested_object_field"
+  }
+ ],
+ "rcc_classroom_editTeacherInfo": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId"
+  },
+  {
+   "api": "POST /rcc/classroom/strategy/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomStrategyId",
+   "to": "teacherClassroomStrategy.classroomStrategyId",
+   "matched_by": "nested_object_field"
+  }
+ ],
+ "rcc_classroom_editTeacherInfoCheckDesktopPreName": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId"
+  }
+ ],
+ "rcc_classroom_getClassroomBasicInfo": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId"
+  }
+ ],
+ "rcc_classroom_getClassroomVdiDiskStorage": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId"
+  },
+  {
+   "api": "POST /rcc/classroom/image/getAssignedClusterAndNetwork",
+   "from_jsonpath": "$.content.itemArr[0].clusterId",
+   "to": "clusterId",
+   "matched_by": "same_name"
+  }
+ ],
+ "rcc_classroom_getInfo": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId"
+  }
+ ],
+ "rcc_classroom_getStudentConfig": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId"
+  }
+ ],
+ "rcc_classroom_getTeacherConfig": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId"
+  }
+ ],
+ "rcc_classroom_image_assignImage_stuImage_detail": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "crId"
+  }
+ ],
+ "rcc_classroom_image_assignImage_teaImage_detail": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "crId"
+  }
+ ],
+ "rcc_classroom_image_assignImage_yetAssign_list": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "crId"
+  }
+ ],
+ "rcc_classroom_image_getAssignedClusterAndNetwork": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId"
+  }
+ ],
+ "rcc_classroom_image_getAssignedClusters": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId"
+  }
+ ],
+ "rcc_classroom_image_getInfo": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "crId",
+   "matched_by": "abbrev_crId"
+  },
+  {
+   "api": "POST /rcc/classroom/image/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "imageId"
+  }
+ ],
+ "rcc_classroom_image_getInfoStoragePoolList": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "crId",
+   "matched_by": "abbrev_crId"
+  },
+  {
+   "api": "POST /rcc/classroom/image/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "imageId"
+  }
+ ],
+ "rcc_classroom_image_getStrategy": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId"
+  },
+  {
+   "api": "POST /rcc/classroom/image/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "imageId"
+  }
+ ],
+ "rcc_classroom_image_getVDIDesktopCount": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId"
+  }
+ ],
+ "rcc_classroom_image_getVDILessonImageCount": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId"
+  }
+ ],
+ "rcc_classroom_image_list": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "crId",
+   "matched_by": "abbrev_crId"
+  }
+ ],
+ "rcc_classroom_image_student_hide": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "crId",
+   "matched_by": "abbrev_crId"
+  },
+  {
+   "api": "POST /rcc/classroom/image/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "imageId"
+  }
+ ],
+ "rcc_classroom_image_student_show": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "crId",
+   "matched_by": "abbrev_crId"
+  },
+  {
+   "api": "POST /rcc/classroom/image/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "imageId"
+  }
+ ],
+ "rcc_classroom_image_student_strategy_edit": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId"
+  },
+  {
+   "api": "POST /rcc/classroom/image/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "imageId"
+  },
+  {
+   "api": "POST /rcc/classroom/strategy/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomStrategyId",
+   "to": "deskStrategyId"
+  }
+ ],
+ "rcc_classroom_image_student_update": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "crId",
+   "matched_by": "abbrev_crId"
+  },
+  {
+   "api": "POST /rcc/classroom/image/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "imageId"
+  }
+ ],
+ "rcc_classroom_image_teacher_hide": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "crId",
+   "matched_by": "abbrev_crId"
+  },
+  {
+   "api": "POST /rcc/classroom/image/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "imageId"
+  }
+ ],
+ "rcc_classroom_image_teacher_network_edit": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId"
+  },
+  {
+   "api": "POST /rcc/classroom/image/getAssignedClusterAndNetwork",
+   "from_jsonpath": "$.content.itemArr[0].clusterId",
+   "to": "clusterId"
+  }
+ ],
+ "rcc_classroom_image_teacher_show": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "crId",
+   "matched_by": "abbrev_crId"
+  },
+  {
+   "api": "POST /rcc/classroom/image/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "imageId"
+  }
+ ],
+ "rcc_classroom_image_teacher_strategy_edit": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId"
+  },
+  {
+   "api": "POST /rcc/classroom/image/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "imageId"
+  },
+  {
+   "api": "POST /space/strategygroup/vdi/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "imageId"
+  },
+  {
+   "api": "POST /space/cluster/obtainComputeClusterList",
+   "from_jsonpath": "$.content.itemArr[0].computerClusterId + platformId",
+   "to": "platformId"
+  }
+ ],
+ "rcc_classroom_image_teacher_update": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "crId",
+   "matched_by": "abbrev_crId"
+  },
+  {
+   "api": "POST /rcc/classroom/image/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "imageId"
+  }
+ ],
+ "rcc_classroom_networkWhitelist_create": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId"
+  }
+ ],
+ "rcc_classroom_networkWhitelist_delete": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId"
+  },
+  {
+   "api": "POST /rcc/classroom/networkWhitelist/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "whiteListIdArr"
+  }
+ ],
+ "rcc_classroom_networkWhitelist_edit": [
+  {
+   "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
+   "from_jsonpath": "$.content[0].classroomId",
+   "to": "classroomId"
+  },
+  {
+   "api": "POST /rcc/classroom/networkWhitelist/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "whiteListId"
+  }
+ ],
+ "rcc_classroom_networkWhitelist_getWhiteList": [
+  {
+   "api": "POST /rcc/classroom/networkWhitelist/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "whiteListId"
+  }
+ ],
+ "rcc_classroom_seat_batchCheckDesktopIpDuplicate": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomId",
+   "to": "classroomId",
+   "matched_by": "same_name"
+  },
+  {
+   "api": "POST /rcc/classroom/seat/list",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "seatIdArr",
+   "matched_by": "seatIdArr"
+  }
+ ],
+ "rcc_classroom_seat_batchCreate": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomId",
+   "to": "classroomId"
+  },
+  {
+   "api": "POST /rcc/classroom/image/getAssignedClusterAndNetwork",
+   "from_jsonpath": "$.content.networkId",
+   "to": "networkId",
+   "matched_by": "same_name"
+  },
+  {
+   "api": "POST /space/cluster/obtainComputeClusterList",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "clusterId",
+   "matched_by": "api_rule"
+  },
+  {
+   "api": "POST /space/platform/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "platformId",
+   "matched_by": "api_rule"
+  }
+ ],
+ "rcc_classroom_seat_checkStudentDesktopIpDuplicate": [
+  {
+   "api": "POST /rcc/classroom/seat/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "seatId",
+   "matched_by": "api_rule"
+  },
+  {
+   "api": "POST /rcc/classroom/image/getAssignedClusterAndNetwork",
+   "from_jsonpath": "$.content.networkId",
+   "to": "networkId",
+   "matched_by": "same_name"
+  },
+  {
+   "api": "POST /space/cluster/obtainComputeClusterList",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "clusterId",
+   "matched_by": "api_rule"
+  },
+  {
+   "api": "POST /space/platform/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "platformId",
+   "matched_by": "api_rule"
+  }
+ ],
+ "rcc_classroom_seat_checkStudentDesktopNameDuplicate": [
+  {
+   "api": "POST /rcc/classroom/seat/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "seatId",
+   "matched_by": "api_rule"
+  }
+ ],
+ "rcc_classroom_seat_clearTciLocalDisk": [
+  {
+   "api": "POST /rcc/classroom/seat/list",
+   "from_jsonpath": "$.content.itemArr[*].terminalId",
+   "to": "idArr",
+   "matched_by": "generic_idArr"
+  }
+ ],
+ "rcc_classroom_seat_create": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomId",
+   "to": "classroomId"
+  },
+  {
+   "api": "POST /rcc/classroom/image/getAssignedClusterAndNetwork",
+   "from_jsonpath": "$.content.networkId",
+   "to": "networkId",
+   "matched_by": "same_name"
+  },
+  {
+   "api": "POST /space/cluster/obtainComputeClusterList",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "clusterId",
+   "matched_by": "api_rule"
+  },
+  {
+   "api": "POST /space/platform/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "platformId",
+   "matched_by": "api_rule"
+  }
+ ],
+ "rcc_classroom_seat_delete": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomId",
+   "to": "classroomId"
+  },
+  {
+   "api": "POST /rcc/classroom/seat/list",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "seatIdArr"
+  }
+ ],
+ "rcc_classroom_seat_disk_list": [
+  {
+   "api": "POST /rcc/classroom/seat/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "seatId"
+  }
+ ],
+ "rcc_classroom_seat_edit": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomId",
+   "to": "classroomId"
+  },
+  {
+   "api": "POST /rcc/classroom/seat/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "seatId"
+  },
+  {
+   "api": "POST /rcc/classroom/image/getAssignedClusterAndNetwork",
+   "from_jsonpath": "$.content.networkId",
+   "to": "networkId",
+   "matched_by": "same_name"
+  },
+  {
+   "api": "POST /space/cluster/obtainComputeClusterList",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "seatId"
+  },
+  {
+   "api": "POST /space/platform/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "seatId"
+  }
+ ],
+ "rcc_classroom_seat_getInfo": [
+  {
+   "api": "POST /rcc/classroom/seat/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "seatId"
+  }
+ ],
+ "rcc_classroom_seat_getSeat": [
+  {
+   "api": "POST /rcc/classroom/seat/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "seatId"
+  }
+ ],
+ "rcc_classroom_seat_getStudentTerminalType": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomId",
+   "to": "classroomId"
+  }
+ ],
+ "rcc_classroom_seat_list": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomId",
+   "resolve_via": "查询过滤（exactMatchArr/condition/matchArr）"
+  }
+ ],
+ "rcc_classroom_seat_networkWhitelist_getClassroomDesktopIpRange": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomId",
+   "to": "classroomId"
+  }
+ ],
+ "rcc_classroom_seat_network_cancelDisable": [
+  {
+   "api": "POST /rcc/classroom/seat/list",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "seatIdArr"
+  }
+ ],
+ "rcc_classroom_seat_network_disable": [
+  {
+   "api": "POST /rcc/classroom/seat/list",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "seatIdArr"
+  }
+ ],
+ "rcc_classroom_seat_networkcard_list": [
+  {
+   "api": "POST /rcc/classroom/seat/list",
+   "from_jsonpath": "$.content.itemArr[0].id",
+   "to": "seatId"
+  }
+ ],
+ "rcc_classroom_seat_terminal_collectLog": [
+  {
+   "api": "POST /rcc/classroom/seat/list",
+   "from_jsonpath": "$.content.itemArr[0].terminalId",
+   "to": "terminalId"
+  }
+ ],
+ "rcc_classroom_seat_terminal_collectLog_download": [
+  {
+   "api": "POST /rcc/classroom/seat/terminal/collectLog",
+   "from_jsonpath": "$.content.logName",
+   "to": "logName",
+   "matched_by": "same_name"
+  }
+ ],
+ "rcc_classroom_seat_terminal_collectLog_get": [
+  {
+   "api": "POST /rcc/classroom/seat/list",
+   "from_jsonpath": "$.content.itemArr[0].terminalId",
+   "to": "terminalId"
+  }
+ ],
+ "rcc_classroom_seat_terminal_init": [
+  {
+   "api": "POST /rcc/classroom/seat/list",
+   "from_jsonpath": "$.content.itemArr[*].terminalId",
+   "to": "idArr",
+   "matched_by": "generic_idArr"
+  }
+ ],
+ "rcc_classroom_seat_terminal_kickout": [
+  {
+   "api": "POST /rcc/classroom/seat/list",
+   "from_jsonpath": "$.content.itemArr[*].terminalId",
+   "to": "idArr",
+   "matched_by": "generic_idArr"
+  }
+ ],
+ "rcc_classroom_seat_terminal_refresh": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomId",
+   "to": "classroomId"
+  }
+ ],
+ "rcc_classroom_seat_terminal_restart": [
+  {
+   "api": "POST /rcc/classroom/seat/list",
+   "from_jsonpath": "$.content.itemArr[*].terminalId",
+   "to": "idArr",
+   "matched_by": "generic_idArr"
+  }
+ ],
+ "rcc_classroom_seat_terminal_shutdown": [
+  {
+   "api": "POST /rcc/classroom/seat/list",
+   "from_jsonpath": "$.content.itemArr[*].terminalId",
+   "to": "idArr",
+   "matched_by": "generic_idArr"
+  }
+ ],
+ "rcc_classroom_seat_terminal_unlock": [
+  {
+   "api": "POST /rcc/classroom/seat/list",
+   "from_jsonpath": "$.content.itemArr[*].terminalId",
+   "to": "idArr",
+   "matched_by": "generic_idArr"
+  }
+ ],
+ "rcc_classroom_seat_terminal_wake": [
+  {
+   "api": "POST /rcc/classroom/seat/list",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "seatIdArr"
+  },
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomId",
+   "to": "classroomId"
+  }
+ ],
+ "rcc_classroom_seat_vdiLocalDisk_clear": [
+  {
+   "api": "POST /rcc/classroom/seat/list",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "idArr",
+   "matched_by": "array_field"
+  }
+ ],
+ "rcc_classroom_teacher_clearTeacherTciLocalDisk": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[*].classroomId",
+   "to": "idArr",
+   "matched_by": "generic_idArr"
+  }
+ ],
+ "rcc_classroom_teacher_disk_list": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomId",
+   "to": "classroomId"
+  }
+ ],
+ "rcc_classroom_teacher_end": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomId",
+   "to": "classroomId"
+  },
+  {
+   "api": "POST /rcc/classroom/image/list",
+   "from_jsonpath": "$.content.itemArr[0].imageId",
+   "to": "imageId",
+   "matched_by": "same_name"
+  }
+ ],
+ "rcc_classroom_teacher_getInfo": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomId",
+   "to": "classroomId"
+  }
+ ],
+ "rcc_classroom_teacher_networkcard_list": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomId",
+   "to": "classroomId"
+  }
+ ],
+ "rcc_classroom_teacher_start": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomId",
+   "to": "classroomId"
+  },
+  {
+   "api": "POST /rcc/classroom/image/list",
+   "from_jsonpath": "$.content.itemArr[0].imageId",
+   "to": "imageId",
+   "matched_by": "same_name"
+  }
+ ],
+ "rcc_classroom_teacher_terminal_collectLog": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomId",
+   "to": "id"
+  }
+ ],
+ "rcc_classroom_teacher_terminal_collectLog_download": [
+  {
+   "api": "POST /rcc/classroom/teacher/terminal/collectLog",
+   "from_jsonpath": "$.content.logName",
+   "to": "logName",
+   "matched_by": "same_name"
+  }
+ ],
+ "rcc_classroom_teacher_terminal_collectLog_get": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].teacherTerminalId",
+   "to": "terminalId",
+   "matched_by": "api_rule"
+  }
+ ],
+ "rcc_classroom_teacher_terminal_init": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].teacherTerminalId",
+   "to": "idArr",
+   "matched_by": "generic_idArr"
+  }
+ ],
+ "rcc_classroom_teacher_terminal_restart": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[*].classroomId",
+   "to": "idArr",
+   "matched_by": "generic_idArr"
+  }
+ ],
+ "rcc_classroom_teacher_terminal_shutdown": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[*].classroomId",
+   "to": "idArr",
+   "matched_by": "generic_idArr"
+  }
+ ],
+ "rcc_classroom_teacher_terminal_unlock": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[*].classroomId",
+   "to": "classroomIdArr"
+  }
+ ],
+ "rcc_classroom_teacher_terminal_wake": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[*].classroomId",
+   "to": "classroomArr",
+   "matched_by": "array_list"
+  }
+ ],
+ "rcc_classroom_teacher_vdiLocalDisk_clear": [
+  {
+   "api": "POST /rcc/classroom/desktop/list",
+   "from_jsonpath": "$.content.itemArr[*].desktopId",
+   "to": "idArr",
+   "matched_by": "generic_idArr"
+  }
+ ],
+ "rcc_classroom_terminal_log_delete": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomId",
+   "to": "classroomId"
+  },
+  {
+   "api": "POST /rcc/classroom/terminal/log/list",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "logIdArr",
+   "matched_by": "logIdArr"
+  }
+ ],
+ "rcc_classroom_terminal_log_download": [
+  {
+   "api": "POST /rcc/classroom/terminal/log/list",
+   "from_jsonpath": "$.content.logName",
+   "to": "logName",
+   "matched_by": "same_name"
+  }
+ ],
+ "rcc_classroom_terminal_log_list": [
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomId",
+   "resolve_via": "查询过滤（matchArr/searchKeyword）"
+  }
+ ],
+ "rcc_deskStrategy_getClassroomImageList": [
+  {
+   "api": "POST /rcc/space/image/list",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "resolve_via": "matchArr 过滤字段（见该接口 request.body.matchArr[].fieldName）"
+  }
+ ],
+ "rcc_deskStrategy_getClusterSupportEnablePersonalConfig": [
+  {
+   "api": "POST /space/strategygroup/vdi/list",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "strategyId"
+  },
+  {
+   "api": "POST /space/cluster/obtainComputeClusterList",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "strategyId"
+  },
+  {
+   "api": "POST /space/platform/list",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "strategyId"
+  }
+ ],
+ "rcc_space_checkNameDuplication": [
+  {
+   "api": "POST /rcc/space/detail",
+   "from_jsonpath": "$.content.id",
+   "to": "id",
+   "matched_by": "same_name"
+  }
+ ],
+ "rcc_space_classroom_cloudDesktop_list": [
+  {
+   "api": "POST /rcc/classroom/create",
+   "from_jsonpath": "$.content.classroomId",
+   "resolve_via": "查询过滤（matchArr/searchKeyword）"
+  }
+ ],
+ "rcc_space_classroom_cloudDesktop_powerOff": [
+  {
+   "api": "POST /rcc/classroom/create",
+   "from_jsonpath": "$.content.classroomId",
+   "to": "idArr"
+  }
+ ],
+ "rcc_space_classroom_cloudDesktop_restart": [
+  {
+   "api": "POST /rcc/classroom/create",
+   "from_jsonpath": "$.content.classroomId",
+   "to": "idArr"
+  }
+ ],
+ "rcc_space_classroom_cloudDesktop_shutdown": [
+  {
+   "api": "POST /rcc/classroom/create",
+   "from_jsonpath": "$.content.classroomId",
+   "to": "idArr"
+  }
+ ],
+ "rcc_space_delete": [
+  {
+   "api": "POST /rcc/space/list",
+   "from_jsonpath": "$.content.id",
+   "to": "idArr",
+   "matched_by": "array_field"
+  }
+ ],
+ "rcc_space_desktop_detail": [
+  {
+   "api": "POST /rcc/space/classroom/cloudDesktop/list",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "id"
+  }
+ ],
+ "rcc_space_detail": [
+  {
+   "api": "POST /rcc/space/list",
+   "from_jsonpath": "$.content.id",
+   "to": "id"
+  }
+ ],
+ "rcc_space_edit": [
+  {
+   "api": "POST /rcc/space/list",
+   "from_jsonpath": "$.content.id",
+   "to": "id",
+   "matched_by": "same_name"
+  },
+  {
+   "api": "POST /rcc/space/image/list",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "id",
+   "matched_by": "same_name"
+  },
+  {
+   "api": "POST /space/cluster/obtainComputeClusterList",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "id",
+   "matched_by": "same_name"
+  },
+  {
+   "api": "POST /space/storagePool/list",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "id",
+   "matched_by": "same_name"
+  }
+ ],
+ "rcc_space_forceWakeUp": [
+  {
+   "api": "POST /rcc/space/list",
+   "from_jsonpath": "$.content.id",
+   "to": "idArr",
+   "matched_by": "array_field"
+  }
+ ],
+ "rcc_space_overview_seatList": [
+  {
+   "api": "POST /rcc/classroom/create",
+   "from_jsonpath": "$.content.classroomId",
+   "resolve_via": "查询过滤（matchArr/searchKeyword）"
+  }
+ ],
+ "rcc_space_publish": [
+  {
+   "api": "POST /rcc/classroom/create",
+   "from_jsonpath": "$.content.classroomId",
+   "to": "classroomId"
+  },
+  {
+   "api": "POST /rcc/space/image/list",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "imageTemplateIdArr"
+  }
+ ],
+ "rcc_space_user_update": [
+  {
+   "api": "POST /rcc/classroom/create",
+   "from_jsonpath": "$.content.classroomId",
+   "to": "classroomId"
+  },
+  {
+   "api": "POST /space/user/listWithAssignment",
+   "from_jsonpath": "$.content.itemArr[*].userId",
+   "resolve_via": "分配用户列表（addUserByIdList/deleteUserByIdList，取决于操作方向）"
+  },
+  {
+   "api": "POST /space/user/group/list",
+   "from_jsonpath": "$.content.id",
+   "to": "selectedGroupIdList",
+   "matched_by": "group_list"
+  },
+  {
+   "api": "POST /space/adGroup/listWithAssignment",
+   "from_jsonpath": "$.content.itemArr[*].adGroupId",
+   "to": "selectedAdGroupIdList",
+   "matched_by": "api_rule"
+  }
+ ],
+ "rcc_spacetci_desktop_restore": [
+  {
+   "api": "POST /rcc/classroom/image/list",
+   "from_jsonpath": "$.content.itemArr[0].imageId",
+   "to": "imageId",
+   "matched_by": "same_name"
+  },
+  {
+   "api": "POST /rcc/classroom/terminal/list",
+   "from_jsonpath": "$.content.itemArr[0].classroomId",
+   "to": "classroomId"
+  },
+  {
+   "api": "POST /rcc/classroom/desktop/tci/list",
+   "from_jsonpath": "$.content.itemArr[*].desktopId",
+   "to": "deskList[].deskId",
+   "matched_by": "api_rule"
+  }
+ ],
+ "space_adGroup_listWithAssignment": [
+  {
+   "api": "POST /rcc/classroom/create",
+   "from_jsonpath": "$.content.classroomId",
+   "resolve_via": "查询过滤（matchArr/searchKeyword）"
+  }
+ ],
+ "space_adGroup_pool_realBindAdGroup_page": [
+  {
+   "api": "POST /rcc/classroom/create",
+   "from_jsonpath": "$.content.classroomId",
+   "resolve_via": "查询过滤（matchArr/searchKeyword）"
+  }
+ ],
+ "space_cluster_obtainComputeClusterList": [
+  {
+   "api": "POST /rcc/space/image/list",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "resolve_via": "matchArr 过滤字段（见该接口 request.body.matchArr[].fieldName）"
+  },
+  {
+   "api": "POST /space/storagePool/list",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "resolve_via": "matchArr 过滤字段（见该接口 request.body.matchArr[].fieldName）"
+  },
+  {
+   "api": "POST /space/clouddesktop/deskNetwork/list",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "resolve_via": "matchArr 过滤字段（见该接口 request.body.matchArr[].fieldName）"
+  }
+ ],
+ "space_deskStrategy_vgpu_list": [
+  {
+   "api": "POST /space/cluster/obtainComputeClusterList",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "clusterId",
+   "matched_by": "api_rule"
+  }
+ ],
+ "space_storagePool_list": [
+  {
+   "api": "POST /space/cluster/obtainComputeClusterList",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "resolve_via": "matchArr 过滤字段（见该接口 request.body.matchArr[].fieldName）"
+  }
+ ],
+ "space_strategy_tci_checkDuplication": [
+  {
+   "api": "POST /space/strategy/tci/list",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "id",
+   "matched_by": "same_name"
+  }
+ ],
+ "space_strategy_tci_condition_list": [
+  {
+   "api": "POST /spacetci/lessonImage/getLessonImageList",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "resolve_via": "matchArr 过滤字段（见该接口 request.body.matchArr[].fieldName）"
+  },
+  {
+   "api": "POST /rcc/deskStrategy/getClassroomImageList",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "resolve_via": "matchArr 过滤字段（见该接口 request.body.matchArr[].fieldName）"
+  }
+ ],
+ "space_strategy_tci_edit": [
+  {
+   "api": "POST /space/strategy/tci/list",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "id"
+  },
+  {
+   "api": "POST /space/deskStrategy/getSupportUsbTyp",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "id"
+  }
+ ],
+ "space_strategygroup_vdi_checkDuplication": [
+  {
+   "api": "POST /space/strategygroup/vdi/list",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "id",
+   "matched_by": "same_name"
+  }
+ ],
+ "space_strategygroup_vdi_condition_list": [
+  {
+   "api": "POST /rcc/space/image/list",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "resolve_via": "matchArr 过滤字段（见该接口 request.body.matchArr[].fieldName）"
+  },
+  {
+   "api": "POST /rcc/deskStrategy/getClassroomImageList",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "resolve_via": "matchArr 过滤字段（见该接口 request.body.matchArr[].fieldName）"
+  },
+  {
+   "api": "POST /space/cluster/obtainComputeClusterList",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "resolve_via": "matchArr 过滤字段（见该接口 request.body.matchArr[].fieldName）"
+  }
+ ],
+ "space_strategygroup_vdi_create": [
+  {
+   "api": "管理员登录",
+   "from_jsonpath": [
+    "authToken",
+    "sessionId"
+   ],
+   "note": "登录步骤（框架内置），非 request.body 字段映射"
+  },
+  {
+   "api": "/space/deskStrategy/getSupportUsbTyp",
+   "from_jsonpath": [
+    "usbTypeIdArr"
+   ],
+   "to": "usbTypeIdArr",
+   "matched_by": "same_name"
+  },
+  {
+   "api": "/space/deskStrategy/vgpu/list",
+   "from_jsonpath": [
+    "vgpuType",
+    "vgpuExtraInfo"
+   ],
+   "to": "vgpuType",
+   "matched_by": "same_name"
+  },
+  {
+   "api": "/space/deskStrategy/agreement/template/list",
+   "from_jsonpath": [
+    "agreementTemplateId"
+   ],
+   "resolve_via": "模板ID→agreementInfo 协议配置（需查询模板详情填充）"
+  }
+ ],
+ "space_strategygroup_vdi_edit": [
+  {
+   "api": "POST /space/strategygroup/vdi/list",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "id"
+  },
+  {
+   "api": "POST /space/deskStrategy/vgpu/list",
+   "from_jsonpath": "$.content.itemArr[*].value",
+   "resolve_via": "vgpu 选项 value→vgpuType/vgpuExtraInfo 配置（需查询 vgpu 详情）"
+  }
+ ],
+ "space_user_group_list": [
+  {
+   "api": "POST /rcc/classroom/create",
+   "from_jsonpath": "$.content.id",
+   "to": "classroomId",
+   "matched_by": "classroomId"
+  }
+ ],
+ "space_user_listWithAssignment": [
+  {
+   "api": "POST /rcc/classroom/create",
+   "from_jsonpath": "$.content.classroomId",
+   "resolve_via": "查询过滤（matchArr/searchKeyword）"
+  }
+ ],
+ "space_user_realBindUser_page": [
+  {
+   "api": "POST /rcc/classroom/create",
+   "from_jsonpath": "$.content.classroomId",
+   "resolve_via": "查询过滤（matchArr/searchKeyword）"
+  }
+ ],
+ "spacetci_lessonImage_getInfo": [
+  {
+   "api": "POST /spacetci/lessonImage/getLessonImageList",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "id"
+  }
+ ],
+ "spacetci_lessonImage_getLessonImageList": [
+  {
+   "api": "POST /rcc/classroom/create",
+   "from_jsonpath": "$.content.itemArr[*].classroomId",
+   "resolve_via": "查询过滤（exactMatchArr/condition/matchArr）"
+  }
+ ],
+ "spacetci_lessonImage_getStrategy": [
+  {
+   "api": "POST /spacetci/lessonImage/getLessonImageList",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "id"
+  }
+ ],
+ "spacetci_lessonImage_student_delete": [
+  {
+   "api": "POST /spacetci/lessonImage/getLessonImageList",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "id"
+  }
+ ],
+ "spacetci_lessonImage_student_getDownloadInfo": [
+  {
+   "api": "POST /spacetci/lessonImage/getLessonImageList",
+   "from_jsonpath": "$.content.itemArr[*].lessonImageId",
+   "resolve_via": "condition 过滤（按 lessonImageId 过滤下载信息）"
+  }
+ ],
+ "spacetci_lessonImage_student_update": [
+  {
+   "api": "POST /spacetci/lessonImage/getLessonImageList",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "id"
+  }
+ ],
+ "spacetci_lessonImage_teacher_delete": [
+  {
+   "api": "POST /spacetci/lessonImage/getLessonImageList",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "id"
+  }
+ ],
+ "spacetci_lessonImage_teacher_getDownloadInfo": [
+  {
+   "api": "POST /spacetci/lessonImage/getLessonImageList",
+   "from_jsonpath": "$.content.itemArr[*].lessonImageId",
+   "resolve_via": "condition 过滤（按 lessonImageId 过滤下载信息）"
+  }
+ ],
+ "spacetci_lessonImage_teacher_update": [
+  {
+   "api": "POST /spacetci/lessonImage/getLessonImageList",
+   "from_jsonpath": "$.content.itemArr[*].id",
+   "to": "id"
+  }
+ ]
+}

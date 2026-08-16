@@ -157,10 +157,10 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: seatNum
+  - name: desk_id
+  - name: log_file_name
     desc: ''
     used_by: 见 setup/request
-    desc: ''
-    used_by: setup/request
 ---
 # GET /rcc/classroom/desktop/tci/collectLog/download
 

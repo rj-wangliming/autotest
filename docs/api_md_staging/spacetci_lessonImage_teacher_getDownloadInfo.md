@@ -119,6 +119,9 @@ cleanup: []
 idempotency:
   level: fully_idempotent
   note: 纯查询接口
+params:
+  required:
+  - name: teacher_terminal_id
 ---
 # POST /spacetci/lessonImage/teacher/getDownloadInfo
 
@@ -172,7 +175,8 @@ graph LR
 | page | Integer | 否 | 分页页码 | 当前页 |
 | teacherTerminalId | String | 是 | 查询条件，非空 | 教师终端ID，用于过滤下载状态记录 |
 | condition | Object | 否 |  | 排序与过滤（condition） |
-| sort | Object | 否 |  | 排序与过滤（sort） |## 出参详情
+| sort | Object | 否 |  | 排序与过滤（sort） |
+## 出参详情
 
 | 返回类型 | DefaultWebResponse<PageQueryResponse<TCILessonImageDownloadInfoVO>> |
 |---|---|

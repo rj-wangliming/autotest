@@ -179,6 +179,24 @@ response:
         enableAdaptiveResolution: Boolean
         pattern: CbbCloudDeskPattern
         platformStrategyGroup: PlatformStrategyGroup（strategyGroupFacadeStr.voi）
+    note:
+      type: String
+      description: 备注
+    enablePersonalConfig:
+      type: Boolean
+      description: 是否开启个人配置
+    deskPersonalConfigStrategyType:
+      type: CbbDeskPersonalConfigStrategyType
+      description: 个人配置策略类型
+    personalConfigDiskSize:
+      type: Integer
+      description: 个人配置盘大小
+    desktopOccupyDriveArr:
+      type: String[]
+      description: 第三方盘符 I~Z
+    enableInternet:
+      type: Boolean
+      description: 联网开关
 polling:
   api: common_get_msgct_detail_info
   method: POST
@@ -227,7 +245,7 @@ constraints:
   failure: '62110018'
 - level: BUSINESS
   field: enablePeripheral/usbTypeIdArr
-  rule: enablePeripheral=true 时先调用 POST /rcc/space/deskStrategy/getSupportUsbTyp 取外设ID（content.itemArr[].id），写入 platformStrategyGroup+strategyType；false 时不调用
+  rule: enablePeripheral=true 时先调用 POST /space/deskStrategy/getSupportUsbTyp 取外设ID（content.itemArr[].id），写入 platformStrategyGroup+strategyType；false 时不调用
   failure: 外设接口异常
 - level: BUSINESS
   field: enableScheduleStrategy/diskRestoreStrategyArr
@@ -282,7 +300,7 @@ cleanup:
 - api: POST /space/strategy/tci/delete
   purpose: 删除创建的 TCI 策略（需先取 content.strategyId / id）
   depends_on: 创建成功后的策略 id
-- api: POST /rcc/space/deskStrategy/getSupportUsbTyp
+- api: POST /space/deskStrategy/getSupportUsbTyp
   purpose: 外设策略前置获取（若 enablePeripheral=true 时调用，无资源创建，无需清理）
   note: 只读前置，无清理
 idempotency:
@@ -292,8 +310,6 @@ params:
   required:
   - name: strategy_name
   - name: systemSize
-    desc: ''
-    used_by: 见 setup/request
     desc: ''
     used_by: 见 setup/request
 ---
@@ -461,7 +477,7 @@ USB设备类型ID数组（在 platformStrategyGroup 内部配置，推断）（�
 | BUSINESS | enableDiskConfig/diskSize | ① enableDiskConfig=true 时 diskSize 必填可编辑；② false 时 diskSize 不可编辑 | 62110012 |
 | BUSINESS | desktopType/enableScheduleStrategy | 仅 desktopType=PERSONAL（个性）时可修改 enableScheduleStrategy（系统盘/数据盘还原计划）；desktopType=RECOVERABLE（还原）时不可修改 | 62110012~62110015 |
 | BUSINESS | desktopType/enableAutoEdit | 仅 desktopType=RECOVERABLE（还原）时可修改 enableAutoEdit（启用自动编辑）；desktopType=PERSONAL（个性）时不可修改 | 62110018 |
-| BUSINESS | enablePeripheral/usbTypeIdArr | enablePeripheral=true 时**先调用 POST /rcc/space/deskStrategy/getSupportUsbTyp**，从返回值 content.itemArr[].id 取外设策略ID，写入 platformStrategyGroup.strategyGroupFacadeStr + strategyType；enablePeripheral=false 时不调用 | 外设接口异常 |
+| BUSINESS | enablePeripheral/usbTypeIdArr | enablePeripheral=true 时**先调用 POST /space/deskStrategy/getSupportUsbTyp**，从返回值 content.itemArr[].id 取外设策略ID，写入 platformStrategyGroup.strategyGroupFacadeStr + strategyType；enablePeripheral=false 时不调用 | 外设接口异常 |
 | BUSINESS | enableScheduleStrategy/diskRestoreStrategyArr | 开启时还原策略各模式参数（参考文档样例）：NO_RECOVER（不还原，partition）；MONTH（monthDay=1~12）；WEEK（weekDayArr 周日=7 可多选）；DAY（每日）；EVERYTIME（每次）；CUSTOM（everyFewDays=间隔天数）；均含 scheduleExecuteTime（毫秒时间戳）+ diskType(SYSTEM/DATA)+lessonStrategyId+partition | 62110012~62110015 |
 | PARAM | desktopOccupyDriveArr | 第三方盘符 I~Z 可配置多个，可为空 | 6211000x |
 | BUSINESS | id | 可传前端 id（使用指定 id 创建，幂等场景） | id 冲突 |
@@ -533,7 +549,7 @@ USB设备类型ID数组（在 platformStrategyGroup 内部配置，推断）（�
 | 场景 | 触发条件 | 断言表达式 |
 |---|---|---|
 | 入参合法且名称唯一 | 策略类型 VOI + 名称合法 + 约束通过 | `$.status == "SUCCESS"` |
-| 外设策略开启 | enablePeripheral=true 且 getSupportUsbTyp 正常 | `$.status == "SUCCESS"`；且前置接口 `POST /rcc/space/deskStrategy/getSupportUsbTyp` 返回 `$.content.itemArr[].id` 非空 |
+| 外设策略开启 | enablePeripheral=true 且 getSupportUsbTyp 正常 | `$.status == "SUCCESS"`；且前置接口 `POST /space/deskStrategy/getSupportUsbTyp` 返回 `$.content.itemArr[].id` 非空 |
 | 传入 id | 使用前端 id 创建 | `$.status == "SUCCESS"` |
 
 ### 失败断言（JSONPath 级）
@@ -555,7 +571,7 @@ USB设备类型ID数组（在 platformStrategyGroup 内部配置，推断）（�
 | 接口 | 说明 |
 |---|---|
 | POST /space/strategy/tci/delete | 删除创建的 TCI 策略（自动化清理主路径，需先取创建返回的策略 id） |
-| POST /rcc/space/deskStrategy/getSupportUsbTyp | 只读前置（enablePeripheral=true 时调用取外设ID），无资源创建，无需清理 |
+| POST /space/deskStrategy/getSupportUsbTyp | 只读前置（enablePeripheral=true 时调用取外设ID），无资源创建，无需清理 |
 
 > 说明：状态机失败时框架会通过 processor innerUnDoProcess 回滚已创建数据（内部机制），但**自动化测试的环境清理必须走 HTTP 接口**（POST /space/strategy/tci/delete），不能依赖内部状态机回滚。
 

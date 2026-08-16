@@ -103,6 +103,7 @@ idempotency:
 params:
   required:
   - name: classroom_name
+  - name: log_id_arr
     desc: ''
     used_by: 见 setup/request
 ---

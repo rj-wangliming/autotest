@@ -210,6 +210,7 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: space_name
+  - name: name
     desc: ''
     used_by: 见 setup/request
 ---

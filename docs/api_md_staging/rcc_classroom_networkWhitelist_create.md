@@ -116,8 +116,6 @@ params:
   - name: startIp
     desc: ''
     used_by: 见 setup/request
-    desc: ''
-    used_by: 见 setup/request
 ---
 # POST /rcc/classroom/networkWhitelist/create
 

@@ -202,6 +202,9 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: classroom_strategy_name
+  - name: default_display_desk_type
+  - name: reserved_storage_policy
+  - name: start_policy
     desc: ''
     used_by: setup/request
 ---

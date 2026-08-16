@@ -140,6 +140,7 @@ idempotency:
 params:
   required:
   - name: classroom_name
+  - name: platform_id
     desc: ''
     used_by: 见 setup/request
 ---

@@ -116,6 +116,63 @@ response:
     enablePersonalConfig:
       type: Boolean
       description: 是否启用浮动个性
+    "itemArr[]_id":
+      type: UUID
+      description: 课程策略ID
+    "itemArr[]_strategyName":
+      type: String
+      description: 策略名称
+    "itemArr[]_desktopType":
+      type: CbbCloudDeskPattern
+      description: 桌面类型
+    "itemArr[]_systemDisk":
+      type: Integer
+      description: 系统盘大小（GB）
+    "itemArr[]_cpu":
+      type: Integer
+      description: CPU核数
+    "itemArr[]_memory":
+      type: Integer
+      description: 内存大小（MB）
+    "itemArr[]_canUsed":
+      type: Boolean
+      description: 是否可用（state!='AVAILABLE' 为 false）
+    "itemArr[]_canUsedMessage":
+      type: String
+      description: 不可用提示（本接口不填充，condition/list 使用）
+    "itemArr[]_deskCreateMode":
+      type: DeskCreateMode
+      description: 创建方式
+    "itemArr[]_deskStrategyState":
+      type: CbbDeskStrategyState
+      description: 策略状态
+    "itemArr[]_strategyType":
+      type: CbbStrategyType
+      description: 策略类型
+    "itemArr[]_classroomUsedCount":
+      type: Integer
+      description: 引用策略的教室数
+    "itemArr[]_vgpuType":
+      type: VgpuType
+      description: vGPU类型
+    "itemArr[]_vgpuExtraInfo":
+      type: String
+      description: vGPU附加信息JSON（AGV→GPU_AGV 标题替换后回写）
+    "itemArr[]_enablePersonalConfig":
+      type: Boolean
+      description: 是否启用浮动个性
+    "itemArr[]_creatorUserName":
+      type: String
+      description: 创建者
+    "itemArr[]_createTime":
+      type: Date
+      description: 创建时间
+    "itemArr[]_version":
+      type: Integer
+      description: 版本号
+    "itemArr[]_deskStrategyId":
+      type: UUID
+      description: 云桌面策略组ID（数据权限过滤字段）
 upstream:
 - api: 内部调用:PageQueryViewHelper
   purpose: 视图分页查询 VDI 策略列表

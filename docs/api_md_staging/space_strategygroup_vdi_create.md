@@ -375,8 +375,17 @@ response:
           type: UUID
           assert_op: not_empty
           description: 平台策略组ID（用于清理/关联）
+    stateAvailable:
+      type: Boolean
+      description: state==AVAILABLE时为true（计算属性）
+    createTime:
+      type: Long
+      description: 创建时间戳
+    updateTime:
+      type: Long
+      description: 更新时间戳
 polling:
-  api: /space/strategygroup/vdi/detail
+  api: POST /space/strategygroup/vdi/detail
   method: POST
   params:
     id: ${content.id}
@@ -400,42 +409,42 @@ upstream:
   - authToken
   - sessionId
   purpose: '@EnableAuthority 前置'
-- api: /space/deskStrategy/getSupportUsbTyp
+- api: POST /space/deskStrategy/getSupportUsbTyp
   produces:
   - usbTypeIdArr
   purpose: 获取支持的USB外设类型列表
-- api: /space/deskStrategy/vgpu/list
+- api: POST /space/deskStrategy/vgpu/list
   produces:
   - vgpuType
   - vgpuExtraInfo
   purpose: 获取vGPU相关选项
-- api: /space/deskStrategy/agreement/template/list
+- api: POST /space/deskStrategy/agreement/template/list
   produces:
   - agreementTemplateId
   purpose: 获取协议配置模板列表
 downstream:
 - kind: http
-  api: /space/strategygroup/vdi/detail
+  api: POST /space/strategygroup/vdi/detail
   verify: true
   purpose: 查看策略详情（也用作 polling）
 - kind: http
-  api: /space/strategygroup/vdi/list
+  api: POST /space/strategygroup/vdi/list
   verify: true
   purpose: 策略列表查询
 - kind: http
-  api: /space/strategygroup/vdi/edit
+  api: POST /space/strategygroup/vdi/edit
   verify: false
   purpose: 编辑策略
 - kind: http
-  api: /space/strategygroup/vdi/delete
+  api: POST /space/strategygroup/vdi/delete
   verify: false
   purpose: 删除策略（cleanup 用）
 - kind: http
-  api: /rcc/classroom/image/teacher/create
+  api: POST /rcc/classroom/image/teacher/create
   verify: false
   purpose: 分配镜像引用策略（原文档路径 /rcc/classroomImage/assign 已修正）
 - kind: http
-  api: /rcc/classroom/image/student/create
+  api: POST /rcc/classroom/image/student/create
   verify: false
   purpose: 学生镜像分配
 - kind: spi
@@ -607,7 +616,7 @@ assertions:
       value: '62100332'
 cleanup:
 - name: delete_vdi_strategy
-  api: /space/strategygroup/vdi/delete
+  api: POST /space/strategygroup/vdi/delete
   method: POST
   permission: '@EnableAuthority'
   request:
@@ -616,7 +625,7 @@ cleanup:
       - ${content.id}
   condition: ${content.id} is not null
   pre_check:
-    api: /space/strategygroup/vdi/detail
+    api: POST /space/strategygroup/vdi/detail
     assert:
     - path: $.content.state
       op: eq

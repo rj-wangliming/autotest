@@ -86,7 +86,7 @@ upstream:
 - api: 内部调用:RccVDIIpDeliverAPI
   purpose: 无起始IP时为座位分配空闲IP
 downstream:
-- api: /rcc/classroom/seat/create
+- api: POST /rcc/classroom/seat/create
   purpose: 推断：出参 vdiStartIP 供 POST /rcc/classroom/seat/create 座位IP填写
 constraints:
 - level: request
@@ -112,6 +112,7 @@ idempotency:
 params:
   required:
   - name: classroom_name
+  - name: number
     desc: ''
     used_by: 见 setup/request
 ---

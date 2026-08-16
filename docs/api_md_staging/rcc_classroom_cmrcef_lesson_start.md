@@ -35,6 +35,7 @@ request:
       required: true
       constraint: '@NotNull，AES加密TOKEN'
       description: 由@ClassroomCef拦截器校验（CMR 专用加密 TOKEN，需测试环境提供/注入）
+      generated_by: true
     imageId:
       type: UUID
       required: true

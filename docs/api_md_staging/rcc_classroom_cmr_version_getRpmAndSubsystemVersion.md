@@ -106,6 +106,9 @@ cleanup: []
 idempotency:
   level: fully_idempotent
   note: 纯查询接口
+params:
+  required:
+  - name: sub_system
 ---
 # POST /rcc/classroom/cmr/version/getRpmAndSubsystemVersion
 

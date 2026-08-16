@@ -6,7 +6,7 @@ api:
   name: 学生机课程镜像编辑课程云桌面策略；可选同步变更镜像版本（提交镜像版本变更批任务）
   controller: RccClassroomImageController
   method_ref: editStudentStrategy
-  permission: '@EnableAuthority'
+  permission: '@EnableAuthority + @OneTimeTokenRequired'
   exec_mode: sync（指定 targetImageId 变更镜像版本时提交 ChangeImageVersionBatchTaskHandler 批任务）
   async: true
   description: 学生机课程镜像编辑课程云桌面策略；可选同步变更镜像版本（提交镜像版本变更批任务）
@@ -197,12 +197,14 @@ params:
     desc: ''
     used_by: setup/request
   - name: classroom_strategy_name
+  - name: cluster_id
+  - name: platform_id
     desc: ''
     used_by: setup/request
 ---
 # POST /rcc/classroom/image/student/strategy/edit
 
-> 学生机课程镜像编辑课程云桌面策略；可选同步变更镜像版本（提交镜像版本变更批任务） ｜ @EnableAuthority ｜ sync（指定 targetImageId 变更镜像版本时提交 ChangeImageVersionBatchTaskHandler 批任务）
+> 学生机课程镜像编辑课程云桌面策略；可选同步变更镜像版本（提交镜像版本变更批任务） ｜ @EnableAuthority + @OneTimeTokenRequired ｜ sync（指定 targetImageId 变更镜像版本时提交 ChangeImageVersionBatchTaskHandler 批任务）
 
 ## 依赖关系全景图
 
@@ -213,7 +215,7 @@ graph LR
         A2["POST /rcc/classroom/image/list"]
         A3["POST /rcc/classroom/strategy/list"]
     end
-    B["POST /rcc/classroom/image/student/strategy/edit<br>学生机课程镜像编辑课程云桌面策略；可选同步变更镜像版本（提交镜像版本变更批任务）<br>权限: @EnableAuthority"]
+    B["POST /rcc/classroom/image/student/strategy/edit<br>学生机课程镜像编辑课程云桌面策略；可选同步变更镜像版本（提交镜像版本变更批任务）<br>权限: @EnableAuthority + @OneTimeTokenRequired"]
     A1 -->|数据| B
     A2 -->|数据| B
     A3 -->|数据| B
@@ -252,7 +254,7 @@ graph LR
 | URL | /rcc/classroom/image/student/strategy/edit |
 | Controller | RccClassroomImageController |
 | 方法名 | editStudentStrategy |
-| 权限注解 | @EnableAuthority |
+| 权限注解 | @EnableAuthority + @OneTimeTokenRequired |
 | 执行方式 | sync（指定 targetImageId 变更镜像版本时提交 ChangeImageVersionBatchTaskHandler 批任务） |
 | 业务含义 | 学生机课程镜像编辑课程云桌面策略；可选同步变更镜像版本（提交镜像版本变更批任务） |
 

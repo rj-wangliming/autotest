@@ -55,6 +55,15 @@ response:
     endIp:
       type: String
       description: 结束IP
+    "itemArr[]_id":
+      type: UUID
+      description: 白名单ID
+    "itemArr[]_startIp":
+      type: String
+      description: 起始IP
+    "itemArr[]_endIp":
+      type: String
+      description: 结束IP
 upstream:
 - api: 内部调用:RccPermissionChecker
   purpose: 按管理员权限改写查询条件

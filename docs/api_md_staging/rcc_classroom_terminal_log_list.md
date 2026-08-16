@@ -80,6 +80,18 @@ response:
     expireCleanTime:
       type: Date
       description: 期望清理时间
+    "itemArr[]_id":
+      type: UUID
+      description: 日志ID
+    "itemArr[]_logName":
+      type: String
+      description: 日志名称
+    "itemArr[]_logTime":
+      type: Date
+      description: 日志时间
+    "itemArr[]_expireCleanTime":
+      type: Date
+      description: 期望清理时间
 upstream:
 - api: POST /rcc/classroom/terminal/list
   produces: $.content.itemArr[0].classroomId

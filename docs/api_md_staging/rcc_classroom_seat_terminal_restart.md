@@ -160,8 +160,7 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: seatNum
-    desc: ''
-    used_by: 见 setup/request
+  - name: id_arr
     desc: ''
     used_by: 见 setup/request
 ---

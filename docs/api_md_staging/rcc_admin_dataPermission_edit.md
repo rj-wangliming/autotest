@@ -128,6 +128,7 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: strategy_name
+  - name: user_name
     desc: ''
     used_by: 见 setup/request
 ---

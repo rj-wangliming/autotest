@@ -73,6 +73,10 @@ cleanup: []
 idempotency:
   level: fully_idempotent
   note: 纯查询接口
+params:
+  required:
+  - name: classroom_id
+  - name: token
 ---
 # POST /rcc/classroom/cmrcef/lesson/progress
 

@@ -122,6 +122,10 @@ prereq_state:
 idempotency:
   level: data_level
   note: 重复下课由classroomLessonAPI.checkCanEndLesson状态校验拦截，非严格幂等
+params:
+  required:
+  - name: classroom_id
+  - name: token
 ---
 # POST /rcc/classroom/cmrcef/lesson/end
 

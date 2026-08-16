@@ -131,7 +131,7 @@ upstream:
 - api: 内部调用:audit/BaseAuditLogAPI
   purpose: 记录创建策略成功/失败审计日志
 downstream:
-- api: /rcc/classroom/create（CreateClassroomWebRequest）消费
+- api: POST /rcc/classroom/create（CreateClassroomWebRequest）消费
   purpose: 策略ID被教室创建 POST /rcc/classroom/create（CreateClassroomWebReque
 constraints:
 - level: PARAM

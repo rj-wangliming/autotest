@@ -70,6 +70,7 @@ request:
       required: true
       constraint: '@NotNull，值2=HIDE'
       description: 动作
+      value: 2
     shouldOnlyDeleteDataFromDb:
       type: Boolean
       required: false
@@ -128,6 +129,7 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: image_name
+  - name: cr_id
     desc: ''
     used_by: setup/request
 ---

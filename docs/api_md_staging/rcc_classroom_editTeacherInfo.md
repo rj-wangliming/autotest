@@ -107,9 +107,12 @@ response:
     msgArgArr: String[]
     content: Object
   body:
-    taskName/taskDesc:
+    taskName:
       type: String
-      description: 教师机配置任务名称与描述
+      description: 教师机配置任务名称
+    taskDesc:
+      type: String
+      description: 教师机配置任务描述
     taskId:
       type: UUID
       description: 批任务ID（使用 classroomId 作 uniqueId）
@@ -189,6 +192,7 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: classroom_strategy_name
+  - name: teacher_ip
     desc: ''
     used_by: setup/request
 ---

@@ -90,6 +90,7 @@ idempotency:
 params:
   required:
   - name: classroom_name
+  - name: terminal_id
     desc: ''
     used_by: 见 setup/request
 ---

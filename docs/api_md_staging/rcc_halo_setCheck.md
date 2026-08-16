@@ -57,6 +57,9 @@ cleanup:
 idempotency:
   level: non_idempotent
   note: 参数覆盖写入，重复设置同值幂等
+params:
+  required:
+  - name: disable_halo_check
 ---
 # POST /rcc/halo/setCheck
 

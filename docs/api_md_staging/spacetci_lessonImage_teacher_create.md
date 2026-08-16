@@ -72,17 +72,17 @@ setup:
   extract:
     clusterId: $.content.itemArr[0].computerClusterId
     platformId: $.content.itemArr[0].platformId
-  purpose: 获取计算集群ID与云平台ID
+  purpose: 获取计算集群ID与云平台ID（取第一条，无名称过滤）
 - name: get_storage_pool
   api: POST /space/storagePool/list
   extract:
     storagePoolId: $.content.itemArr[0].storagePoolId
-  purpose: 获取存储池ID（镜像分配用）
+  purpose: 获取存储池ID（镜像分配用）（取第一条，无名称过滤）
 - name: get_network
   api: POST /space/clouddesktop/deskNetwork/list
   extract:
     networkId: $.content.itemArr[0].id
-  purpose: 获取网络ID（镜像分配用）
+  purpose: 获取网络ID（镜像分配用）（取第一条，无名称过滤）
 request:
   dto: TCIAssignImageWebRequest
   body:
@@ -203,6 +203,7 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: image_name
+  - name: teacher_image_name
     desc: ''
     used_by: setup/request
 ---

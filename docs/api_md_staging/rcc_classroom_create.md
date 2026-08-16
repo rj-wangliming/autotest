@@ -134,9 +134,12 @@ response:
     msgArgArr: String[]
     content: Object
   body:
-    taskName/taskDesc:
+    taskName:
       type: String
-      description: 任务名称与描述（创建教室任务）
+      description: 任务名称（创建教室任务）
+    taskDesc:
+      type: String
+      description: 任务描述（创建教室任务）
     taskId:
       type: UUID
       description: 批任务ID（生成新随机UUID）
@@ -249,8 +252,6 @@ params:
   - name: teacher_mode
     desc: ''
     used_by: 见 setup/request
-    desc: ''
-    used_by: setup/request
 ---
 # POST /rcc/classroom/create
 

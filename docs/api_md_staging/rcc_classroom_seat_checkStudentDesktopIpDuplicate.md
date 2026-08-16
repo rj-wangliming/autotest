@@ -79,6 +79,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 学生机工作模式（可选值：NONE/PC/VDI/IDV/VOI(TCI)/APP/UNKNOWN）
+      generated_by: config_generator
     vdiDesktopIp:
       type: String
       required: false
@@ -167,8 +168,6 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: seatNum
-    desc: ''
-    used_by: 见 setup/request
     desc: ''
     used_by: 见 setup/request
 ---

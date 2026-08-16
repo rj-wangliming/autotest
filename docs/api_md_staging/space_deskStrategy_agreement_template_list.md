@@ -172,6 +172,9 @@ cleanup:
 idempotency:
   level: non_idempotent
   note: 只读查询，无副作用
+params:
+  required:
+  - name: protocol_type
 ---
 # POST /space/deskStrategy/agreement/template/list
 

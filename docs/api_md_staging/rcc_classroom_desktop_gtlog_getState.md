@@ -6,7 +6,7 @@ api:
   name: 获取云桌面GT日志收集状态：返回当前收集状态（DOING/DONE/FAULT），DONE/FAULT 时记录审计日志。
   controller: RccClassroomDesktopController
   method_ref: getState
-  permission: '@EnableAuthority'
+  permission: '无'
   exec_mode: sync
   async: false
   description: 获取云桌面GT日志收集状态：返回当前收集状态（DOING/DONE/FAULT），DONE/FAULT 时记录审计日志。
@@ -151,8 +151,6 @@ params:
   - name: seatNum
     desc: ''
     used_by: 见 setup/request
-    desc: ''
-    used_by: setup/request
 ---
 # POST /rcc/classroom/desktop/gtlog/getState
 

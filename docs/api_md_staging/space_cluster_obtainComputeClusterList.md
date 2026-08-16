@@ -76,18 +76,33 @@ response:
     clusterState:
       type: CloudClusterStateEnums
       description: 集群状态
-    totalCpu/usedCpu:
+    totalCpu:
       type: long
-      description: 总/已用 CPU 核数
-    totalMemory/usedMemory:
+      description: 总 CPU 核数
+    usedCpu:
       type: long
-      description: 总/已用内存 MB
+      description: 已用 CPU 核数
+    totalMemory:
+      type: long
+      description: 总内存 MB
+    usedMemory:
+      type: long
+      description: 已用内存 MB
     architecture:
       type: String
       description: CPU 架构
-    platformId/platformName/platformType/platformStatus:
-      type: mixed
-      description: 所属平台信息
+    platformId:
+      type: UUID
+      description: 所属平台ID
+    platformName:
+      type: String
+      description: 所属平台名称
+    platformType:
+      type: String
+      description: 所属平台类型
+    platformStatus:
+      type: String
+      description: 所属平台状态
     canUsed:
       type: Boolean
       description: 适配性检查是否可用（默认 true）
@@ -97,6 +112,69 @@ response:
     canInstallDrive:
       type: Boolean
       description: 是否可安装驱动（适配检查回填，默认 false）
+    "itemArr[]_id":
+      type: UUID
+      description: 集群ID
+    "itemArr[]_computerClusterId":
+      type: UUID
+      description: 计算集群ID
+    "itemArr[]_clusterName":
+      type: String
+      description: 集群名称
+    "itemArr[]_clusterDesc":
+      type: String
+      description: 集群描述
+    "itemArr[]_clusterState":
+      type: CloudClusterStateEnums
+      description: 集群状态
+    "itemArr[]_totalCpu":
+      type: long
+      description: 总CPU核数
+    "itemArr[]_usedCpu":
+      type: long
+      description: 已用CPU核数
+    "itemArr[]_totalMemory":
+      type: long
+      description: 总内存（MB）
+    "itemArr[]_usedMemory":
+      type: long
+      description: 已用内存（MB）
+    "itemArr[]_architecture":
+      type: String
+      description: CPU架构（x86_64、ARM）
+    "itemArr[]_platformId":
+      type: UUID
+      description: 平台ID
+    "itemArr[]_createTime":
+      type: Date
+      description: 创建时间
+    "itemArr[]_updateTime":
+      type: Date
+      description: 更新时间
+    "itemArr[]_platformName":
+      type: String
+      description: 云平台名称
+    "itemArr[]_platformType":
+      type: CloudPlatformType
+      description: 云平台类型
+    "itemArr[]_platformStatus":
+      type: CloudPlatformStatus
+      description: 云平台状态
+    "itemArr[]_cloudPlatformId":
+      type: String
+      description: 云平台唯一标识
+    "itemArr[]_archSet":
+      type: Set<String>
+      description: CPU架构集合
+    "itemArr[]_canUsed":
+      type: Boolean
+      description: 适配性检查是否可用（默认true）
+    "itemArr[]_canUsedMessage":
+      type: String
+      description: 不可用原因
+    "itemArr[]_canInstallDrive":
+      type: Boolean
+      description: 是否可安装驱动（适配检查回填，默认false）
 upstream:
 - api: POST /rcc/space/image/list
   produces: $.content.itemArr[*].id

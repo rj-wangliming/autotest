@@ -100,6 +100,8 @@ idempotency:
 params:
   required:
   - name: classroom_name
+  - name: student_end_ip
+  - name: student_start_ip
     desc: ''
     used_by: 见 setup/request
 ---

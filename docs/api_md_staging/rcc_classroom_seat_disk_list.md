@@ -80,18 +80,22 @@ request:
       required: false
       constraint: '@Nullable'
       description: 扩展透传数据
+    page:
       type: Integer
       required: false
       constraint: '@Range(min=0)'
       description: 页码（继承，默认0）
+    limit:
       type: Integer
       required: false
       constraint: '@Range(min=1,max=2000)'
       description: 每页条数（继承，默认1）
+    matchArr:
       type: Match[]
       required: false
       constraint: '@NotNull 默认空数组'
       description: 匹配条件（继承）
+    sortArr:
       type: Sort[]
       required: false
       constraint: '@NotNull 默认空数组'
@@ -155,6 +159,51 @@ response:
     devAvailSize:
       type: String
       description: 磁盘可用空间（TCITerminalDiskInfoDTO 扩展字段）
+    "itemArr[]_devName":
+      type: String
+      description: 磁盘名称（设备名）
+    "itemArr[]_devType":
+      type: String
+      description: 磁盘类型
+    "itemArr[]_devForm":
+      type: String
+      description: 磁盘形态
+    "itemArr[]_devTotalSize":
+      type: String
+      description: 磁盘空间总大小（单位 byte）
+    "itemArr[]_devMedia":
+      type: String
+      description: 磁盘介质
+    "itemArr[]_devState":
+      type: String
+      description: 磁盘状态
+    "itemArr[]_devSn":
+      type: String
+      description: 磁盘序列号
+    "itemArr[]_devFirmwareVersion":
+      type: String
+      description: 磁盘固件版本
+    "itemArr[]_devHealth":
+      type: String
+      description: 磁盘健康状态
+    "itemArr[]_devPowerOnhour":
+      type: String
+      description: 磁盘通电时长
+    "itemArr[]_devTotalWritten":
+      type: String
+      description: 磁盘历史写入量
+    "itemArr[]_devReadIops":
+      type: String
+      description: 读IOPS
+    "itemArr[]_devWriteIops":
+      type: String
+      description: 写IOPS
+    "itemArr[]_devModel":
+      type: String
+      description: 磁盘型号
+    "itemArr[]_devAvailSize":
+      type: String
+      description: 磁盘可用空间（TCITerminalDiskInfoDTO 扩展字段）
 upstream:
 - api: POST /rcc/classroom/seat/list
   produces: $.content.itemArr[0].id
@@ -201,8 +250,6 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: seatNum
-    desc: ''
-    used_by: 见 setup/request
     desc: ''
     used_by: 见 setup/request
 ---

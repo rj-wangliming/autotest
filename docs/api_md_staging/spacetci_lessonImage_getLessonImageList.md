@@ -151,7 +151,8 @@ graph LR
 | rows | Integer | 否 | 分页行数 | 每页条数 |
 | page | Integer | 否 | 分页页码 | 当前页 |
 | condition | Object | 否 |  | 排序与过滤条件（condition） |
-| sort | Object | 否 |  | 排序与过滤条件（sort） |## 出参详情
+| sort | Object | 否 |  | 排序与过滤条件（sort） |
+## 出参详情
 
 | 返回类型 | DefaultWebResponse<PageQueryResponse<TCIViewLessonImageDTO>> |
 |---|---|

@@ -48,9 +48,12 @@ response:
     msgArgArr: String[]
     content: Object
   body:
-    taskName/taskDesc:
+    taskName:
       type: String
-      description: 删除教室任务名称与描述
+      description: 删除教室任务名称
+    taskDesc:
+      type: String
+      description: 删除教室任务描述
     taskId:
       type: UUID
       description: 批任务ID
@@ -107,7 +110,7 @@ prereq_state:
   resource: classroom
   required_state: NONE_CLASS
   forbidden: [STARTING_CLASS, IN_CLASS, ENDING_CLASS]
-  api: /rcc/classroom/delete
+  api: POST /rcc/classroom/delete
   achieve_via:
   - api: POST /rcc/classroom/cmrcef/lesson/end
     note: 教室上课中需先下课(lesson/end)才能删除
@@ -118,6 +121,7 @@ idempotency:
 params:
   required:
   - name: classroom_name
+  - name: id_arr
     desc: ''
     used_by: 见 setup/request
 ---

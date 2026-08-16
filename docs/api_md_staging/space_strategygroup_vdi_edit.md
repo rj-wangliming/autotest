@@ -59,24 +59,26 @@ request:
       required: true
       constraint: '@NotNull @Range(0,2048)，只可扩大'
       description: 系统盘大小
+      value: ${param.system_size}
     cpu:
       type: Integer
       required: true
       constraint: '@Range(1,64)'
       description: CPU 核数
+      value: ${param.cpu}
     memory:
       type: Integer
       required: false
       constraint: '@Range(1024,262144)'
       description: 内存 MB
     vgpuType:
-      type: String
+      type: VgpuType
       required: false
-      description: vGPU 配置（修改需校验关联镜像兼容）（vgpuType）
+      description: vGPU 类型（修改需校验关联镜像兼容）
     vgpuExtraInfo:
-      type: String
+      type: VgpuExtraInfo
       required: false
-      description: vGPU 配置（修改需校验关联镜像兼容）（vgpuExtraInfo）
+      description: vGPU 配置信息（对象，含 model/parentGpuModel/vgpuModelType/memory/graphicsMemorySize；修改需校验关联镜像兼容）
     deskCreateMode:
       type: DeskCreateMode
       required: false
@@ -99,6 +101,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 平台策略组（更新时回填）
+      generated_by: true
     enableInternet:
       type: Boolean
       required: true
@@ -117,11 +120,65 @@ request:
       type: Integer
       required: false
       description: 浮动个性配置（personalConfigDiskSize）
-    其余策略项:
-      type: mixed
+    note:
+      type: String
       required: false
-      constraint: 同 create
-      description: enableHyperVisorImprove/enableNested/enableDoubleScreen/enableHa/haPriority/desk
+      description: 备注
+    state:
+      type: SpaceStrategyGroupState
+      required: false
+      constraint: '@Nullable'
+      description: 策略状态
+    enableHyperVisorImprove:
+      type: Boolean
+      required: false
+      example: true
+    enableNested:
+      type: Boolean
+      required: false
+      example: false
+    enableDoubleScreen:
+      type: Boolean
+      required: false
+      example: false
+    enableHa:
+      type: Boolean
+      required: false
+      example: false
+    haPriority:
+      type: Integer
+      required: false
+      constraint: '@Nullable @Range(0,10)'
+      description: 配置HA优先级（VDI生效）
+    desktopOccupyDriveArr:
+      type: list
+      required: false
+      description: 数组（示例 0 项）
+    keyboardEmulationType:
+      type: String
+      required: false
+      example: PS2
+    needHideFloatBar:
+      type: Boolean
+      required: false
+      example: false
+    enableShowLocalDisk:
+      type: Boolean
+      required: false
+      example: true
+    enableAdaptiveResolution:
+      type: Boolean
+      required: false
+      example: true
+    enableSoftwareDecode:
+      type: Boolean
+      required: false
+      example: true
+    shutDownDeleteSystemDisk:
+      type: Boolean
+      required: false
+      constraint: '@Nullable'
+      description: VDI还原类型桌面关机后是否删除系统盘
 response:
   wrapper:
     status: String
@@ -217,6 +274,12 @@ idempotency:
 params:
   required:
   - name: strategy_name
+  - name: cpu
+  - name: enable_internet
+  - name: name
+  - name: pattern
+  - name: strategy_type
+  - name: system_size
     desc: ''
     used_by: 见 setup/request
 ---
@@ -292,7 +355,8 @@ graph LR
 | vgpuType | String | 否 |  | vGPU 配置（修改需校验关联镜像兼容）（vgpuType） |
 | enablePersonalConfig | Boolean | 否 |  | 浮动个性配置（enablePersonalConfig） |
 | enableStudentAccount | Boolean | 否 |  | 学生端账号密码（密码前端传密文，服务端解密）（enableStudentAcco |
-| personalConfigDiskSize | Integer | 否 |  | 浮动个性配置（personalConfigDiskSize） |## 出参详情
+| personalConfigDiskSize | Integer | 否 |  | 浮动个性配置（personalConfigDiskSize） |
+## 出参详情
 
 | 返回类型 | DefaultWebResponse |
 |---|---|

@@ -114,6 +114,8 @@ idempotency:
 params:
   required:
   - name: classroom_name
+  - name: enable_force_init_public
+  - name: id_arr
     desc: ''
     used_by: 见 setup/request
 ---

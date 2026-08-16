@@ -39,7 +39,7 @@ request:
       description: 是否强制刷新（真实请求样例默认 false）
     matchArr:
       type: Match[]
-      required: true
+      required: false
       constraint: '@NotNull，默认空数组'
       description: 精确/模糊查询条件数组
       value:
@@ -50,7 +50,7 @@ request:
         matchRule: EQ
     sortArr:
       type: Sort[]
-      required: true
+      required: false
       constraint: '@NotNull，默认空数组'
       description: 排序条件数组
     customData:
@@ -214,6 +214,150 @@ response:
       type: String
       description: 终端部署模式
     teacherPlatformStatus:
+      type: CloudPlatformStatus
+      description: 教师机镜像使用的云平台状态
+    "itemArr[]_classroomId":
+      type: UUID
+      description: 教室ID
+    "itemArr[]_classroomName":
+      type: String
+      description: 教室名称
+    "itemArr[]_classroomState":
+      type: ClassroomLessonStatusEnum
+      description: 教室上课状态
+    "itemArr[]_studentType":
+      type: String
+      description: 学生工作模式类型（JSON串，用于派生 studentModeArr）
+    "itemArr[]_studentModeArr":
+      type: TerminalTypeEnum[]
+      description: 学生工作模式数组
+    "itemArr[]_studentStartIp":
+      type: String
+      description: 学生终端起始IP
+    "itemArr[]_studentEndIp":
+      type: String
+      description: 学生终端结束IP
+    "itemArr[]_studentTerminalIpSegment":
+      type: String
+      description: 学生终端IP段（由 studentStartIp/studentEndIp 生成）
+    "itemArr[]_currentLessonId":
+      type: UUID
+      description: 当前上课ID
+    "itemArr[]_disableNetwork":
+      type: Boolean
+      description: 是否禁网
+    "itemArr[]_networkIds":
+      type: String
+      description: 教室关联网络策略ID聚合串（逗号分隔）
+    "itemArr[]_teacherTerminalId":
+      type: String
+      description: 教师机终端ID
+    "itemArr[]_teacherIp":
+      type: String
+      description: 教师机IP
+    "itemArr[]_teacherType":
+      type: String
+      description: 教师机工作模式类型（JSON串，用于派生 teacherModeArr）
+    "itemArr[]_teacherModeArr":
+      type: TerminalTypeEnum[]
+      description: 教师机工作模式数组
+    "itemArr[]_teacherDesktopId":
+      type: UUID
+      description: 教师机云桌面ID
+    "itemArr[]_teacherDesktopName":
+      type: String
+      description: 教师机云桌面名称
+    "itemArr[]_teacherDesktopIp":
+      type: String
+      description: 教师机云桌面IP
+    "itemArr[]_teacherId":
+      type: UUID
+      description: 教师ID
+    "itemArr[]_teacherTerminalState":
+      type: CbbTerminalStateEnums
+      description: 教师机终端状态
+    "itemArr[]_teacherTerminalModel":
+      type: String
+      description: 教师机终端型号
+    "itemArr[]_teacherUpgradeVersion":
+      type: String
+      description: 教师机终端升级版本
+    "itemArr[]_teacherHardwareVersion":
+      type: String
+      description: 教师机终端硬件版本
+    "itemArr[]_teacherRainOsVersion":
+      type: String
+      description: 教师机终端RainOS版本
+    "itemArr[]_teacherSerialNumber":
+      type: String
+      description: 教师机终端序列号
+    "itemArr[]_teacherMac":
+      type: String
+      description: 教师机终端MAC
+    "itemArr[]_teacherDiskSize":
+      type: Long
+      description: 教师机终端磁盘大小
+    "itemArr[]_teacherCpuType":
+      type: String
+      description: 教师机终端CPU型号
+    "itemArr[]_teacherMemory":
+      type: Long
+      description: 教师机终端内存大小
+    "itemArr[]_teacherTerminalOsType":
+      type: String
+      description: 教师机终端操作系统类型
+    "itemArr[]_terminalTotalNum":
+      type: Integer
+      description: 终端总数（学生机+教师机，接口回填）
+    "itemArr[]_terminalOnlineNum":
+      type: Integer
+      description: 在线终端数（接口回填）
+    "itemArr[]_desktopTotalNum":
+      type: Integer
+      description: 云桌面总数
+    "itemArr[]_desktopOnlineNum":
+      type: Integer
+      description: 在线云桌面数
+    "itemArr[]_vdiTeacherImageNum":
+      type: Integer
+      description: 教师机VDI镜像数
+    "itemArr[]_vdiStudentImageNum":
+      type: Integer
+      description: 学生机VDI镜像数
+    "itemArr[]_tciTeacherImageNum":
+      type: Integer
+      description: 教师机TCI镜像数
+    "itemArr[]_tciStudentImageNum":
+      type: Integer
+      description: 学生机TCI镜像数
+    "itemArr[]_teacherDesktopState":
+      type: CbbCloudDeskState
+      description: 教师机云桌面状态
+    "itemArr[]_teacherBootManageMode":
+      type: CbbTerminalBootManageModeEnums
+      description: 教师机终端引导管理模式
+    "itemArr[]_terminalNeedUpgrade":
+      type: Boolean
+      description: 终端是否需要升级
+    "itemArr[]_publishAsSpace":
+      type: Boolean
+      description: 是否作为教学实训空间发布
+    "itemArr[]_canTerminalInit":
+      type: Boolean
+      description: 是否支持终端初始化
+    "itemArr[]_terminalGroupId":
+      type: UUID
+      description: 关联终端组ID
+    "itemArr[]_teacherLockStatus":
+      type: Boolean
+      description: 教师机终端锁定状态
+    "itemArr[]_teacherTerminalIp":
+      type: String
+      description: 教师机绑定的终端IP
+    "itemArr[]_deployMode":
+      type: String
+      description: 终端部署模式
+    "itemArr[]_teacherPlatformStatus":
       type: CloudPlatformStatus
       description: 教师机镜像使用的云平台状态
 upstream:

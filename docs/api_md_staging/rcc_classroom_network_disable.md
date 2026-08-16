@@ -111,6 +111,7 @@ idempotency:
 params:
   required:
   - name: classroom_name
+  - name: disable_network
     desc: ''
     used_by: 见 setup/request
 ---

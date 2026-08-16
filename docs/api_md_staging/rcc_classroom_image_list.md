@@ -78,15 +78,153 @@ response:
     msgArgArr: String[]
     content: Object
   body:
-    itemArr/items:
+    itemArr:
       type: ClassroomImageCardInfoDTO[]
-      description: 镜像卡片列表，元素含 id/imageName/teaImage/hide/canUpdate/cbbImageType
+      description: 镜像卡片列表（位于 content 下：$.content.itemArr），元素含 id/imageName/teaImage/hide/canUpdate/cbbImageType
     total:
       type: Integer
       description: 总条数
-    itemArr:
-      type: List<Object>
-      description: 分页数据项（位于 content 下：$.content.itemArr）
+    "itemArr[]_id":
+      type: UUID
+      description: 镜像ID
+    "itemArr[]_imageName":
+      type: String
+      description: 镜像名称
+    "itemArr[]_teaImage":
+      type: Boolean
+      description: 是否教师机镜像
+    "itemArr[]_hide":
+      type: Boolean
+      description: 是否隐藏
+    "itemArr[]_canUpdate":
+      type: Boolean
+      description: 是否能更新
+    "itemArr[]_usage":
+      type: String
+      description: 用途
+    "itemArr[]_classroomState":
+      type: ClassroomLessonStatusEnum
+      description: 当前教室状态
+    "itemArr[]_beingUsedInLesson":
+      type: Boolean
+      description: 当前教室正使用该镜像且处于上课准备/上课中/下课准备中
+    "itemArr[]_cbbImageType":
+      type: CbbImageType
+      description: 镜像类型（VDI/IDV/VOI）
+    "itemArr[]_rootImageId":
+      type: UUID
+      description: 根镜像ID
+    "itemArr[]_rootImageName":
+      type: String
+      description: 根镜像名称
+    "itemArr[]_imageRoleType":
+      type: ImageRoleType
+      description: 镜像角色类型
+    "itemArr[]_enableMultipleVersion":
+      type: Boolean
+      description: 是否开启多版本
+    "itemArr[]_cpu":
+      type: Integer
+      description: CPU核数
+    "itemArr[]_editErrorMessageArr":
+      type: String[]
+      description: 驱动未更新等错误提示
+    "itemArr[]_imageSystemSize":
+      type: Integer
+      description: 系统盘大小（GB）
+    "itemArr[]_memory":
+      type: Double
+      description: 内存大小（GB）
+    "itemArr[]_osType":
+      type: CbbOsType
+      description: 操作系统类型
+    "itemArr[]_supportGoldenImage":
+      type: Boolean
+      description: 是否黄金镜像
+    "itemArr[]_downloadInfo":
+      type: String
+      description: 镜像下载总览
+    "itemArr[]_bindDefaultEnter":
+      type: Boolean
+      description: 是否默认进入的镜像
+    "itemArr[]_cbbCloudDeskPattern":
+      type: CbbCloudDeskPattern
+      description: 桌面模式
+    "itemArr[]_imageTemplateState":
+      type: ImageTemplateState
+      description: 镜像模板状态
+    "itemArr[]_classroomId":
+      type: UUID
+      description: 教室ID
+    "itemArr[]_createTime":
+      type: Date
+      description: 创建时间
+    "itemArr[]_imageDiskList":
+      type: List<CbbImageDiskInfoDTO>
+      description: 镜像磁盘信息列表
+    "itemArr[]_dataDiskSize":
+      type: Integer
+      description: 数据盘大小
+    "itemArr[]_enableGpu":
+      type: Boolean
+      description: 是否启用GPU
+    "itemArr[]_vgpuType":
+      type: VgpuType
+      description: vGPU类型
+    "itemArr[]_graphicsMemorySize":
+      type: String
+      description: 显存大小
+    "itemArr[]_vgpuItem":
+      type: String
+      description: vGPU规格项
+    "itemArr[]_vgpuModel":
+      type: String
+      description: vGPU型号
+    "itemArr[]_classroomImageId":
+      type: UUID
+      description: 教室镜像ID
+    "itemArr[]_gpuOptionList":
+      type: List<VgpuDTO>
+      description: GPU规格列表（仅VDI填充）
+    "itemArr[]_clusterId":
+      type: UUID
+      description: 计算集群ID
+    "itemArr[]_platformId":
+      type: UUID
+      description: 平台ID
+    "itemArr[]_clusterName":
+      type: String
+      description: 计算集群名称
+    "itemArr[]_strategyId":
+      type: UUID
+      description: 云桌面策略ID
+    "itemArr[]_strategyName":
+      type: String
+      description: 云桌面策略名称
+    "itemArr[]_networkId":
+      type: UUID
+      description: 网络策略ID
+    "itemArr[]_networkName":
+      type: String
+      description: 网络策略名称
+    "itemArr[]_storagePoolIds":
+      type: String
+      description: 存储池ID集合
+    "itemArr[]_spaceImage":
+      type: Boolean
+      description: 是否在教学实训桌面池发布
+    "itemArr[]_teacherDesktopState":
+      type: CbbCloudDeskState
+      description: 教师机桌面状态
+    "itemArr[]_platformType":
+      type: CloudPlatformType
+      description: 云平台类型（继承 RccPlatformBaseInfoDTO）
+    "itemArr[]_platformName":
+      type: String
+      description: 云平台名称（继承 RccPlatformBaseInfoDTO）
+    "itemArr[]_platformStatus":
+      type: CloudPlatformStatus
+      description: 云平台状态（继承 RccPlatformBaseInfoDTO）
 upstream:
 - api: POST /rcc/classroom/create -> POST /rcc/classroom/select
   produces: $.content[0].classroomId
@@ -118,6 +256,7 @@ idempotency:
 params:
   required:
   - name: classroom_name
+  - name: cr_id
     desc: ''
     used_by: 见 setup/request
 ---
@@ -180,7 +319,8 @@ graph LR
 | matchArr | Object | 否 |  | 分页、排序与筛选参数（matchArr） |
 | searchKeyword | String | 否 |  | 分页、排序与筛选参数（searchKeyword） |
 | sortArr | Object | 否 |  | 分页、排序与筛选参数（sortArr） |
-| page | Integer | 否 |  | 分页、排序与筛选参数（page） |## 出参详情
+| page | Integer | 否 |  | 分页、排序与筛选参数（page） |
+## 出参详情
 
 | 返回类型 | DefaultWebResponse（data=PageQueryResponse<ClassroomImageCardInfoDTO>） |
 |---|---|

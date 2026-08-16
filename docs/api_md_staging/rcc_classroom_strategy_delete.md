@@ -75,9 +75,12 @@ response:
     msgArgArr: String[]
     content: Object
   body:
-    taskName/taskDesc:
+    taskName:
       type: String
-      description: 删除教室策略任务名称与描述（单条含策略名）
+      description: 删除教室策略任务名称（单条含策略名）
+    taskDesc:
+      type: String
+      description: 删除教室策略任务描述
     taskId:
       type: UUID
       description: 批任务ID
@@ -139,6 +142,7 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: classroom_strategy_name
+  - name: id_arr
     desc: ''
     used_by: setup/request
 ---

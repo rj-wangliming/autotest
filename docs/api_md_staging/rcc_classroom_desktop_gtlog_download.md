@@ -108,9 +108,12 @@ response:
     contentType:
       type: String
       description: application/octet-stream
-    fileName/suffix:
+    fileName:
       type: String
-      description: 在原文件名下划线位置插入 _deskIp 重命名后下载
+      description: 下载文件名（在原文件名下划线位置插入 _deskIp 重命名）
+    suffix:
+      type: String
+      description: 文件名后缀
 upstream:
 - api: POST /rcc/classroom/desktop/gtlog/collectLog
   produces: $.content.logFileName
@@ -156,10 +159,10 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: seatNum
+  - name: desk_id
+  - name: log_file_name
     desc: ''
     used_by: 见 setup/request
-    desc: ''
-    used_by: setup/request
 ---
 # GET /rcc/classroom/desktop/gtlog/download
 

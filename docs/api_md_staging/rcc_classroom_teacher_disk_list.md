@@ -109,6 +109,51 @@ response:
     devAvailSize:
       type: String
       description: 磁盘可用空间（TCITerminalDiskInfoDTO 扩展字段）
+    "itemArr[]_devName":
+      type: String
+      description: 磁盘名称（设备名）
+    "itemArr[]_devType":
+      type: String
+      description: 磁盘类型
+    "itemArr[]_devForm":
+      type: String
+      description: 磁盘形态
+    "itemArr[]_devTotalSize":
+      type: String
+      description: 磁盘空间总大小（单位 byte）
+    "itemArr[]_devMedia":
+      type: String
+      description: 磁盘介质
+    "itemArr[]_devState":
+      type: String
+      description: 磁盘状态
+    "itemArr[]_devSn":
+      type: String
+      description: 磁盘序列号
+    "itemArr[]_devFirmwareVersion":
+      type: String
+      description: 磁盘固件版本
+    "itemArr[]_devHealth":
+      type: String
+      description: 磁盘健康状态
+    "itemArr[]_devPowerOnhour":
+      type: String
+      description: 磁盘通电时长
+    "itemArr[]_devTotalWritten":
+      type: String
+      description: 磁盘历史写入量
+    "itemArr[]_devReadIops":
+      type: String
+      description: 读IOPS
+    "itemArr[]_devWriteIops":
+      type: String
+      description: 写IOPS
+    "itemArr[]_devModel":
+      type: String
+      description: 磁盘型号
+    "itemArr[]_devAvailSize":
+      type: String
+      description: 磁盘可用空间（TCITerminalDiskInfoDTO 扩展字段）
 upstream:
 - api: POST /rcc/classroom/terminal/list
   produces: $.content.itemArr[0].classroomId

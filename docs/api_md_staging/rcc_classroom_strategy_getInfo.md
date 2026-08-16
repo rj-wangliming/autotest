@@ -90,9 +90,12 @@ response:
     startPolicy:
       type: DesktopStartPolicyEnum
       description: 上课云桌面启动策略
-    defaultEnterImageSwitch/defaultEnterImageSeconds:
-      type: Boolean/Integer
-      description: 默认进入指定云桌面开关/倒计时
+    defaultEnterImageSwitch:
+      type: Boolean
+      description: 默认进入指定云桌面开关
+    defaultEnterImageSeconds:
+      type: Integer
+      description: 默认进入指定云桌面倒计时
     defaultDisplayDeskType:
       type: DefaultDisplayDeskType
       description: 默认展示桌面类型
@@ -102,15 +105,21 @@ response:
     classroomStrategyState:
       type: ClassroomStrategyState
       description: 策略状态
-    createTime/updateTime:
+    createTime:
       type: Date
-      description: 创建/更新时间
+      description: 创建时间
+    updateTime:
+      type: Date
+      description: 更新时间
     refClassroomNum:
       type: Integer
       description: 引用该策略的教室数
-    reservedStoragePolicy/reservedStorageSize:
-      type: ReservedSpaceType/Integer
-      description: 预留空间类型/大小
+    reservedStoragePolicy:
+      type: ReservedSpaceType
+      description: 预留空间类型
+    reservedStorageSize:
+      type: Integer
+      description: 预留空间大小
     startMode:
       type: CbbTerminalStartMode
       description: 终端启动模式（默认UEFI）

@@ -134,6 +134,7 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: desktop_name
+  - name: number
     desc: ''
     used_by: 见 setup/request
 ---

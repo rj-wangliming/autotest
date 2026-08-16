@@ -76,8 +76,8 @@ upstream:
 - api: 内部调用:RccVDIIpDeliverAPI
   purpose: 无起始IP时按网络+数量计算空闲IP区间
 downstream:
-- api: /rcc/classroom/create
-  purpose: 推断：出参 VDIDeliverIpInfoDTO.vdiStartIP 供教室创建 POST /rcc/classro
+- api: POST /rcc/classroom/create
+  purpose: 推断：出参 VDIDeliverIpInfoDTO.vdiStartIP 供教室创建 POST /rcc/classroom/createom/create
 constraints:
 - level: request
   field: networkId/number
@@ -104,6 +104,8 @@ idempotency:
 params:
   required:
   - name: classroom_name
+  - name: network_id
+  - name: number
     desc: ''
     used_by: 见 setup/request
 ---

@@ -30,6 +30,7 @@ request:
       required: true
       constraint: '@NotNull；毫秒时间戳；与上次登录相同会拒绝（ALREADY_LOGIN_CURRENT_TIME 防重放）'
       description: 请求时间戳（毫秒），每次登录必须生成新值
+      generated_by: true
     captchaCode:
       type: String
       required: false
@@ -73,6 +74,10 @@ assertions:
 idempotency:
   level: not_idempotent
   note: 每次登录生成新 token；timestamp 防重放，重复同值会被拒
+params:
+  required:
+  - name: rcdc_passwd
+  - name: rcdc_user
 ---
 # POST /rco/admin/loginAdmin
 
@@ -105,7 +110,9 @@ idempotency:
 | 字段 | 类型 | 说明 |
 |---|---|---|
 | content.token | String | 登录 token（后续请求 Authorization: Bearer <token>） |
-| content.id / userName / menuNameArr | UUID / String / String[] | 管理员信息 |
+| content.id | UUID | 管理员ID |
+| content.userName | String | 管理员账号 |
+| content.menuNameArr | String[] | 管理员菜单列表 |
 
 ## 加密约定（pwd）
 

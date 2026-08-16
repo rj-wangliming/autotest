@@ -131,8 +131,7 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: seatNum
-    desc: ''
-    used_by: 见 setup/request
+  - name: log_name
     desc: ''
     used_by: 见 setup/request
 ---

@@ -6,7 +6,7 @@ api:
   name: 教室创建弹窗中批量校验教师机主机名前缀与座位云桌面主机名前缀是否冲突/重复。教师机为非PC工作模式时教师机主机名前缀必填（为空抛 RCDC_RCC_CLASSR
   controller: RccClassroomConfigController
   method_ref: batchCheckDesktopNameDuplicate
-  permission: '@EnableAuthority'
+  permission: '无'
   exec_mode: 同步
   async: false
   description: 教室创建弹窗中批量校验教师机主机名前缀与座位云桌面主机名前缀是否冲突/重复。教师机为非PC工作模式时教师机主机名前缀必填（为空抛 RCDC_RCC_CLASSROOM_TEACHER_PRE_NAME_MUST_NOT_BE_NULL），随后将入参拷贝为 BatchCheckDesktopNameDTO 调 classroomAPI.batchCheckDesktopNameDuplicate 做
@@ -34,6 +34,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 学生机工作模式数组（可选值：NONE/PC/VDI/IDV/VOI(TCI)/APP/UNKNOWN）
+      generated_by: config_generator
     desktopNum:
       type: Integer
       required: false
@@ -110,6 +111,11 @@ cleanup: []
 idempotency:
   level: non_idempotent
   note: 只读校验接口，重复调用无副作用
+params:
+  required:
+  - name: desktop_name_start_num
+  - name: desktop_pre_name
+  - name: teacher_mode
 ---
 # POST /rcc/classroom/batchCheckDesktopNameDuplicate
 

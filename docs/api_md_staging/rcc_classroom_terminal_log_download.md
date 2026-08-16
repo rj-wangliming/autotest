@@ -91,6 +91,7 @@ idempotency:
 params:
   required:
   - name: classroom_name
+  - name: log_name
     desc: ''
     used_by: 见 setup/request
 ---

@@ -82,9 +82,12 @@ response:
     systemDisk:
       type: Integer
       description: 系统盘大小 GB
-    cpu/memory:
+    cpu:
       type: Integer
-      description: CPU 核数/内存 MB
+      description: CPU 核数
+    memory:
+      type: Integer
+      description: 内存 MB
     canUsed:
       type: Boolean
       description: 是否可用（条件校验不满足置 false）
@@ -100,15 +103,75 @@ response:
     classroomUsedCount:
       type: Integer
       description: 引用策略的教室数
-    vgpuType/vgpuExtraInfo:
-      type: VgpuType/String
-      description: vGPU 配置
+    vgpuType:
+      type: VgpuType
+      description: vGPU 类型
+    vgpuExtraInfo:
+      type: String
+      description: vGPU 额外信息
     enablePersonalConfig:
       type: Boolean
       description: 是否启用浮动个性
     deskStrategyId:
       type: UUID
       description: 云桌面策略组 id（数据权限过滤字段）
+    "itemArr[]_id":
+      type: UUID
+      description: 课程策略ID
+    "itemArr[]_strategyName":
+      type: String
+      description: 策略名称
+    "itemArr[]_desktopType":
+      type: CbbCloudDeskPattern
+      description: 桌面类型
+    "itemArr[]_systemDisk":
+      type: Integer
+      description: 系统盘大小（GB）
+    "itemArr[]_cpu":
+      type: Integer
+      description: CPU核数
+    "itemArr[]_memory":
+      type: Integer
+      description: 内存大小（MB）
+    "itemArr[]_canUsed":
+      type: Boolean
+      description: 是否可用（条件校验不满足置 false）
+    "itemArr[]_canUsedMessage":
+      type: String
+      description: 不可用原因
+    "itemArr[]_deskCreateMode":
+      type: DeskCreateMode
+      description: 创建方式
+    "itemArr[]_deskStrategyState":
+      type: CbbDeskStrategyState
+      description: 策略状态
+    "itemArr[]_strategyType":
+      type: CbbStrategyType
+      description: 策略类型
+    "itemArr[]_classroomUsedCount":
+      type: Integer
+      description: 引用策略的教室数
+    "itemArr[]_vgpuType":
+      type: VgpuType
+      description: vGPU类型
+    "itemArr[]_vgpuExtraInfo":
+      type: String
+      description: vGPU附加信息JSON
+    "itemArr[]_enablePersonalConfig":
+      type: Boolean
+      description: 是否启用浮动个性
+    "itemArr[]_creatorUserName":
+      type: String
+      description: 创建者
+    "itemArr[]_createTime":
+      type: Date
+      description: 创建时间
+    "itemArr[]_version":
+      type: Integer
+      description: 版本号
+    "itemArr[]_deskStrategyId":
+      type: UUID
+      description: 云桌面策略组ID（数据权限过滤字段）
 upstream:
 - api: POST /rcc/space/image/list
   produces: $.content.itemArr[*].id

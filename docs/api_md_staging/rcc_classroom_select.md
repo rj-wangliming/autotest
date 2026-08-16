@@ -52,6 +52,24 @@ response:
     startPolicy:
       type: DesktopStartPolicyEnum
       description: 上课云桌面启动策略
+    "itemArr[]_classroomId":
+      type: UUID
+      description: 教室ID
+    "itemArr[]_classroomName":
+      type: String
+      description: 教室名称
+    "itemArr[]_timetableId":
+      type: UUID
+      description: 课表ID
+    "itemArr[]_classroomState":
+      type: ClassroomLessonStatusEnum
+      description: 教室上课状态
+    "itemArr[]_currentLessonId":
+      type: UUID
+      description: 当前上课ID
+    "itemArr[]_startPolicy":
+      type: DesktopStartPolicyEnum
+      description: 上课云桌面启动策略
 upstream:
 - api: 内部调用:rcc/ClassroomAPI
   purpose: 按关键字查询教室列表

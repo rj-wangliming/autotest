@@ -70,6 +70,9 @@ setup:
 - name: login
   api: POST /rco/admin/loginAdmin
   purpose: 管理员登录（框架内置，引擎自动处理）
+params:
+  required:
+  - name: id
 ---
 # POST /space/strategy/tci/getInfo
 

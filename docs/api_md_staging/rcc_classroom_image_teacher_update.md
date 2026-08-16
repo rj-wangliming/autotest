@@ -70,6 +70,7 @@ request:
       required: true
       constraint: '@NotNull，值1=UPDATE'
       description: 动作
+      value: 1
     shouldOnlyDeleteDataFromDb:
       type: Boolean
       required: false
@@ -124,6 +125,8 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: image_name
+  - name: cr_id
+  - name: teacher_image_name
     desc: ''
     used_by: setup/request
 ---

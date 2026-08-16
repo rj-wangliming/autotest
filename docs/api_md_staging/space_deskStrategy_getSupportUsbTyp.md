@@ -70,6 +70,9 @@ cleanup:
 idempotency:
   level: non_idempotent
   note: 只读查询，无副作用
+params:
+  required:
+  - name: cloud_desk_type
 ---
 # POST /space/deskStrategy/getSupportUsbTyp
 

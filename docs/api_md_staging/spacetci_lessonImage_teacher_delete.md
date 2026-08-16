@@ -108,6 +108,7 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: image_name
+  - name: teacher_image_name
     desc: ''
     used_by: setup/request
 ---

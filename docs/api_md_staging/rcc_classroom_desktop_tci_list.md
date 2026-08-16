@@ -52,6 +52,7 @@ request:
       required: true
       constraint: 首个match必须是classroomId的精确匹配
       description: 包含 classroomId 精确匹配条件
+      value: ${prev.query_classroom.output.classroomId}
     sortArr:
       type: Sort[]
       required: false
@@ -149,6 +150,84 @@ response:
     guestToolVersion:
       type: String
       description: 云桌面安装的工具版本
+    "itemArr[]_desktopId":
+      type: UUID
+      description: 云桌面ID
+    "itemArr[]_computerName":
+      type: String
+      description: 云桌面主机名
+    "itemArr[]_desktopPreName":
+      type: String
+      description: 主机名前缀（教师机名前缀或座位名）
+    "itemArr[]_desktopState":
+      type: CbbCloudDeskState
+      description: 云桌面状态
+    "itemArr[]_disableNetwork":
+      type: Boolean
+      description: 是否禁网
+    "itemArr[]_desktopType":
+      type: CbbCloudDeskType
+      description: 云桌面类型（IDV/VDI）
+    "itemArr[]_desktopRole":
+      type: String
+      description: 云桌面角色（学生机/教师机）
+    "itemArr[]_desktopMac":
+      type: String
+      description: 云桌面MAC
+    "itemArr[]_desktopIp":
+      type: String
+      description: 云桌面IP
+    "itemArr[]_desktopImageName":
+      type: String
+      description: 镜像名称
+    "itemArr[]_desktopRootImageName":
+      type: String
+      description: 根镜像名称
+    "itemArr[]_imageType":
+      type: CbbImageType
+      description: 镜像类型
+    "itemArr[]_osType":
+      type: CbbOsType
+      description: 操作系统类型
+    "itemArr[]_osVersion":
+      type: String
+      description: 系统版本
+    "itemArr[]_systemDisk":
+      type: Integer
+      description: 系统分区大小
+    "itemArr[]_diskSize":
+      type: Integer
+      description: 数据盘大小
+    "itemArr[]_desktopCategory":
+      type: String
+      description: 云桌面容量类型（PERSON/RESTORE）
+    "itemArr[]_terminalIp":
+      type: String
+      description: 终端IP
+    "itemArr[]_classroomId":
+      type: UUID
+      description: 教室ID
+    "itemArr[]_seatNum":
+      type: Integer
+      description: 座位号
+    "itemArr[]_hostName":
+      type: String
+      description: 主机名
+    "itemArr[]_terminalState":
+      type: CbbTerminalStateEnums
+      description: 终端状态
+    "itemArr[]_targetComputerName":
+      type: String
+      description: 目标计算机名称（计算机名不存在时的提示）
+    "itemArr[]_registerState":
+      type: CbbDeskRegisterState
+      description: 云桌面注册状态
+    "itemArr[]_desktopIpv6":
+      type: String
+      description: 云桌面IPv6地址
+    "itemArr[]_guestToolVersion":
+      type: String
+      description: 云桌面安装的工具版本
 upstream:
 - api: POST /rcc/classroom/terminal/list
   produces: $.content.itemArr[0].classroomId
@@ -235,7 +314,8 @@ graph LR
 | matchArr[0] | DefaultExactMatch | 是 | 首个match必须是classroomId的精确匹配 | 包含 classroomId 精确匹配条件 |
 | sortArr | Sort[] | 否 | 可选 | 排序条件 |
 | limit | Integer | 否 |  | 页码与每页条数（limit） |
-| page | Integer | 否 |  | 页码与每页条数（page） |## 出参详情
+| page | Integer | 否 |  | 页码与每页条数（page） |
+## 出参详情
 
 | 返回类型 | DefaultWebResponse（data=PageQueryResponse<ViewTCIDesktopResultDTO>） |
 |---|---|

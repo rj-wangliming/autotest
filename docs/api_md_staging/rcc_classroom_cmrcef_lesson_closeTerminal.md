@@ -68,6 +68,10 @@ cleanup: []
 idempotency:
   level: data_level
   note: 关机指令重复下发无校验，非严格幂等
+params:
+  required:
+  - name: classroom_id
+  - name: token
 ---
 # POST /rcc/classroom/cmrcef/lesson/closeTerminal
 

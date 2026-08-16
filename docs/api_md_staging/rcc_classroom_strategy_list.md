@@ -125,7 +125,7 @@ upstream:
 - api: 内部调用:rcc/ClassroomStrategyAPI
   purpose: 分页查询教室策略列表
 downstream:
-- api: /rcc/classroom/create
+- api: POST /rcc/classroom/create
   purpose: 被教室创建 POST /rcc/classroom/create 消费
 constraints:
 - level: PARAM

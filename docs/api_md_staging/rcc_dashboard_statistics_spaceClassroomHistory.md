@@ -104,6 +104,7 @@ idempotency:
 params:
   required:
   - name: classroom_name
+  - name: time_query_type
     desc: ''
     used_by: 见 setup/request
 ---

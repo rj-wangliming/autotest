@@ -162,8 +162,8 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: seatNum
-    desc: ''
-    used_by: 见 setup/request
+  - name: enable_force_init_public
+  - name: id_arr
     desc: ''
     used_by: 见 setup/request
 ---

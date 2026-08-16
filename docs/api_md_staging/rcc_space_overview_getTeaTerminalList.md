@@ -34,12 +34,12 @@ request:
       description: 搜索关键字（匹配终端IP或终端名称）
     matchArr:
       type: Match[]
-      required: true
+      required: false
       constraint: '@Nullable'
       description: 匹配条件
     sortArr:
       type: Sort[]
-      required: true
+      required: false
       constraint: '@Nullable'
       description: 排序条件
     exactMatchArr:

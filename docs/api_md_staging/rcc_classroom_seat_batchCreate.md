@@ -199,8 +199,6 @@ params:
   - name: seatNum
     desc: ''
     used_by: 见 setup/request
-    desc: ''
-    used_by: 见 setup/request
 ---
 # POST /rcc/classroom/seat/batchCreate
 

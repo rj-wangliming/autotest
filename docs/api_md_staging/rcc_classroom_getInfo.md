@@ -57,12 +57,18 @@ response:
     classroomState:
       type: ClassroomLessonStatusEnum
       description: 教室授课状态
-    terminalTotalNum/terminalOnlineNum:
+    terminalTotalNum:
       type: Integer
-      description: 终端总数/在线数
-    desktopTotalNum/desktopOnlineNum:
+      description: 终端总数
+    terminalOnlineNum:
       type: Integer
-      description: 桌面总数/在线数
+      description: 终端在线数
+    desktopTotalNum:
+      type: Integer
+      description: 桌面总数
+    desktopOnlineNum:
+      type: Integer
+      description: 桌面在线数
     disableNetwork:
       type: Boolean
       description: 是否禁网
@@ -72,9 +78,12 @@ response:
     studentTerminalIpSegment:
       type: String
       description: 学生机终端IP段
-    studentImageNum/studentImageStorageSize:
+    studentImageNum:
       type: Integer
-      description: 学生机镜像数量/镜像存储大小
+      description: 学生机镜像数量
+    studentImageStorageSize:
+      type: Integer
+      description: 学生机镜像存储大小
     currentLessonId:
       type: UUID
       description: 当前上课ID
@@ -93,6 +102,108 @@ response:
     studentClassroomStrategyName:
       type: String
       description: 学生机教室策略名称
+    networkIds:
+      type: String
+      description: 关联网络策略ID集合
+    studentTerminalModel:
+      type: String
+      description: 学生机终端型号
+    cmrClassConfig:
+      type: String
+      description: 课堂同步录制配置
+    diskRequiredSize:
+      type: Integer
+      description: 学生机终端磁盘容量要求（GB）
+    teacherPlatformStatus:
+      type: CloudPlatformStatus
+      description: 教师机镜像云平台状态
+    teacherId:
+      type: UUID
+      description: 教师ID
+    teacherName:
+      type: String
+      description: 教师名称
+    teacherDesktopState:
+      type: CbbCloudDeskState
+      description: 教师桌面状态
+    teacherDesktopIp:
+      type: String
+      description: 教师桌面IP
+    teacherRainOsVersion:
+      type: String
+      description: 教师终端 RainOS 版本
+    teacherHardwareVersion:
+      type: String
+      description: 教师终端硬件版本
+    teacherUpgradeVersion:
+      type: String
+      description: 教师终端升级版本
+    teacherSerialNumber:
+      type: String
+      description: 教师终端序列号
+    teacherTerminalModel:
+      type: String
+      description: 教师终端型号
+    teacherCpuType:
+      type: String
+      description: 教师机CPU型号
+    teacherMemory:
+      type: Long
+      description: 教师机内存大小
+    teacherMac:
+      type: String
+      description: 教师机MAC地址
+    teacherIp:
+      type: String
+      description: 教师机终端IP
+    teacherTerminalId:
+      type: String
+      description: 教师终端ID
+    teacherOsType:
+      type: String
+      description: 教师机操作系统类型
+    teacherLockStatus:
+      type: Boolean
+      description: 教师终端是否锁定
+    teacherDesktopId:
+      type: UUID
+      description: 教师桌面ID
+    teacherTerminalName:
+      type: String
+      description: 教师终端名称
+    teacherMode:
+      type: TerminalTypeEnum
+      description: 教师机模式
+    teacherTerminalState:
+      type: CbbTerminalStateEnums
+      description: 教师终端状态
+    teacherDiskSize:
+      type: Long
+      description: 教师机磁盘大小
+    teacherSystemSize:
+      type: Long
+      description: 教师机系统盘大小
+    teacherImageNum:
+      type: Integer
+      description: 教师机镜像数量
+    teacherTerminalDiskSize:
+      type: Long
+      description: 教师终端磁盘大小
+    teacherState:
+      type: ClassroomLessonStatusEnum
+      description: 教师状态
+    teacherClassroomStrategyName:
+      type: String
+      description: 教师机教室策略名称
+    terminalNeedUpgrade:
+      type: Boolean
+      description: 终端是否需要升级
+    canTerminalInit:
+      type: Boolean
+      description: 是否支持终端初始化
+    deployMode:
+      type: String
+      description: 部署模式
 upstream:
 - api: POST /rcc/classroom/create -> POST /rcc/classroom/select
   produces: $.content[0].classroomId

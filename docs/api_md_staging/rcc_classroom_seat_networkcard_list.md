@@ -80,18 +80,22 @@ request:
       required: false
       constraint: '@Nullable'
       description: 扩展透传数据
+    page:
       type: Integer
       required: false
       constraint: '@Range(min=0)'
       description: 页码（继承）
+    limit:
       type: Integer
       required: false
       constraint: '@Range(min=1,max=2000)'
       description: 每页条数（继承）
+    matchArr:
       type: Match[]
       required: false
       constraint: '@NotNull'
       description: 匹配条件（继承）
+    sortArr:
       type: Sort[]
       required: false
       constraint: '@NotNull'
@@ -161,6 +165,57 @@ response:
     wirelessAuthMode:
       type: CbbTerminalWirelessAuthModeEnums
       description: 无线认证方式
+    "itemArr[]_networkAccessMode":
+      type: CbbNetworkModeEnums
+      description: 网络接入方式
+    "itemArr[]_getIpMode":
+      type: CbbGetNetworkModeEnums
+      description: IP获取方式（静态/DHCP）
+    "itemArr[]_getDnsMode":
+      type: CbbGetNetworkModeEnums
+      description: DNS获取方式
+    "itemArr[]_macAddr":
+      type: String
+      description: 网卡MAC地址
+    "itemArr[]_ip":
+      type: String
+      description: 网卡IP
+    "itemArr[]_subnetMask":
+      type: String
+      description: 子网掩码
+    "itemArr[]_gateway":
+      type: String
+      description: 网关
+    "itemArr[]_mainDns":
+      type: String
+      description: 首选DNS
+    "itemArr[]_secondDns":
+      type: String
+      description: 备用DNS
+    "itemArr[]_ssid":
+      type: String
+      description: 无线SSID
+    "itemArr[]_maxSpeed":
+      type: String
+      description: 网卡最大速率
+    "itemArr[]_product":
+      type: String
+      description: 网卡产品型号
+    "itemArr[]_businessCard":
+      type: CbbNetworkCardEnums
+      description: 业务网卡标识
+    "itemArr[]_businessCardIndex":
+      type: Integer
+      description: 业务网卡序号
+    "itemArr[]_inUse":
+      type: Boolean
+      description: 是否正在使用
+    "itemArr[]_iface":
+      type: String
+      description: 网卡接口名
+    "itemArr[]_wirelessAuthMode":
+      type: CbbTerminalWirelessAuthModeEnums
+      description: 无线认证方式
 upstream:
 - api: POST /rcc/classroom/seat/list
   produces: $.content.itemArr[0].id
@@ -207,8 +262,6 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: seatNum
-    desc: ''
-    used_by: 见 setup/request
     desc: ''
     used_by: 见 setup/request
 ---

@@ -106,6 +106,7 @@ idempotency:
 params:
   required:
   - name: classroom_name
+  - name: classroom_arr
     desc: ''
     used_by: 见 setup/request
 ---

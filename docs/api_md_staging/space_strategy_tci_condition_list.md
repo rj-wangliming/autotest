@@ -115,6 +115,9 @@ response:
     creatorUserName:
       type: String
       description: 创建者
+    createTime:
+      type: Date
+      description: 创建时间
 upstream:
 - api: POST /spacetci/lessonImage/getLessonImageList
   produces: $.content.itemArr[*].id

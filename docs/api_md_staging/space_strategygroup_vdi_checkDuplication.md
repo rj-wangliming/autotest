@@ -36,7 +36,7 @@ response:
     msgArgArr: String[]
     content: Object
   body:
-    duplicate:
+    hasDuplication:
       type: Boolean
       description: 名称是否重复（DuplicateResponse 框架字段）
 upstream:
@@ -64,22 +64,25 @@ constraints:
 assertions:
   success:
   - scenario: 名称唯一
-    expect: $.content.duplicate==false
+    expect: $.content.hasDuplication==false
   - scenario: 编辑时传入自身 id 且名称未变
-    expect: $.content.duplicate==false
+    expect: $.content.hasDuplication==false
   failure:
   - scenario: 本地存在同名
     trigger: 查重命中
-    expect: $.content.duplicate==true（业务返回，非 HTTP ERROR）
+    expect: $.content.hasDuplication==true（业务返回，非 HTTP ERROR）
   - scenario: 平台策略组存在同名
     trigger: checkDeskStrategyExist 命中
-    expect: $.content.duplicate==true（业务返回，非 HTTP ERROR）
+    expect: $.content.hasDuplication==true（业务返回，非 HTTP ERROR）
 cleanup:
 - api: 无
   note: 只读校验接口
 idempotency:
   level: non_idempotent
   note: 只读校验，相同入参结果一致
+params:
+  required:
+  - name: name
 ---
 # POST /space/strategygroup/vdi/checkDuplication
 
@@ -143,7 +146,7 @@ graph LR
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
-| duplicate | Boolean | 名称是否重复（DuplicateResponse 框架字段） |
+| hasDuplication | Boolean | 名称是否重复（DuplicateResponse 框架字段） |
 
 ## 上游前置业务
 
@@ -159,7 +162,7 @@ graph LR
 3. SpaceStrategyGroupVDIValidation.validateNameDuplication：Assert.hasText(name)
 4. super.validateNameDuplication 本地查重（重复抛 62100317）
 5. platformStrategyAPI.checkDeskStrategyExist(name, id) 平台查重（重复抛 62100220）
-6. 框架捕获重名异常 → 组装 DuplicateResponse（duplicate=true）
+6. 框架捕获重名异常 → 组装 DuplicateResponse（hasDuplication=true）
 7. 返回 DefaultWebResponse.success(DuplicateResponse)
 
 ## 下游消费方
@@ -189,15 +192,15 @@ graph LR
 
 | 场景 | 断言点 |
 |---|---|
-| 名称唯一 | $.content.duplicate==false |
-| 编辑时传入自身 id 且名称未变 | $.content.duplicate==false |
+| 名称唯一 | $.content.hasDuplication==false |
+| 编辑时传入自身 id 且名称未变 | $.content.hasDuplication==false |
 
 ### 失败场景
 
 | 场景 | 触发条件 | 断言点 |
 |---|---|---|
-| 本地存在同名 | 查重命中 | $.content.duplicate==true（业务返回，非 HTTP ERROR） |
-| 平台策略组存在同名 | checkDeskStrategyExist 命中 | $.content.duplicate==true（业务返回，非 HTTP ERROR） |
+| 本地存在同名 | 查重命中 | $.content.hasDuplication==true（业务返回，非 HTTP ERROR） |
+| 平台策略组存在同名 | checkDeskStrategyExist 命中 | $.content.hasDuplication==true（业务返回，非 HTTP ERROR） |
 
 ## 环境清理机制
 

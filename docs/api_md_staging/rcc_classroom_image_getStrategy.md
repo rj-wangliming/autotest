@@ -89,15 +89,21 @@ response:
     lessonDeskStrategy:
       type: SpaceDeskStrategyGroupVDI
       description: 课程云桌面策略
-    rootImageId/rootImageName:
-      type: UUID/String
-      description: 根镜像ID/名称（当前为镜像版本时填充）
+    rootImageId:
+      type: UUID
+      description: 根镜像ID（当前为镜像版本时填充）
+    rootImageName:
+      type: String
+      description: 根镜像名称（当前为镜像版本时填充）
     imageRoleType:
       type: ImageRoleType
       description: 镜像角色类型
-    imageReplicationStoragePoolId/Name:
-      type: UUID/String
-      description: 跨存储同步副本存储池ID/名称
+    imageReplicationStoragePoolId:
+      type: UUID
+      description: 跨存储同步副本存储池ID
+    imageReplicationStoragePoolName:
+      type: String
+      description: 跨存储同步副本存储池名称
 upstream:
 - api: POST /rcc/classroom/create -> POST /rcc/classroom/select
   produces: $.content[0].classroomId
@@ -142,6 +148,7 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: image_name
+  - name: enable_teacher
     desc: ''
     used_by: setup/request
 ---

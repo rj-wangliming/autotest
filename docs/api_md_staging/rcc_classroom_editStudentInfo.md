@@ -58,6 +58,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 学生机类型数组（可选值：NONE/PC/VDI/IDV/VOI(TCI)/APP/UNKNOWN）
+      generated_by: config_generator
     studentStartIp:
       type: String
       required: false
@@ -111,9 +112,12 @@ response:
     msgArgArr: String[]
     content: Object
   body:
-    taskName/taskDesc:
+    taskName:
       type: String
-      description: 学生机配置任务名称与描述
+      description: 学生机配置任务名称
+    taskDesc:
+      type: String
+      description: 学生机配置任务描述
     taskId:
       type: UUID
       description: 批任务ID（使用 classroomId 作 uniqueId）

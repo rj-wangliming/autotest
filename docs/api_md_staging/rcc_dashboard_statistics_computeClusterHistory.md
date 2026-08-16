@@ -101,6 +101,8 @@ idempotency:
 params:
   required:
   - name: cluster_name
+  - name: server_resource_type
+  - name: time_query_type
     desc: ''
     used_by: 见 setup/request
 ---

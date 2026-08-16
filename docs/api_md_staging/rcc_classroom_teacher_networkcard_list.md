@@ -115,6 +115,57 @@ response:
     wirelessAuthMode:
       type: CbbTerminalWirelessAuthModeEnums
       description: 无线认证方式
+    "itemArr[]_networkAccessMode":
+      type: CbbNetworkModeEnums
+      description: 网络接入方式
+    "itemArr[]_getIpMode":
+      type: CbbGetNetworkModeEnums
+      description: IP获取方式（静态/DHCP）
+    "itemArr[]_getDnsMode":
+      type: CbbGetNetworkModeEnums
+      description: DNS获取方式
+    "itemArr[]_macAddr":
+      type: String
+      description: 网卡MAC地址
+    "itemArr[]_ip":
+      type: String
+      description: 网卡IP
+    "itemArr[]_subnetMask":
+      type: String
+      description: 子网掩码
+    "itemArr[]_gateway":
+      type: String
+      description: 网关
+    "itemArr[]_mainDns":
+      type: String
+      description: 首选DNS
+    "itemArr[]_secondDns":
+      type: String
+      description: 备用DNS
+    "itemArr[]_ssid":
+      type: String
+      description: 无线SSID
+    "itemArr[]_maxSpeed":
+      type: String
+      description: 网卡最大速率
+    "itemArr[]_product":
+      type: String
+      description: 网卡产品型号
+    "itemArr[]_businessCard":
+      type: CbbNetworkCardEnums
+      description: 业务网卡标识
+    "itemArr[]_businessCardIndex":
+      type: Integer
+      description: 业务网卡序号
+    "itemArr[]_inUse":
+      type: Boolean
+      description: 是否正在使用
+    "itemArr[]_iface":
+      type: String
+      description: 网卡接口名
+    "itemArr[]_wirelessAuthMode":
+      type: CbbTerminalWirelessAuthModeEnums
+      description: 无线认证方式
 upstream:
 - api: POST /rcc/classroom/terminal/list
   produces: $.content.itemArr[0].classroomId

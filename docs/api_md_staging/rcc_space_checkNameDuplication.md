@@ -72,6 +72,9 @@ cleanup: []
 idempotency:
   level: non_idempotent
   note: 只读校验接口，无副作用
+params:
+  required:
+  - name: name
 ---
 # POST /rcc/space/checkNameDuplication
 

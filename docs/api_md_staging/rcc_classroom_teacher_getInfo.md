@@ -80,9 +80,24 @@ response:
     teacherTerminalState:
       type: CbbTerminalStateEnums
       description: 教师终端状态
-    teacherMac/teacherCpuType/teacherMemory/teacherDiskSize/teacherSystemSize/teacherImageNum:
-      type: String/Long/Integer
-      description: 教师机硬件与镜像信息
+    teacherMac:
+      type: String
+      description: 教师机MAC
+    teacherCpuType:
+      type: String
+      description: 教师机CPU型号
+    teacherMemory:
+      type: Long
+      description: 教师机内存
+    teacherDiskSize:
+      type: Long
+      description: 教师机磁盘大小
+    teacherSystemSize:
+      type: Long
+      description: 教师机系统盘大小
+    teacherImageNum:
+      type: Integer
+      description: 教师机镜像数量
     classroomName:
       type: String
       description: 教室名称
@@ -95,6 +110,51 @@ response:
     platformStatus:
       type: CloudPlatformStatus
       description: 云平台状态
+    teacherDesktopIp:
+      type: String
+      description: 教师桌面IP
+    teacherRainOsVersion:
+      type: String
+      description: 教师终端 RainOS 版本
+    teacherHardwareVersion:
+      type: String
+      description: 教师终端硬件版本
+    teacherUpgradeVersion:
+      type: String
+      description: 教师终端升级版本
+    teacherSerialNumber:
+      type: String
+      description: 教师终端序列号
+    teacherTerminalModel:
+      type: String
+      description: 教师终端型号
+    teacherOsType:
+      type: String
+      description: 教师机操作系统类型
+    teacherLockStatus:
+      type: Boolean
+      description: 教师终端是否锁定
+    teacherTerminalName:
+      type: String
+      description: 教师终端名称
+    teacherTerminalDiskSize:
+      type: Long
+      description: 教师终端磁盘大小
+    teacherState:
+      type: ClassroomLessonStatusEnum
+      description: 教师状态
+    teacherClassroomStrategyName:
+      type: String
+      description: 教师机教室策略名称
+    terminalNeedUpgrade:
+      type: Boolean
+      description: 终端是否需要升级
+    canTerminalInit:
+      type: Boolean
+      description: 是否支持终端初始化
+    deployMode:
+      type: String
+      description: 部署模式
 upstream:
 - api: POST /rcc/classroom/terminal/list
   produces: $.content.itemArr[0].classroomId

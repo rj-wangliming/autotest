@@ -42,6 +42,11 @@ request:
       constraint: 非空、≤32、名称正则
       description: 策略名称（允许修改，需查重）
       value: ${param.name}
+    note:
+      type: String
+      required: false
+      constraint: '@Nullable'
+      description: 备注
     pattern:
       type: CbbCloudDeskPattern
       required: true
@@ -59,6 +64,7 @@ request:
       required: true
       constraint: '@NotNull @Range(0,2048)'
       description: 系统盘大小（关联镜像时只可扩大）
+      value: ${param.system_size}
     enableDiskConfig:
       type: Boolean
       required: true
@@ -104,6 +110,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 平台策略组（更新时回填）
+      generated_by: true
     enablePersonalConfig:
       type: Boolean
       required: false
@@ -223,6 +230,16 @@ idempotency:
 params:
   required:
   - name: strategy_name
+  - name: enable_adaptive_resolution
+  - name: enable_auto_edit
+  - name: enable_disk_config
+  - name: enable_force_auto_edit
+  - name: enable_internet
+  - name: enable_schedule_strategy
+  - name: name
+  - name: pattern
+  - name: strategy_type
+  - name: system_size
     desc: ''
     used_by: 见 setup/request
 ---
@@ -294,7 +311,8 @@ graph LR
 | enableInternet | Boolean | 是 | @NotNull | 联网 |
 | enablePersonalConfig | Boolean | 否 |  | 浮动个性配置（enablePersonalConfig） |
 | deskPersonalConfigStrategyType | String | 否 |  | 浮动个性配置（deskPersonalConfigStrategyType） |
-| personalConfigDiskSize | Integer | 否 |  | 浮动个性配置（personalConfigDiskSize） |## 出参详情
+| personalConfigDiskSize | Integer | 否 |  | 浮动个性配置（personalConfigDiskSize） |
+## 出参详情
 
 | 返回类型 | DefaultWebResponse |
 |---|---|

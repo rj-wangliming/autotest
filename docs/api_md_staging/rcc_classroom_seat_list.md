@@ -235,6 +235,165 @@ response:
     platformStatus:
       type: CloudPlatformStatus
       description: 云平台状态
+    "itemArr[]_id":
+      type: UUID
+      description: 座位ID
+    "itemArr[]_classroomId":
+      type: UUID
+      description: 教室ID
+    "itemArr[]_classroomName":
+      type: String
+      description: 教室名称
+    "itemArr[]_desktopName":
+      type: String
+      description: 云桌面主机名
+    "itemArr[]_studentModeArr":
+      type: TerminalTypeEnum[]
+      description: 学生机工作模式（PC/VDI/IDV/VOI等）
+    "itemArr[]_terminalModeArr":
+      type: TerminalTypeEnum[]
+      description: 终端工作模式
+    "itemArr[]_imageTemplateName":
+      type: String
+      description: 镜像模板名称
+    "itemArr[]_vdiDesktopId":
+      type: UUID
+      description: VDI桌面ID
+    "itemArr[]_vdiDesktopIp":
+      type: String
+      description: VDI桌面IP
+    "itemArr[]_vdiDesktopGateway":
+      type: String
+      description: VDI桌面网关
+    "itemArr[]_vdiDesktopMask":
+      type: String
+      description: VDI桌面掩码
+    "itemArr[]_vdiDesktopDnsPrimary":
+      type: String
+      description: VDI桌面首选DNS
+    "itemArr[]_vdiDesktopDnsSecondary":
+      type: String
+      description: VDI桌面备用DNS
+    "itemArr[]_idvDesktopId":
+      type: UUID
+      description: IDV桌面ID
+    "itemArr[]_idvDesktopIp":
+      type: String
+      description: IDV桌面IP
+    "itemArr[]_idvDesktopGateway":
+      type: String
+      description: IDV桌面网关
+    "itemArr[]_idvDesktopMask":
+      type: String
+      description: IDV桌面掩码
+    "itemArr[]_idvDesktopDns":
+      type: String
+      description: IDV桌面DNS
+    "itemArr[]_idvDesktopState":
+      type: CbbCloudDeskState
+      description: IDV桌面状态
+    "itemArr[]_seatNum":
+      type: Integer
+      description: 座位号
+    "itemArr[]_disableNetwork":
+      type: Boolean
+      description: 是否禁网
+    "itemArr[]_terminalId":
+      type: String
+      description: 终端ID
+    "itemArr[]_terminalName":
+      type: String
+      description: 终端名称
+    "itemArr[]_terminalRainOsVersion":
+      type: String
+      description: 终端RainOS版本
+    "itemArr[]_terminalHardwareVersion":
+      type: String
+      description: 终端硬件版本
+    "itemArr[]_terminalUpgradeVersion":
+      type: String
+      description: 终端升级版本
+    "itemArr[]_terminalMac":
+      type: String
+      description: 终端MAC
+    "itemArr[]_terminalIp":
+      type: String
+      description: 终端IP
+    "itemArr[]_terminalCpu":
+      type: String
+      description: 终端CPU型号
+    "itemArr[]_terminalMemory":
+      type: Long
+      description: 终端内存大小
+    "itemArr[]_terminalProductModel":
+      type: String
+      description: 终端产品型号
+    "itemArr[]_terminalSerialNum":
+      type: String
+      description: 终端序列号
+    "itemArr[]_terminalPlatform":
+      type: CbbTerminalPlatformEnums
+      description: 终端平台
+    "itemArr[]_terminalState":
+      type: CbbTerminalStateEnums
+      description: 终端状态
+    "itemArr[]_desktopState":
+      type: CbbCloudDeskState
+      description: 桌面状态
+    "itemArr[]_classroomState":
+      type: ClassroomLessonStatusEnum
+      description: 教室状态
+    "itemArr[]_terminalType":
+      type: String
+      description: 终端类型
+    "itemArr[]_productId":
+      type: String
+      description: 产品ID
+    "itemArr[]_terminalStartMode":
+      type: CbbTerminalStartMode
+      description: 终端启动模式
+    "itemArr[]_terminalResolution":
+      type: String
+      description: 终端分辨率
+    "itemArr[]_isTerminalLocked":
+      type: Boolean
+      description: 终端是否锁定
+    "itemArr[]_lastOnlineTime":
+      type: Date
+      description: 最后上线时间
+    "itemArr[]_seatDownloadState":
+      type: SeatDownloadStateEnum
+      description: 座位下载状态
+    "itemArr[]_vdiDesktopState":
+      type: CbbCloudDeskState
+      description: VDI桌面状态
+    "itemArr[]_bootManageMode":
+      type: CbbTerminalBootManageModeEnums
+      description: 终端引导管理模式
+    "itemArr[]_seatStatus":
+      type: SeatStateEnums
+      description: 座位状态
+    "itemArr[]_vdiLocalDiskId":
+      type: UUID
+      description: VDI本地磁盘ID
+    "itemArr[]_terminalNeedUpgrade":
+      type: Boolean
+      description: 终端是否需要升级
+    "itemArr[]_deployMode":
+      type: String
+      description: 部署模式
+    "itemArr[]_canTerminalInit":
+      type: Boolean
+      description: 是否支持终端初始化
+    "itemArr[]_softwareVersion":
+      type: String
+      description: 软件版本
+    "itemArr[]_sourceIp":
+      type: String
+      description: 来源IP
+    "itemArr[]_platformStatus":
+      type: CloudPlatformStatus
+      description: 云平台状态
 upstream:
 - api: POST /rcc/classroom/terminal/list
   produces: $.content.itemArr[0].classroomId
@@ -330,7 +489,8 @@ graph LR
 | exactMatchArr[].valueArr | String[] | 否 | 过滤值 | 对应字段的取值数组 |
 | sortArr | Sort[] | 否 | 排序 | 支持 QUERY_ID(id) 等排序字段 |
 | limit | Integer | 否 |  | 分页页码与每页条数（limit） |
-| page | Integer | 否 |  | 分页页码与每页条数（page） |## 出参详情
+| page | Integer | 否 |  | 分页页码与每页条数（page） |
+## 出参详情
 
 | 返回类型 | DefaultWebResponse（data=DefaultPageResponse<SeatInfoDTO>） |
 |---|---|

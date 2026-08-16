@@ -61,6 +61,9 @@ cleanup:
 idempotency:
   level: data_level
   note: 重复上报会重复处理同一报告文件，无防重标记
+params:
+  required:
+  - name: file_name
 ---
 # POST /rcc/halo/getReport
 

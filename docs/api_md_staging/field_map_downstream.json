@@ -1,0 +1,1649 @@
+{
+ "rcc_admin_dataPermission_edit": [
+  {
+   "api": "内部调用:PlatformAdminDataPermissionAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_batchCheckDesktopNameDuplicate": [
+  {
+   "api": "内部调用:rcc/ClassroomAPI#batchCheckDesktopNameDuplicate",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_checkClassroomNameDuplicate": [
+  {
+   "api": "内部调用:rcc/ClassroomAPI#checkClassroomNameDuplicate",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_checkStudentIpDuplicate": [
+  {
+   "api": "内部调用:rcc/ClassroomAPI#checkIPSegmentConflict",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_checkTeacherIpDuplicate": [
+  {
+   "api": "内部调用:rcc/ClassroomAPI#checkTeacherIpDuplicate",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_cmr_download_getUrl": [
+  {
+   "api": "https://{cluster_virtual_ip}:9274/api",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_cmrcef_lesson_closeTerminal": [
+  {
+   "api": "内部调用:seatAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_cmrcef_lesson_end": [
+  {
+   "api": "内部调用:classroomLessonAPI",
+   "from": [
+    "classroomId",
+    "lessonTaskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:lessonFactory",
+   "from": [
+    "classroomId",
+    "lessonTaskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:cmrClientAPI",
+   "from": [
+    "classroomId",
+    "lessonTaskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_cmrcef_lesson_start": [
+  {
+   "api": "内部调用:classroomLessonAPI",
+   "from": [
+    "classroomId",
+    "lessonTaskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_create": [
+  {
+   "api": "POST /rcc/classroom/* 全部教室相关接口",
+   "from": [
+    "taskId"
+   ],
+   "note": "创建教室产出 classroomId；因 create 为异步批任务，实际经 select 按名称查询获得"
+  }
+ ],
+ "rcc_classroom_delete": [
+  {
+   "api": "内部调用:rcc/ClassroomAPI#deleteClassroom",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_desktop_cancelFault": [
+  {
+   "api": "内部调用:PlatformDeskFaultInfoAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_desktop_forceWakeUp": [
+  {
+   "api": "内部调用:SeatAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_desktop_gtlog_collectLog": [
+  {
+   "api": "内部调用:PlatformGuestToolLogAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_desktop_powerOff": [
+  {
+   "api": "内部调用:RccDesktopOperateAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_desktop_remoteAssist_assistRequest": [
+  {
+   "api": "内部调用:PlatformRemoteAssistMgmtAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_desktop_restart": [
+  {
+   "api": "内部调用:RccDesktopOperateAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_desktop_restoreVDIImage": [
+  {
+   "api": "内部调用:RccDesktopOperateAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_desktop_shutdown": [
+  {
+   "api": "内部调用:RccDesktopOperateAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_desktop_tci_collectLog": [
+  {
+   "api": "内部调用:PlatformGuestToolLogAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_desktop_tci_remoteAssist_assistRequest": [
+  {
+   "api": "内部调用:PlatformRemoteAssistMgmtAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_desktop_tci_restart": [
+  {
+   "api": "内部调用:PlatformDeskTCIMgmtAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_desktop_tci_shutdown": [
+  {
+   "api": "内部调用:ClassroomTeacherAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_editClassroomBasicInfo": [
+  {
+   "api": "POST /rcc/classroom/getInfo|getClassroomBasicInfo|image/*",
+   "from": [
+    "classroomId"
+   ],
+   "note": "出参 ResponseClassroomIdDTO.classroomId 回显教室ID",
+   "to": "classroomId",
+   "matched_by": "same_name_downstream"
+  }
+ ],
+ "rcc_classroom_editStudentInfo": [
+  {
+   "api": "内部调用:rcc/ClassroomAPI#editStudentTerminalInfo",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_editTeacherInfo": [
+  {
+   "api": "内部调用:rcc/ClassroomAPI#editTeacherInfo",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_editTeacherInfoCheckDesktopPreName": [
+  {
+   "api": "内部调用:rcc/ClassroomAPI#checkTeacherDesktopNameForEdit",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_getClassroomBasicInfo": [
+  {
+   "api": "POST /rcc/classroom/editClassroomBasicInfo",
+   "from": [
+    "classroomId",
+    "terminalGroupId"
+   ],
+   "note": "出参 ClassroomBasicConfigDTO.classroomId",
+   "to": "classroomId",
+   "matched_by": "same_name_downstream"
+  }
+ ],
+ "rcc_classroom_getClassroomVdiDiskStorage": [
+  {
+   "api": "POST /rcc/classroom/image/{student,teacher}/create",
+   "from": [
+    "clusterId",
+    "platformId",
+    "vdiDiskStorageId"
+   ],
+   "note": "出参 ClassroomVdiDiskStorageDTO.vdiDiskStorageId，分配镜像时作为 VDI 数"
+  }
+ ],
+ "rcc_classroom_getInfo": [
+  {
+   "api": "POST /rcc/classroom/*",
+   "from": [
+    "classroomId",
+    "currentLessonId",
+    "studentVlanId",
+    "teacherDesktopId",
+    "teacherId",
+    "teacherTerminalId"
+   ],
+   "note": "出参 ClassroomInfoDetailDTO 继承 ClassroomTeacherBasicDetailDTO "
+  }
+ ],
+ "rcc_classroom_getStudentConfig": [
+  {
+   "api": "内部调用:rcc/ClassroomAPI#getStudentTerminalInfo",
+   "from": [
+    "classroomId",
+    "studentVlanId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_getTeacherConfig": [
+  {
+   "api": "内部调用:rcc/ClassroomAPI#getTeacherInfo",
+   "from": [
+    "classroomId",
+    "cmrId",
+    "teacherTerminalId",
+    "teacherVlanId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_image_assignImage_stuImage_detail": [
+  {
+   "api": "内部调用:rcc/ClassroomImageAPI#getAssignImageClassroomConfig",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_image_assignImage_teaImage_detail": [
+  {
+   "api": "内部调用:rcc/ClassroomImageAPI#getTeacherTerminalDetail",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_image_assignImage_yetAssign_list": [
+  {
+   "api": "POST /rcc/classroom/image/{student,teacher}/create",
+   "from": [],
+   "note": "待分配镜像模板ID；ImageDetailDTO 包装 rcc/cbbImageTemplateDetailDTO，cb"
+  }
+ ],
+ "rcc_classroom_image_getAssignedClusterAndNetwork": [
+  {
+   "api": "POST /rcc/classroom/image/{student,teacher}/create",
+   "from": [],
+   "note": "教室关联计算集群ID，供分配镜像/改网络使用（推断）"
+  },
+  {
+   "api": "POST /rcc/classroom/image/{student,teacher}/network/edit",
+   "from": [],
+   "note": "教室关联网络策略ID，供改网络使用（推断）"
+  }
+ ],
+ "rcc_classroom_image_getAssignedClusters": [
+  {
+   "api": "POST /rcc/classroom/image/{student,teacher}/create",
+   "from": [],
+   "note": "可分配的课程镜像计算集群ID，供分配镜像使用"
+  }
+ ],
+ "rcc_classroom_image_getInfo": [
+  {
+   "api": "POST /rcc/classroom/image/{student,teacher}/delete|hide|show|update|strategy/edit",
+   "from": [],
+   "note": "getInfo 出参 ClassroomImageDetailDTO.imageId 即课程镜像ID，被操作类接口消费"
+  }
+ ],
+ "rcc_classroom_image_getInfoStoragePoolList": [
+  {
+   "api": "内部调用:rcc/PlatformStoragePoolMgmtAPI#queryStoragePoolListByRequest",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:rcc/PlatformServerMgmtAPI#getInfoById",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_image_getStrategy": [
+  {
+   "api": "POST /rcc/classroom/image/{student,teacher}/strategy/edit",
+   "from": [
+    "imageId",
+    "imageReplicationStoragePoolId",
+    "rootImageId"
+   ],
+   "note": "getStrategy 出参 ClassroomImageStrategyResponse.imageId"
+  },
+  {
+   "api": "POST /rcc/classroom/image/{student,teacher}/create",
+   "from": [
+    "imageId",
+    "imageReplicationStoragePoolId",
+    "rootImageId"
+   ],
+   "note": "镜像所在集群ID（推断，ClusterInfoDTO 字段）"
+  }
+ ],
+ "rcc_classroom_image_getVDIDesktopCount": [
+  {
+   "api": "内部调用:rcc/ClassroomDesktopRelationAPI#getVdiDesktopList",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_image_getVDILessonImageCount": [
+  {
+   "api": "内部调用:rcc/ClassroomImageAPI#getClassroomImage",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:rcc/PlatformAdminDataPermissionAPI#listImageIdByAdminId",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_image_list": [
+  {
+   "api": "POST /rcc/classroom/image/getInfo|getInfoStoragePoolList|getStrategy|{student,teacher}/delete|hide|show|update",
+   "from": [],
+   "note": "出参 ClassroomImageCardInfoDTO.id=课程镜像ID（镜像模板ID），是大量下游消费的主键",
+   "to": "imageId",
+   "matched_by": "cross_doc_prev"
+  },
+  {
+   "api": "POST /rcc/classroom/image/*",
+   "from": [],
+   "note": "卡片自带 classroomId 回显"
+  }
+ ],
+ "rcc_classroom_image_student_create": [
+  {
+   "api": "POST /rcc/classroom/image/getInfo|list|{student}/delete|hide|show|update",
+   "from": [],
+   "note": "分配成功后课程镜像ID，经 image/list 查询获取（create 响应不含ID）"
+  }
+ ],
+ "rcc_classroom_image_student_delete": [
+  {
+   "api": "内部调用:rcc/SeatAPI#deleteDesktop/deleteDesktopDisk",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:rcc/ClassroomImageAPI#doAction/deleteOtherPlatformVmGroupByDeleteImage",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:rcc/SeatAPI#pushClassroomImageList2Seat",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_image_student_hide": [
+  {
+   "api": "内部调用:rcc/ClassroomImageAPI#doAction",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:rcc/SeatAPI#pushClassroomImageList2Seat",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_image_student_network_edit": [
+  {
+   "api": "内部调用:rcc/SeatAPI#changeClassroomSeatNetworkConfig/changeSeatDesktopIp",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:rcc/RccNetworkWhiteListAPI#recreateNetworkWhiteList",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_image_student_show": [
+  {
+   "api": "内部调用:rcc/ClassroomImageAPI#doAction",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:rcc/SeatAPI#pushClassroomImageList2Seat",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_image_student_strategy_edit": [
+  {
+   "api": "内部调用:rcc/ClassroomImageAPI#updateStudentImageStrategy",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:rcc/ClassroomImageAPI#changeImageVersion",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_image_student_update": [
+  {
+   "api": "内部调用:rcc/ClassroomImageAPI#doAction",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:rcc/SeatAPI#pushClassroomImageList2Seat",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_image_teacher_create": [
+  {
+   "api": "POST /rcc/classroom/image/getInfo|list|{teacher}/delete|hide|show|update",
+   "from": [
+    "taskId"
+   ],
+   "note": "分配成功后课程镜像ID，经 image/list 查询获取"
+  }
+ ],
+ "rcc_classroom_image_teacher_delete": [
+  {
+   "api": "内部调用:rcc/ClassroomTeacherAPI#deleteDesktop/deleteDesktopDisk",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:rcc/ClassroomTeacherAPI#pushClassroomImageToTeacher",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_image_teacher_hide": [
+  {
+   "api": "内部调用:rcc/ClassroomImageAPI#doAction",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:rcc/ClassroomTeacherAPI#pushClassroomImageToTeacher",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_image_teacher_network_edit": [
+  {
+   "api": "内部调用:rcc/ClassroomTeacherAPI#changeVdiDesktopNetwork",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:rcc/RccVDIIpDeliverAPI#isFreeIpEnough",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_image_teacher_show": [
+  {
+   "api": "内部调用:rcc/ClassroomImageAPI#doAction",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:rcc/ClassroomTeacherAPI#pushClassroomImageToTeacher",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_image_teacher_strategy_edit": [
+  {
+   "api": "内部调用:rcc/ClassroomImageAPI#updateTeacherImageStrategy",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:rcc/ClassroomImageAPI#changeImageVersion",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_image_teacher_update": [
+  {
+   "api": "内部调用:rcc/ClassroomImageAPI#doAction",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:rcc/ClassroomTeacherAPI#pushClassroomImageToTeacher",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_lesson_end": [
+  {
+   "api": "内部调用:CmrClientAPI",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_lesson_restart": [
+  {
+   "api": "内部调用:CmrClientAPI",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_lesson_start": [
+  {
+   "api": "内部调用:CmrClientAPI",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_list": [
+  {
+   "api": "POST /rcc/classroom/getInfo|delete|image/*",
+   "from": [
+    "classroomId",
+    "currentLessonId",
+    "teacherDesktopId",
+    "teacherId",
+    "teacherTerminalId",
+    "terminalGroupId"
+   ],
+   "note": "出参 ViewClassroomInfoEntity.classroomId，教室ID的兜底查询来源",
+   "to": "classroomId",
+   "matched_by": "same_name_downstream"
+  }
+ ],
+ "rcc_classroom_networkWhitelist_create": [
+  {
+   "api": "POST /rcc/classroom/networkWhitelist/delete|edit|getWhiteList",
+   "from": [
+    "taskId"
+   ],
+   "note": "产出的禁网白名单ID（NetworkWhiteListDTO.id），create 为异步批任务响应不含ID，需经 li"
+  }
+ ],
+ "rcc_classroom_networkWhitelist_delete": [
+  {
+   "api": "内部调用:RccNetworkWhiteListAPI",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_networkWhitelist_edit": [
+  {
+   "api": "内部调用:RccNetworkWhiteListAPI",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_networkWhitelist_list": [
+  {
+   "api": "POST /rcc/classroom/networkWhitelist/delete|edit|getWhiteList",
+   "from": [
+    "id"
+   ],
+   "note": "出参 NetworkWhiteListDTO.id，白名单 ID 的唯一查询来源",
+   "to": "whiteListIdArr",
+   "matched_by": "cross_doc_prev"
+  }
+ ],
+ "rcc_classroom_network_cancelDisable": [
+  {
+   "api": "内部调用:SeatAPI",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_network_deliverIPForVDIClassroom": [
+  {
+   "api": "/rcc/classroom/create",
+   "from": [
+    "clusterId",
+    "networkId",
+    "platformId"
+   ],
+   "note": "推断：出参 VDIDeliverIpInfoDTO.vdiStartIP 供教室创建 POST /rcc/classro"
+  }
+ ],
+ "rcc_classroom_network_deliverIPForVDISeat": [
+  {
+   "api": "/rcc/classroom/seat/create",
+   "from": [],
+   "note": "推断：出参 vdiStartIP 供 POST /rcc/classroom/seat/create 座位IP填写"
+  }
+ ],
+ "rcc_classroom_network_disable": [
+  {
+   "api": "内部调用:CmrClientAPI",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:SeatAPI",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_oneclickshutdown": [
+  {
+   "api": "内部调用:PlatformTerminalOperatorAPI",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_seat_batchCreate": [
+  {
+   "api": "POST /rcc/classroom/image/student/create",
+   "from": [
+    "taskId"
+   ],
+   "note": "创建座位后需分配学生机镜像，桌面才存在（座位本身不含桌面，桌面由「座位 + 镜像分配」生成；分配镜像接口的上游即本接口）"
+  }
+ ],
+ "rcc_classroom_select": [
+  {
+   "api": "POST /rcc/classroom/* 与 /rcc/classroom/image/*",
+   "from": [
+    "classroomId",
+    "currentLessonId",
+    "timetableId"
+   ],
+   "note": "出参 ClassroomDTO.classroomId，是 create 异步批任务完成后获取教室ID的关键来源"
+  }
+ ],
+ "rcc_classroom_strategy_checkDuplication": [
+  {
+   "api": "内部调用:rcc/ClassroomStrategyAPI#checkNameDuplication",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_strategy_classroomList": [
+  {
+   "api": "内部调用:rcc/ClassroomStrategyAPI#findClassroomList",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_strategy_create": [
+  {
+   "api": "/rcc/classroom/create（CreateClassroomWebRequest）消费",
+   "from": [],
+   "note": "策略ID被教室创建 POST /rcc/classroom/create（CreateClassroomWebReque"
+  }
+ ],
+ "rcc_classroom_strategy_delete": [
+  {
+   "api": "内部调用:rcc/ClassroomStrategyAPI#deleteClassroomStrategy",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_strategy_edit": [
+  {
+   "api": "内部调用:rcc/ClassroomStrategyAPI#updateClassroomStrategy",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_strategy_getInfo": [
+  {
+   "api": "内部调用:rcc/ClassroomStrategyAPI#getClassroomStrategyById",
+   "from": [
+    "classroomStrategyId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_strategy_list": [
+  {
+   "api": "/rcc/classroom/create",
+   "from": [],
+   "note": "被教室创建 POST /rcc/classroom/create 消费"
+  }
+ ],
+ "rcc_classroom_teacher_clearTeacherTciLocalDisk": [
+  {
+   "api": "内部调用:PlatformTerminalOperatorAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_teacher_disk_list": [
+  {
+   "api": "内部调用:rcc/ClassroomAPI#getTeacherDiskList",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_teacher_end": [
+  {
+   "api": "内部调用:LessonFactory",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_teacher_getInfo": [
+  {
+   "api": "内部调用:rcc/ClassroomAPI#getTeacherDetailInfo",
+   "from": [
+    "classroomId",
+    "teacherDesktopId",
+    "teacherId",
+    "teacherTerminalId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_teacher_networkcard_list": [
+  {
+   "api": "内部调用:rcc/ClassroomAPI#getTeacherNetworkCardList",
+   "from": [
+    "ssid"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_teacher_start": [
+  {
+   "api": "内部调用:LessonFactory",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_teacher_terminal_collectLog": [
+  {
+   "api": "内部调用:PlatformTerminalLogAPI",
+   "from": [
+    "content_terminalId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_teacher_terminal_init": [
+  {
+   "api": "内部调用:PlatformRcoUserTerminalMgmtAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_teacher_terminal_restart": [
+  {
+   "api": "内部调用:PlatformTerminalOperatorAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_teacher_terminal_shutdown": [
+  {
+   "api": "内部调用:PlatformTerminalOperatorAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_teacher_terminal_unlock": [
+  {
+   "api": "内部调用:PlatformRcoCertificationStrategyParameterAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_teacher_terminal_wake": [
+  {
+   "api": "内部调用:RccTerminalOperatorAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_teacher_vdiLocalDisk_clear": [
+  {
+   "api": "内部调用:RccDesktopDiskMgmtAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_classroom_terminal_list": [
+  {
+   "api": "POST /rcc/classroom/seat/list、/rcc/classroom/seat/batchCreate、/rcc/classroom/seat/delete、/rcc/classroom/teacher/terminal/restart等",
+   "from": [
+    "classroomId",
+    "currentLessonId",
+    "teacherDesktopId",
+    "teacherId",
+    "teacherTerminalId",
+    "terminalGroupId"
+   ],
+   "note": "教室终端列表出参ViewClassroomInfoEntity.classroomId"
+  },
+  {
+   "api": "POST /rcc/classroom/teacher/terminal/collectLog/get、/teacher/terminal/init",
+   "from": [
+    "classroomId",
+    "currentLessonId",
+    "teacherDesktopId",
+    "teacherId",
+    "teacherTerminalId",
+    "terminalGroupId"
+   ],
+   "note": "教室终端列表出参ViewClassroomInfoEntity.teacherTerminalId"
+  },
+  {
+   "api": "POST /rcc/classroom/desktop/tci/restart、/rcc/classroom/teacher/vdiLocalDisk/clear等",
+   "from": [
+    "classroomId",
+    "currentLessonId",
+    "teacherDesktopId",
+    "teacherId",
+    "teacherTerminalId",
+    "terminalGroupId"
+   ],
+   "note": "教室终端列表出参ViewClassroomInfoEntity.teacherDesktopId"
+  }
+ ],
+ "rcc_classroom_terminal_log_delete": [
+  {
+   "api": "内部调用:PlatformTerminalLogAPI",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_deskStrategy_getClassroomImageList": [
+  {
+   "api": "POST /rcc/deskStrategy/getClusterSupportEnablePersonalConfig",
+   "from": [
+    "classroomId",
+    "deskStrategyId",
+    "id",
+    "imageId",
+    "networkId"
+   ],
+   "note": "前端获取教室镜像后携带策略id/集群id计算是否支持浮动个性盘"
+  },
+  {
+   "api": "POST /rcc/classroom/image/teacher/strategy/edit",
+   "from": [
+    "classroomId",
+    "deskStrategyId",
+    "id",
+    "imageId",
+    "networkId"
+   ],
+   "note": "教室镜像关联策略编辑依赖本接口的教室镜像上下文",
+   "to": "classroomId",
+   "matched_by": "same_name_downstream"
+  }
+ ],
+ "rcc_deskStrategy_getClusterSupportEnablePersonalConfig": [
+  {
+   "api": "POST /rcc/deskStrategy/getClassroomImageList",
+   "from": [],
+   "note": "前端选择教室镜像后与本接口联动决定是否展示浮动个性盘配置"
+  }
+ ],
+ "rcc_globalStrategy_idvMiniConfig_edit": [
+  {
+   "api": "内部调用:RccGlobalStrategyAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_globalStrategy_space_edit": [
+  {
+   "api": "内部调用:PlatformVDIDeskGroupMgmtAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_halo_getReport": [
+  {
+   "api": "内部调用:RccHaloCheckAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_halo_setCheck": [
+  {
+   "api": "内部调用:PlatformRcoGlobalParameterAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_space_checkNameDuplication": [
+  {
+   "api": "内部调用:rcc/RccSpaceAPI#checkSpaceNameDuplicate",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_space_classroom_cloudDesktop_list": [
+  {
+   "api": "内部调用:rcc/RccSpaceAPI#getSpaceClassroomDesktop",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_space_classroom_cloudDesktop_powerOff": [
+  {
+   "api": "内部调用:rcc/RccDesktopOperateAPI#powerOff",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:rcc/RccDesktopMgmtAPI#getDesktopById",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_space_classroom_cloudDesktop_restart": [
+  {
+   "api": "内部调用:rcc/RccDesktopOperateAPI#restart",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_space_classroom_cloudDesktop_shutdown": [
+  {
+   "api": "内部调用:rcc/RccDesktopOperateAPI#shutdown",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:rcc/RccDesktopOperateAPI#shutdownAutoEdit",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_space_delete": [
+  {
+   "api": "内部调用:rcc/RccSpaceAPI#deleteDesktopPoolAndSpaceInfo",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:pa/PlatformAdminDataPermissionAPI#deleteByPermissionDataId",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:rcc/SpaceClassroomPoolUserMgmtAPI#checkIsDesktopInUse",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_space_desktop_detail": [
+  {
+   "api": "内部调用:rcc/RccSpaceAPI#findSpaceDesktopDetail",
+   "from": [
+    "classroomId",
+    "cloudPlatformId",
+    "desktopImageId",
+    "desktopNetworkId",
+    "desktopPoolId",
+    "desktopSoftwareStrategyId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_space_detail": [
+  {
+   "api": "内部调用:rcc/RccSpaceAPI#getSpaceDetailById",
+   "from": [
+    "classroomId",
+    "clusterId",
+    "imageTemplateId",
+    "networkId",
+    "platformId",
+    "rootImageId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_space_edit": [
+  {
+   "api": "内部调用:rcc/RccSpaceAPI#updateSpaceAndSpaceImage",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:rcc/RccSpaceAPI#refreshTerminalEnableAllowTime",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:rcc/RccSpaceAPI#refreshTerminalBeforeRecycleNotifyTime",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_space_forceWakeUp": [
+  {
+   "api": "内部调用:rcc/SeatAPI#wakeUpDesktop",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:pa/PlatformDeskVDIMgmtAPI#findById",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_space_getDesignateSpaceInfo": [
+  {
+   "api": "内部调用:rcc/RccSpaceAPI#findAllSpace",
+   "from": [
+    "classroomId",
+    "clusterId",
+    "desktopPoolId",
+    "id",
+    "imageTemplateId",
+    "networkId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:pa/PlatformDesktopPoolMgmtAPI#getDesktopPoolInfoByIdList",
+   "from": [
+    "classroomId",
+    "clusterId",
+    "desktopPoolId",
+    "id",
+    "imageTemplateId",
+    "networkId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_space_image_list": [
+  {
+   "api": "内部调用:pa/PlatformImageTemplateMgmtAPI#pageQueryLocalPageImageTemplate",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_space_list": [
+  {
+   "api": "内部调用:rcc/RccSpaceAPI#pageQuery",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_space_overview_getTeaTerminalList": [
+  {
+   "api": "内部调用:rcc/ClassroomAPI#pageQueryTeaTerminal",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_space_overview_seatList": [
+  {
+   "api": "内部调用:rcc/SeatAPI#pageQuery",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_space_overview_tciDesktopList": [
+  {
+   "api": "内部调用:rcc/RccDesktopMgmtAPI#pageQueryOverviewDesktopList",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_space_overview_vdiDesktopList": [
+  {
+   "api": "内部调用:rcc/RccDesktopMgmtAPI#pageQueryOverviewDesktopList",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_space_publish": [
+  {
+   "api": "内部调用:rcc/RccSpaceAPI#publishSpace",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "内部调用:rcc/AdminPermissionHelper#saveAdminGroupPermission",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_space_user_update": [
+  {
+   "api": "内部调用:rcc/SpaceClassroomPoolUserMgmtAPI#updatePoolBindObject",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "rcc_spacetci_desktop_restore": [
+  {
+   "api": "内部调用:RccTerminalOperatorAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "space_clouddesktop_deskNetwork_list": [
+  {
+   "api": "POST /space/clouddesktop/deskNetwork/list",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "space_cluster_obtainComputeClusterList": [
+  {
+   "api": "POST /space/storagePool/list",
+   "from": [
+    "computerClusterId",
+    "id",
+    "platformId"
+   ],
+   "note": "选择集群后联动查询该集群可用存储池"
+  },
+  {
+   "api": "POST /space/clouddesktop/deskNetwork/list",
+   "from": [
+    "computerClusterId",
+    "id",
+    "platformId"
+   ],
+   "note": "选择集群后联动查询可用网络策略"
+  },
+  {
+   "api": "POST /space/deskStrategy/vgpu/list",
+   "from": [
+    "computerClusterId",
+    "id",
+    "platformId"
+   ],
+   "note": "携带选中集群 id 查询 VGPU 选项"
+  }
+ ],
+ "space_deskStrategy_agreement_template_list": [
+  {
+   "api": "POST /space/deskStrategy/getSupportUsbTyp",
+   "from": [
+    "lanTemplateList[]_templateId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "space_deskStrategy_getSupportUsbTyp": [
+  {
+   "api": "POST /space/strategygroup/vdi/create",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "POST /space/strategygroup/vdi/edit",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "space_deskStrategy_vgpu_list": [
+  {
+   "api": "POST /space/strategygroup/vdi/create",
+   "from": [],
+   "note": "创建策略时按所选集群加载 vGPU 选项"
+  },
+  {
+   "api": "POST /space/strategygroup/vdi/edit",
+   "from": [],
+   "note": "编辑策略时加载 vGPU 选项"
+  }
+ ],
+ "space_platform_list": [
+  {
+   "api": "POST /space/cluster/obtainComputeClusterList",
+   "from": [
+    "cloudPlatformId",
+    "id"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "POST /space/storagePool/list",
+   "from": [
+    "cloudPlatformId",
+    "id"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "space_serverModel_getServerModel": [
+  {
+   "api": "前端初始化引导",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "space_storagePool_list": [
+  {
+   "api": "POST /space/cluster/obtainComputeClusterList",
+   "from": [
+    "id",
+    "platformId",
+    "storageClusterId",
+    "storagePoolId"
+   ],
+   "note": "选择存储池后联动刷新集群可用性"
+  },
+  {
+   "api": "POST /space/strategygroup/vdi/create",
+   "from": [
+    "id",
+    "platformId",
+    "storageClusterId",
+    "storagePoolId"
+   ],
+   "note": "创建课程策略时选择系统盘存储池"
+  }
+ ],
+ "space_strategy_tci_checkDuplication": [
+  {
+   "api": "POST /space/strategy/tci/create",
+   "from": [],
+   "note": "创建 TCI 课程策略前调用名称去重"
+  },
+  {
+   "api": "POST /space/strategy/tci/edit",
+   "from": [],
+   "note": "编辑 TCI 课程策略前调用名称去重"
+  }
+ ],
+ "space_strategy_tci_condition_list": [
+  {
+   "api": "POST /space/strategy/tci/create",
+   "from": [
+    "deskStrategyId",
+    "id"
+   ],
+   "note": "新增课程镜像时从可用策略中选择并创建课程策略"
+  },
+  {
+   "api": "POST /space/strategy/tci/edit",
+   "from": [
+    "deskStrategyId",
+    "id"
+   ],
+   "note": "编辑课程镜像时选择可用的新课程策略"
+  }
+ ],
+ "space_strategy_tci_create": [
+  {
+   "api": "POST /space/strategy/tci/list",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "POST /space/strategy/tci/condition/list",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "space_strategy_tci_delete": [
+  {
+   "api": "POST /space/strategy/tci/list",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "space_strategy_tci_detail": [
+  {
+   "api": "POST /space/strategy/tci/edit",
+   "from": [],
+   "note": "编辑前读取详情"
+  }
+ ],
+ "space_strategy_tci_edit": [
+  {
+   "api": "POST /space/strategy/tci/list",
+   "from": [],
+   "note": "修改后刷新策略列表"
+  },
+  {
+   "api": "POST /space/strategy/tci/condition/list",
+   "from": [],
+   "note": "课程镜像编辑时重新选择策略"
+  }
+ ],
+ "space_strategy_tci_list": [
+  {
+   "api": "POST /space/strategy/tci/checkDuplication",
+   "from": [
+    "deskStrategyId",
+    "id"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "POST /space/strategy/tci/condition/list",
+   "from": [
+    "deskStrategyId",
+    "id"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "space_strategygroup_vdi_checkDuplication": [
+  {
+   "api": "POST /space/strategygroup/vdi/create",
+   "from": [],
+   "note": "创建 VDI 课程策略前名称去重"
+  },
+  {
+   "api": "POST /space/strategygroup/vdi/edit",
+   "from": [],
+   "note": "编辑 VDI 课程策略前名称去重"
+  }
+ ],
+ "space_strategygroup_vdi_condition_list": [
+  {
+   "api": "POST /rcc/classroom/image/teacher/strategy/edit",
+   "from": [
+    "deskStrategyId",
+    "id"
+   ],
+   "note": "修改教室课程策略时从可用列表中选择新策略",
+   "to": "deskStrategyId",
+   "matched_by": "same_name_downstream"
+  }
+ ],
+ "space_strategygroup_vdi_create": [
+  {
+   "api": "/space/strategygroup/vdi/detail",
+   "from": [
+    "creatorId",
+    "id"
+   ],
+   "note": "查看策略详情（也用作 polling）"
+  },
+  {
+   "api": "/space/strategygroup/vdi/list",
+   "from": [
+    "creatorId",
+    "id"
+   ],
+   "note": "策略列表查询"
+  },
+  {
+   "api": "/space/strategygroup/vdi/edit",
+   "from": [
+    "creatorId",
+    "id"
+   ],
+   "note": "编辑策略"
+  },
+  {
+   "api": "/space/strategygroup/vdi/delete",
+   "from": [
+    "creatorId",
+    "id"
+   ],
+   "note": "删除策略（cleanup 用）"
+  },
+  {
+   "api": "/rcc/classroom/image/teacher/create",
+   "from": [
+    "creatorId",
+    "id"
+   ],
+   "note": "分配镜像引用策略（原文档路径 /rcc/classroomImage/assign 已修正）"
+  },
+  {
+   "api": "/rcc/classroom/image/student/create",
+   "from": [
+    "creatorId",
+    "id"
+   ],
+   "note": "学生镜像分配"
+  },
+  {
+   "api": "",
+   "from": [
+    "creatorId",
+    "id"
+   ],
+   "note": "创建桌面读取策略"
+  },
+  {
+   "api": "",
+   "from": [
+    "creatorId",
+    "id"
+   ],
+   "note": "桌面启停读取策略"
+  }
+ ],
+ "space_strategygroup_vdi_delete": [
+  {
+   "api": "POST /space/strategygroup/vdi/list",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "space_strategygroup_vdi_detail": [
+  {
+   "api": "POST /space/strategygroup/vdi/edit",
+   "from": [],
+   "note": "编辑前读取详情"
+  },
+  {
+   "api": "POST /space/strategygroup/vdi/delete",
+   "from": [],
+   "note": "删除前读取详情"
+  }
+ ],
+ "space_strategygroup_vdi_edit": [
+  {
+   "api": "POST /space/strategygroup/vdi/list",
+   "from": [],
+   "note": "修改后刷新策略列表"
+  },
+  {
+   "api": "POST /space/strategygroup/vdi/condition/list",
+   "from": [],
+   "note": "教室镜像编辑时重新选择策略"
+  }
+ ],
+ "space_strategygroup_vdi_list": [
+  {
+   "api": "POST /space/strategygroup/vdi/checkDuplication",
+   "from": [
+    "deskStrategyId",
+    "id"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  },
+  {
+   "api": "POST /space/strategygroup/vdi/delete",
+   "from": [
+    "deskStrategyId",
+    "id"
+   ],
+   "note": "内部调用（非 HTTP 端点）",
+   "to": "idArr",
+   "matched_by": "cross_doc_prev"
+  }
+ ],
+ "spacetci_lessonImage_student_create": [
+  {
+   "api": "内部调用:seatAPI",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "spacetci_lessonImage_student_delete": [
+  {
+   "api": "内部调用:seatAPI",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "spacetci_lessonImage_student_hide": [
+  {
+   "api": "内部调用:seatAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "spacetci_lessonImage_student_show": [
+  {
+   "api": "内部调用:seatAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "spacetci_lessonImage_student_strategy_edit": [
+  {
+   "api": "内部调用:classroomAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "spacetci_lessonImage_student_update": [
+  {
+   "api": "内部调用:seatAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "spacetci_lessonImage_teacher_create": [
+  {
+   "api": "内部调用:classroomTeacherAPI",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "spacetci_lessonImage_teacher_delete": [
+  {
+   "api": "内部调用:classroomTeacherAPI",
+   "from": [
+    "taskId"
+   ],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "spacetci_lessonImage_teacher_hide": [
+  {
+   "api": "内部调用:classroomTeacherAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "spacetci_lessonImage_teacher_show": [
+  {
+   "api": "内部调用:classroomTeacherAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "spacetci_lessonImage_teacher_strategy_edit": [
+  {
+   "api": "内部调用:classroomAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ],
+ "spacetci_lessonImage_teacher_update": [
+  {
+   "api": "内部调用:classroomTeacherAPI",
+   "from": [],
+   "note": "内部调用（非 HTTP 端点）"
+  }
+ ]
+}

@@ -203,10 +203,9 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: seatNum
+  - name: id_arr
     desc: ''
     used_by: 见 setup/request
-    desc: ''
-    used_by: setup（分配学生镜像 desktopStartIp）
 ---
 # POST /rcc/classroom/desktop/restart
 

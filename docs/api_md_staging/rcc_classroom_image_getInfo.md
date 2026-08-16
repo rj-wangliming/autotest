@@ -158,6 +158,7 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: image_name
+  - name: cr_id
     desc: ''
     used_by: setup/request
 ---

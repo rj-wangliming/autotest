@@ -60,9 +60,354 @@ response:
     vgpuModel:
       type: String
       description: vgpu 型号
-    desktopName/computerName/desktopState/desktopType/ip:
-      type: 多种
-      description: 继承 CloudDesktopDetailDTO 的桌面基础详情
+    desktopName:
+      type: String
+      description: 桌面名称（继承 CloudDesktopDetailDTO）
+    computerName:
+      type: String
+      description: 计算机名（继承 CloudDesktopDetailDTO）
+    desktopState:
+      type: CbbCloudDeskState
+      description: 桌面状态（继承 CloudDesktopDetailDTO）
+    desktopType:
+      type: CbbCloudDeskPattern
+      description: 桌面类型（继承 CloudDesktopDetailDTO）
+    desktopIp:
+      type: String
+      description: 桌面IP（继承 CloudDesktopDetailDTO）
+    id:
+      type: UUID
+      description: 云桌面ID
+    sessionType:
+      type: CbbDesktopSessionType
+      description: 会话类型
+    deskType:
+      type: String
+      description: 云桌面类型（IDV/VDI）
+    desktopCategory:
+      type: String
+      description: 云桌面模式（CbbCloudDeskPattern）
+    memory:
+      type: Double
+      description: 内存大小（GB）
+    cpu:
+      type: Integer
+      description: CPU核数
+    systemDisk:
+      type: Integer
+      description: 系统盘大小（GB）
+    personDisk:
+      type: Integer
+      description: 个人盘大小（GB）
+    extraDiskList:
+      type: List<CbbAddExtraDiskDTO>
+      description: 扩展磁盘列表
+    desktopIpv6Addr:
+      type: String
+      description: 桌面IPv6地址
+    desktopMac:
+      type: String
+      description: 桌面MAC
+    desktopImageId:
+      type: UUID
+      description: 桌面镜像ID
+    desktopImageName:
+      type: String
+      description: 桌面镜像名称
+    rootImageId:
+      type: UUID
+      description: 根镜像ID
+    rootImageName:
+      type: String
+      description: 根镜像名称
+    imageRoleType:
+      type: ImageRoleType
+      description: 镜像角色类型
+    cbbImageType:
+      type: String
+      description: 镜像类型（IDV/VOI/VDI）
+    desktopImageType:
+      type: CbbOsType
+      description: 云桌面镜像系统类型
+    desktopStrategyId:
+      type: UUID
+      description: 云桌面策略ID（已废弃）
+    desktopStrategyGroupArr:
+      type: StrategyGroupBaseFacadeDTO[]
+      description: 云桌面策略组数组
+    desktopNetworkId:
+      type: UUID
+      description: 网络策略ID
+    desktopNetworkName:
+      type: String
+      description: 网络策略名称
+    userId:
+      type: UUID
+      description: 用户ID
+    userName:
+      type: String
+      description: 用户名
+    userRealName:
+      type: String
+      description: 用户真实姓名
+    userGroupId:
+      type: UUID
+      description: 用户组ID
+    userGroupName:
+      type: String
+      description: 用户组名称
+    userGroupNameArr:
+      type: String[]
+      description: 用户组名称数组
+    terminalId:
+      type: String
+      description: 终端ID
+    terminalName:
+      type: String
+      description: 终端名称
+    terminalGroupName:
+      type: String
+      description: 终端组名称
+    terminalGroupNameArr:
+      type: String[]
+      description: 终端组名称数组
+    terminalPlatform:
+      type: String
+      description: 终端平台（IDV/VDI）
+    terminalIp:
+      type: String
+      description: 终端IP
+    terminalMask:
+      type: String
+      description: 终端掩码
+    createTime:
+      type: Date
+      description: 创建时间
+    userType:
+      type: String
+      description: 用户类型
+    configIp:
+      type: String
+      description: 配置IP
+    latestLoginTime:
+      type: Date
+      description: 最近登录时间
+    userCreateTime:
+      type: Date
+      description: 用户创建时间
+    lastOnlineTime:
+      type: Date
+      description: 最后上线时间
+    isWindowsOsActive:
+      type: Boolean
+      description: 是否激活Windows
+    osActiveBySystem:
+      type: Boolean
+      description: 系统激活状态
+    terminalMac:
+      type: String
+      description: 终端MAC
+    desktopRole:
+      type: DesktopRole
+      description: 桌面角色
+    serverName:
+      type: String
+      description: 服务器名称
+    physicalServerIp:
+      type: String
+      description: 物理服务器IP
+    idvTerminalModel:
+      type: String
+      description: IDV终端模式（绑定/公用终端）
+    networkAccessMode:
+      type: CbbNetworkAccessModeEnums
+      description: 网络接入模式
+    wirelessIp:
+      type: String
+      description: 无线IP
+    wirelessIpv6Addr:
+      type: String
+      description: 无线IPv6地址
+    wirelessMacAddr:
+      type: String
+      description: 无线MAC地址
+    enableCustom:
+      type: Boolean
+      description: 是否独立配置规格
+    remark:
+      type: String
+      description: 云桌面标签
+    deskCreateMode:
+      type: String
+      description: 云桌面创建方式
+    clusterInfo:
+      type: ClusterInfoDTO
+      description: 计算集群信息
+    desktopSoftwareStrategyId:
+      type: UUID
+      description: 软件策略ID（已废弃）
+    desktopSoftwareStrategyName:
+      type: String
+      description: 软件策略名称（已废弃）
+    vgpuItem:
+      type: String
+      description: vGPU规格项
+    vgpuExtraInfo:
+      type: String
+      description: vGPU附加信息JSON
+    downloadState:
+      type: DownloadStateEnum
+      description: 镜像下载状态
+    failCode:
+      type: Integer
+      description: 下载错误码
+    downloadPromptMessage:
+      type: String
+      description: 镜像下载结果提示语
+    downloadFinishTime:
+      type: Date
+      description: 镜像下载时间
+    agreementAgencyLimitMode:
+      type: AgreementAgencyLimitMode
+      description: 协议代理策略类型
+    enableAgreementAgency:
+      type: Boolean
+      description: 是否开启协议代理
+    enableWebClient:
+      type: Boolean
+      description: 是否开启网页客户端接入
+    enableMobileClient:
+      type: Boolean
+      description: 是否开启移动客户端接入
+    enableUtilizeClient:
+      type: Boolean
+      description: 是否开启强制利旧客户端接入
+    desktopPoolType:
+      type: String
+      description: 桌面池类型
+    desktopPoolId:
+      type: UUID
+      description: 桌面池ID
+    userProfileStrategyId:
+      type: UUID
+      description: 用户配置策略ID（已废弃）
+    userProfileStrategyName:
+      type: String
+      description: 用户配置策略名称（已废弃）
+    userProfileStrategyStorageType:
+      type: UserProfileStrategyStorageTypeEnum
+      description: 用户配置策略存储类型
+    isOpenDeskMaintenance:
+      type: Boolean
+      description: 云桌面维护模式
+    clusterName:
+      type: String
+      description: 计算集群名称
+    deliveryGroupName:
+      type: String
+      description: 关联交付组名称
+    deliveryGroupAppArrName:
+      type: String
+      description: 关联交付组的应用名称
+    imageDiskList:
+      type: List<CbbImageDiskInfoDTO>
+      description: 镜像磁盘信息列表
+    osType:
+      type: String
+      description: 操作系统类型
+    osVersion:
+      type: String
+      description: 操作系统版本
+    desktopTempPermissionName:
+      type: String
+      description: 云桌面临时权限名称
+    desktopSyncLoginAccount:
+      type: Boolean
+      description: 桌面登录账号同步
+    desktopSyncLoginPassword:
+      type: Boolean
+      description: 桌面登录密码同步
+    desktopSyncLoginAccountPermission:
+      type: CbbSyncLoginAccountPermissionEnums
+      description: 桌面登录账号权限
+    enableHa:
+      type: Boolean
+      description: 是否开启高可用
+    haPriority:
+      type: Integer
+      description: HA优先级
+    desktopPoolName:
+      type: String
+      description: 桌面池名称
+    platformId:
+      type: UUID
+      description: 云平台ID
+    platformName:
+      type: String
+      description: 云平台名称
+    platformType:
+      type: CloudPlatformType
+      description: 云平台类型
+    platformStatus:
+      type: CloudPlatformStatus
+      description: 云平台状态
+    cloudPlatformId:
+      type: String
+      description: 云平台唯一标识
+    estProtocolType:
+      type: CbbEstProtocolType
+      description: 协议类型
+    guestToolVersion:
+      type: String
+      description: 客户机工具版本
+    officeActive:
+      type: KmsActiveState
+      description: Office激活状态
+    imageUsage:
+      type: ImageUsageTypeEnum
+      description: 镜像用途
+    enableForceUseAgreementAgency:
+      type: Boolean
+      description: 是否强制使用协议代理
+    strategyType:
+      type: String
+      description: 策略类型
+    systemDiskStoragePoolName:
+      type: String
+      description: 系统盘存储池名称
+    systemDiskStoragePool:
+      type: PlatformStoragePoolDTO
+      description: 系统盘存储池
+    personDiskStoragePoolName:
+      type: String
+      description: 个人盘存储池名称
+    personDiskStoragePool:
+      type: PlatformStoragePoolDTO
+      description: 个人盘存储池
+    registerState:
+      type: CbbDeskRegisterState
+      description: 注册状态
+    registerMessage:
+      type: String
+      description: 注册消息
+    deskPattern:
+      type: CbbCloudDeskPattern
+      description: 桌面模式
+    adOu:
+      type: String
+      description: AD组织单元
+    deskAdvanceConfig:
+      type: CbbDeskAdvanceConfigDTO
+      description: 桌面高级配置
+    faultState:
+      type: Boolean
+      description: 是否报障
+    secLicenseType:
+      type: String
+      description: 安全许可类型
+    showRootPwd:
+      type: Boolean
+      description: 是否在桌面右下角展示密码
 upstream:
 - api: POST /rcc/space/classroom/cloudDesktop/list
   produces: $.content.itemArr[*].id

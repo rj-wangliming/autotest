@@ -63,9 +63,12 @@ response:
     total:
       type: long
       description: 总条数
-    id/storagePoolId:
+    id:
       type: UUID
       description: 存储池 id
+    storagePoolId:
+      type: UUID
+      description: 存储池 id（storagePoolId）
     name:
       type: String
       description: 存储池名称
@@ -75,15 +78,30 @@ response:
     redundancyStrategy:
       type: RedundancyStrategy
       description: 冗余策略（RAID0/RAID1 等）
-    totalCapacity/usedCapacity:
+    totalCapacity:
       type: Long
-      description: 总/已用容量
-    storagePoolMgmtState/storagePoolHealthState:
+      description: 总容量
+    usedCapacity:
+      type: Long
+      description: 已用容量
+    storagePoolMgmtState:
       type: enum
-      description: 管理/健康状态
-    platformId/platformName/platformType/platformStatus:
-      type: mixed
-      description: 所属平台信息
+      description: 存储池管理状态
+    storagePoolHealthState:
+      type: enum
+      description: 存储池健康状态
+    platformId:
+      type: UUID
+      description: 所属平台ID
+    platformName:
+      type: String
+      description: 所属平台名称
+    platformType:
+      type: String
+      description: 所属平台类型
+    platformStatus:
+      type: String
+      description: 所属平台状态
     storageClusterId:
       type: UUID
       description: 存储集群 id
@@ -99,6 +117,72 @@ response:
     itemArr:
       type: StoragePoolDetailResponse[]
       description: 存储池详情列表
+    "itemArr[]_id":
+      type: UUID
+      description: 存储池ID
+    "itemArr[]_storagePoolId":
+      type: UUID
+      description: 存储池ID（业务侧）
+    "itemArr[]_name":
+      type: String
+      description: 存储池名称
+    "itemArr[]_storagePoolType":
+      type: StoragePoolType
+      description: 存储池类型（POS/SAN/SAMBA/RG_PDS 等）
+    "itemArr[]_redundancyStrategy":
+      type: RedundancyStrategy
+      description: 冗余策略（RAID0/RAID1 等）
+    "itemArr[]_totalCapacity":
+      type: Long
+      description: 总容量
+    "itemArr[]_usedCapacity":
+      type: Long
+      description: 已用容量
+    "itemArr[]_storagePoolMgmtState":
+      type: StoragePoolMgmtState
+      description: 存储池管理状态
+    "itemArr[]_storagePoolHealthState":
+      type: StoragePoolHealthState
+      description: 存储池健康状态
+    "itemArr[]_description":
+      type: String
+      description: 存储池描述
+    "itemArr[]_createTime":
+      type: Date
+      description: 创建时间
+    "itemArr[]_updateTime":
+      type: Date
+      description: 更新时间
+    "itemArr[]_storageClusterId":
+      type: UUID
+      description: 存储集群ID
+    "itemArr[]_platformId":
+      type: UUID
+      description: 平台ID
+    "itemArr[]_platformName":
+      type: String
+      description: 云平台名称
+    "itemArr[]_platformType":
+      type: CloudPlatformType
+      description: 云平台类型
+    "itemArr[]_platformStatus":
+      type: CloudPlatformStatus
+      description: 云平台状态
+    "itemArr[]_cloudPlatformId":
+      type: String
+      description: 云平台唯一标识
+    "itemArr[]_options":
+      type: StoragePoolOptionsDTO
+      description: 存储扩展参数
+    "itemArr[]_canUsed":
+      type: Boolean
+      description: 是否可用（默认true）
+    "itemArr[]_useInLocalDisk":
+      type: Boolean
+      description: 是否可用于本地磁盘（默认true；SAN 环境非 SAN 存储置 false）
+    "itemArr[]_canUsedMessage":
+      type: String
+      description: 不可用原因
 upstream:
 - api: POST /space/cluster/obtainComputeClusterList
   produces: $.content.itemArr[*].id

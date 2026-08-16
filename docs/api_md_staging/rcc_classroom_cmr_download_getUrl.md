@@ -82,6 +82,9 @@ cleanup: []
 idempotency:
   level: fully_idempotent
   note: 纯查询，重复调用无副作用
+params:
+  required:
+  - name: rpm_name
 ---
 # POST /rcc/classroom/cmr/download/getUrl
 

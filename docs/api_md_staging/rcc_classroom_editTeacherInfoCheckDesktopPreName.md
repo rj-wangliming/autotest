@@ -105,6 +105,8 @@ idempotency:
 params:
   required:
   - name: classroom_name
+  - name: teacher_mode
+  - name: teacher_pre_name
     desc: ''
     used_by: 见 setup/request
 ---

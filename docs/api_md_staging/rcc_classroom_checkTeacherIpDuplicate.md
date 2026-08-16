@@ -90,6 +90,7 @@ idempotency:
 params:
   required:
   - name: classroom_name
+  - name: teacher_ip
     desc: ''
     used_by: 见 setup/request
 ---

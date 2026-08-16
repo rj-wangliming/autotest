@@ -56,9 +56,15 @@ response:
     file:
       type: File
       description: 日志文件流
-    fileName/suffix:
+    fileName:
       type: String
-      description: 取自 CbbTerminalLogFileInfoDTO.logFileName/suffix
+      description: 取自 CbbTerminalLogFileInfoDTO.logFileName
+    suffix:
+      type: String
+      description: 取自 CbbTerminalLogFileInfoDTO.suffix
+    contentType:
+      type: String
+      description: application/octet-stream
 upstream:
 - api: POST /rcc/classroom/teacher/terminal/collectLog
   produces: $.content.logName
@@ -88,6 +94,7 @@ idempotency:
 params:
   required:
   - name: classroom_name
+  - name: log_name
     desc: ''
     used_by: 见 setup/request
 ---

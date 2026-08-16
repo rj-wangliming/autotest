@@ -212,6 +212,183 @@ response:
       type: String
       description: 空间列表元素字段（源码 RccSpaceInfoDTO.userProfileStrategyName）
 
+    id:
+      type: UUID
+      description: 记录ID
+    name:
+      type: String
+      description: 名称
+    spaceId:
+      type: UUID
+      description: 实训空间ID
+    spaceName:
+      type: String
+      description: 实训空间名称
+    classroomId:
+      type: UUID
+      description: 绑定的教室ID
+    enableAllowMaxUseTime:
+      type: Boolean
+      description: 是否开启单次允许接入最大时间配置
+    allowMaxUseTime:
+      type: Integer
+      description: 单次允许接入最大时间
+    beforeRecycleNotifyTime:
+      type: Integer
+      description: 断开连接前提示时间
+    enableAllowUseTimeInfo:
+      type: Boolean
+      description: 是否开启实训桌面池接入控制策略
+    allowUseTimeInfo:
+      type: String
+      description: 云桌面允许登录时间（字符串）
+    allowUseTimeInfoDTOArr:
+      type: RccAllowUseTimeInfoDTO[]
+      description: 云桌面允许登录时间配置
+    spaceCreateTime:
+      type: Date
+      description: 实训空间创建时间
+    spaceUpdateTime:
+      type: Date
+      description: 实训空间更新时间
+    desktopPoolId:
+      type: UUID
+      description: 桌面池ID
+    desktopPoolName:
+      type: String
+      description: 桌面池名称
+    desktopPoolNamePrefix:
+      type: String
+      description: 云桌面名称前缀（null时采用桌面池名称）
+    poolModel:
+      type: CbbDesktopPoolModel
+      description: 池模式
+    idleDesktopRecover:
+      type: Integer
+      description: 空闲桌面自动回收时间（分钟）
+    description:
+      type: String
+      description: 备注
+    strategyId:
+      type: UUID
+      description: 云桌面策略ID
+    strategyName:
+      type: String
+      description: 云桌面策略名称
+    networkId:
+      type: UUID
+      description: 网络策略ID
+    networkName:
+      type: String
+      description: 网络策略名称
+    poolState:
+      type: CbbDesktopPoolState
+      description: 桌面池状态
+    preStartDesktopNum:
+      type: Integer
+      description: 维持预启动数
+    isOpenMaintenance:
+      type: Boolean
+      description: 是否开启维护模式
+    desktopPoolCreateTime:
+      type: Date
+      description: 桌面池创建时间
+    desktopPoolUpdateTime:
+      type: Date
+      description: 桌面池更新时间
+    softwareStrategyId:
+      type: UUID
+      description: 软件策略ID
+    softwareStrategyName:
+      type: String
+      description: 软件策略名称
+    userProfileStrategyId:
+      type: UUID
+      description: 用户配置策略ID
+    userProfileStrategyName:
+      type: String
+      description: 用户配置策略名称
+    clusterId:
+      type: UUID
+      description: 计算集群ID
+    platformId:
+      type: UUID
+      description: 云平台ID
+    storagePoolId:
+      type: UUID
+      description: 存储池ID
+    businessType:
+      type: BusinessType
+      description: 业务类型
+    createSource:
+      type: CreateSource
+      description: 创建来源
+    enableSpecifiedIpRange:
+      type: Boolean
+      description: 是否开启特定终端IP允许访问
+    canUsed:
+      type: Boolean
+      description: 是否可勾选（默认true）
+    canUsedMessage:
+      type: String
+      description: canUsed=false 的提示语
+    conflictDeskNum:
+      type: Integer
+      description: 池中配置不一致的桌面数量
+    clusterInfo:
+      type: ClusterInfoDTO
+      description: 计算集群信息
+    storagePool:
+      type: StoragePoolDetailDTO
+      description: 存储池详情
+    classroomName:
+      type: String
+      description: 教室名称
+    desktopType:
+      type: CbbCloudDeskPattern
+      description: 云桌面类型
+    memory:
+      type: Double
+      description: 内存大小（GB）
+    cpu:
+      type: Integer
+      description: CPU核数
+    systemDisk:
+      type: Integer
+      description: 系统盘大小（GB）
+    deskCreateMode:
+      type: DeskCreateMode
+      description: 创建方式
+    imageTemplateId:
+      type: UUID
+      description: 镜像模板ID
+    imageTemplateName:
+      type: String
+      description: 镜像模板名称
+    rootImageId:
+      type: UUID
+      description: 根镜像ID
+    rootImageName:
+      type: String
+      description: 根镜像名称
+    osType:
+      type: CbbOsType
+      description: 操作系统类型
+    desktopNum:
+      type: Integer
+      description: 桌面数量
+    connectedNum:
+      type: Integer
+      description: 连接数
+    platformType:
+      type: CloudPlatformType
+      description: 云平台类型（继承 RccPlatformBaseInfoDTO）
+    platformName:
+      type: String
+      description: 云平台名称（继承 RccPlatformBaseInfoDTO）
+    platformStatus:
+      type: CloudPlatformStatus
+      description: 云平台状态（继承 RccPlatformBaseInfoDTO）
 upstream:
 - api: 内部调用:rcc/RccSpaceAPI
   purpose: RCC_CLASSROOM 时查询全部教学实训空间
@@ -250,6 +427,9 @@ cleanup: []
 idempotency:
   level: non_idempotent
   note: 只读查询，无副作用
+params:
+  required:
+  - name: type
 ---
 # POST /rcc/space/getDesignateSpaceInfo
 

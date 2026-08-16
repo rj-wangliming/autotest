@@ -119,6 +119,11 @@ prereq_state:
 idempotency:
   level: data_level
   note: 每次提交都会重新遍历全部亲和性规则并逐平台更新（值相同也执行更新动作），参数本身有值对比；无事务回滚保护
+params:
+  required:
+  - name: expire_clean_day
+  - name: gather_ratio
+  - name: start_strategy_type
 ---
 # POST /rcc/globalStrategy/space/edit
 

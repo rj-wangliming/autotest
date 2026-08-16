@@ -67,17 +67,17 @@ setup:
   extract:
     clusterId: $.content.itemArr[0].computerClusterId
     platformId: $.content.itemArr[0].platformId
-  purpose: 获取计算集群ID与云平台ID
+  purpose: 获取计算集群ID与云平台ID（取第一条，无名称过滤）
 - name: get_storage_pool
   api: POST /space/storagePool/list
   extract:
     storagePoolId: $.content.itemArr[0].storagePoolId
-  purpose: 获取存储池ID（镜像分配用）
+  purpose: 获取存储池ID（镜像分配用）（取第一条，无名称过滤）
 - name: get_network
   api: POST /space/clouddesktop/deskNetwork/list
   extract:
     networkId: $.content.itemArr[0].id
-  purpose: 获取网络ID（镜像分配用）
+  purpose: 获取网络ID（镜像分配用）（取第一条，无名称过滤）
 request:
   dto: AssignNewStudentImageRequest
   body:
@@ -256,8 +256,6 @@ params:
   - name: student_start_ip
     desc: ''
     used_by: 见 setup/request
-    desc: ''
-    used_by: setup/request
 ---
 # POST /rcc/classroom/image/student/create
 
@@ -272,8 +270,8 @@ graph LR
         A2["POST /rcc/classroom/image/assignImage/yetAssign/list"]
         A3["POST /rcc/classroom/strategy/list"]
         A4["POST /rcc/classroom/image/getAssignedClusters"]
-        A5["POST /rcc/classroom/image/getAssignedClu"]
-        A6["POST /rcc/classroom/getClassroomVdiDiskS"]
+        A5["POST /rcc/classroom/image/getAssignedClusterAndNetwork"]
+        A6["POST /rcc/classroom/getClassroomVdiDiskStorage"]
     end
     B["POST /rcc/classroom/image/student/create<br>分配新的学生机课程镜像到教室；若选择跨存储同步且镜像副本尚未同步，则提交跨存储同<br>权限: @EnableAuthority"]
     A1 -->|数据| B

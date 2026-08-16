@@ -155,8 +155,6 @@ params:
   - name: seatNum
     desc: ''
     used_by: 见 setup/request
-    desc: ''
-    used_by: setup/request
 ---
 # POST /rcc/classroom/desktop/tci/collectLog/getState
 

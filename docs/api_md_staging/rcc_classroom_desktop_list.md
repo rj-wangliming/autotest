@@ -210,6 +210,120 @@ response:
     vgpuModel:
       type: String
       description: vGPU型号
+    "itemArr[]_desktopId":
+      type: UUID
+      description: 云桌面ID
+    "itemArr[]_strategyId":
+      type: UUID
+      description: 云桌面策略ID
+    "itemArr[]_computerName":
+      type: String
+      description: 云桌面主机名
+    "itemArr[]_desktopPreName":
+      type: String
+      description: 主机名前缀（教师机名前缀或座位名）
+    "itemArr[]_desktopState":
+      type: CbbCloudDeskState
+      description: 云桌面状态
+    "itemArr[]_disableNetwork":
+      type: Boolean
+      description: 是否禁网
+    "itemArr[]_desktopType":
+      type: CbbCloudDeskType
+      description: 云桌面类型（IDV/VDI）
+    "itemArr[]_desktopRole":
+      type: DesktopRoleEnum
+      description: 云桌面角色（学生机/教师机）
+    "itemArr[]_desktopMac":
+      type: String
+      description: 云桌面MAC
+    "itemArr[]_desktopIp":
+      type: String
+      description: 云桌面IP
+    "itemArr[]_desktopIpv6":
+      type: String
+      description: 云桌面IPv6地址
+    "itemArr[]_guestToolVersion":
+      type: String
+      description: 云桌面安装的工具版本
+    "itemArr[]_vgpuType":
+      type: VgpuType
+      description: vGPU类型
+    "itemArr[]_vgpuExtraInfo":
+      type: String
+      description: vGPU附加信息
+    "itemArr[]_osVersion":
+      type: String
+      description: 系统版本
+    "itemArr[]_desktopImageName":
+      type: String
+      description: 镜像名称
+    "itemArr[]_desktopRootImageName":
+      type: String
+      description: 根镜像模板名称
+    "itemArr[]_desktopImageRoleType":
+      type: ImageRoleType
+      description: 镜像角色类型
+    "itemArr[]_imageType":
+      type: CbbImageType
+      description: 镜像类型
+    "itemArr[]_osType":
+      type: CbbOsType
+      description: 操作系统类型
+    "itemArr[]_cpu":
+      type: Integer
+      description: CPU核数
+    "itemArr[]_memory":
+      type: Double
+      description: 内存大小（GB）
+    "itemArr[]_systemDisk":
+      type: Integer
+      description: 系统分区大小
+    "itemArr[]_desktopCategory":
+      type: String
+      description: 云桌面容量类型（PERSON/RESTORE）
+    "itemArr[]_terminalIp":
+      type: String
+      description: 终端IP
+    "itemArr[]_classroomId":
+      type: UUID
+      description: 教室ID
+    "itemArr[]_seatNum":
+      type: Integer
+      description: 座位号
+    "itemArr[]_targetComputerName":
+      type: String
+      description: 目标计算机名称（计算机名不存在时的提示）
+    "itemArr[]_faultState":
+      type: Boolean
+      description: 云桌面报障状态
+    "itemArr[]_faultDescription":
+      type: String
+      description: 云桌面报障内容
+    "itemArr[]_version":
+      type: Integer
+      description: 版本号
+    "itemArr[]_registerState":
+      type: CbbDeskRegisterState
+      description: 云桌面注册状态
+    "itemArr[]_platformId":
+      type: UUID
+      description: 云平台ID
+    "itemArr[]_platformType":
+      type: CloudPlatformType
+      description: 云平台类型
+    "itemArr[]_platformName":
+      type: String
+      description: 云平台名称
+    "itemArr[]_platformStatus":
+      type: CloudPlatformStatus
+      description: 云平台状态
+    "itemArr[]_vgpuDesktop":
+      type: Boolean
+      description: 是否vGPU桌面
+    "itemArr[]_vgpuModel":
+      type: String
+      description: vGPU型号
 upstream:
 - api: POST /rcc/classroom/terminal/list
   produces: $.content.itemArr[0].classroomId
@@ -235,6 +349,7 @@ idempotency:
 params:
   required:
   - name: classroom_name
+  - name: classroom_id
     desc: ''
     used_by: 见 setup/request
 ---
@@ -285,7 +400,8 @@ graph LR
 | matchArr | Match[] | 否 | 可选，精确/模糊匹配条件 | 查询过滤条件数组 |
 | sortArr | Sort[] | 否 | 可选 | 排序条件 |
 | limit | Integer | 否 |  | 页码与每页条数（limit） |
-| page | Integer | 否 |  | 页码与每页条数（page） |## 出参详情
+| page | Integer | 否 |  | 页码与每页条数（page） |
+## 出参详情
 
 | 返回类型 | DefaultWebResponse（data=PageQueryResponse<ViewDesktopResultDTO>） |
 |---|---|

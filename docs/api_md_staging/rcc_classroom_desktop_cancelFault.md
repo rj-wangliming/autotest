@@ -168,10 +168,9 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: seatNum
+  - name: id_arr
     desc: ''
     used_by: 见 setup/request
-    desc: ''
-    used_by: setup/request
 ---
 # POST /rcc/classroom/desktop/cancelFault
 

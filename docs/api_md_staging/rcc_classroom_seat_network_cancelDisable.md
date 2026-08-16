@@ -158,8 +158,7 @@ params:
     desc: ''
     used_by: 见 setup/request
   - name: seatNum
-    desc: ''
-    used_by: 见 setup/request
+  - name: disable_network
     desc: ''
     used_by: 见 setup/request
 ---
