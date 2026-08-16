@@ -373,27 +373,55 @@ class Executor:
                     "error": "登录失败: %s" % e, "cleanup": "SKIP"}
         results = []
         start = time.time()
+        total_steps = len(plan.get("steps", []))
         try:
             steps = plan.get("steps", [])
             for i, step in enumerate(steps, 1):
-                self.log("step", "[Step%d] %s %s" % (i, step.get("name", ""), step.get("api", "")))
+                step_name = step.get("name", "")
+                step_api = step.get("api", "")
+                section = step.get("section", "")
+                idempotent = step.get("idempotent")
+                purpose = step.get("purpose", "")
+
+                # 步骤开始：输出完整步骤信息
+                self.log("step", "[Step %d/%d] %s" % (i, total_steps, step_name or step_api))
+                if purpose:
+                    self.log("info", "  目的: %s" % purpose)
+                if section:
+                    self.log("info", "  来源: %s" % section)
+                self.log("info", "  接口: %s" % step_api)
+                if idempotent == "reuse":
+                    self.log("info", "  模式: 幂等复用（存在同名直接复用）")
+                elif idempotent == "recreate":
+                    self.log("info", "  模式: 幂等重建（先删同名再创建）")
+                elif idempotent is True:
+                    self.log("info", "  模式: 幂等（存在则通过）")
+                if step.get("poll"):
+                    self.log("info", "  异步: 含轮询等待")
+
                 st = time.time()
                 bs = self._batch_size(step, ctx)
                 if bs > 0:
-                    self.log("info", "[batch] 参数含列表，展开 %d 次" % bs)
+                    self.log("info", "  批量: 参数含列表，展开 %d 次" % bs)
                     last = None
                     for bi in range(bs):
                         ctx["_batch_index"] = bi
-                        self.log("info", "[batch] 第 %d/%d 次" % (bi + 1, bs))
+                        self.log("info", "  [batch] 第 %d/%d 次" % (bi + 1, bs))
                         last = self.execute_step(step, ctx)
                     ctx.pop("_batch_index", None)
                     data = last
                 else:
                     data = self.execute_step(step, ctx)
                 ctx["_last_data"] = data
-                results.append({"step": i, "name": step.get("name", ""),
-                                "api": step.get("api", ""), "status": "PASS",
-                                "duration_ms": int((time.time() - st) * 1000)})
+
+                # 步骤结束：输出结果摘要
+                resp_status = jsonpath_get(data, "$.status") if isinstance(data, dict) else "?"
+                step_duration = int((time.time() - st) * 1000)
+                self.log("info", "  结果: %s (%dms)" % (resp_status or "PASS", step_duration))
+
+                results.append({"step": i, "name": step_name,
+                                "api": step_api, "status": "PASS",
+                                "duration_ms": step_duration})
             return {"status": "PASS", "duration_ms": int((time.time() - start) * 1000),
                     "steps": results, "cleanup": "PASS"}
         except Exception as e:

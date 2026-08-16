@@ -278,6 +278,8 @@ def _write_summary(flog, sid, use_case, base_url, params, result):
 
 def _map_log_level(line):
     """子进程日志行前缀 → 前端分级 level"""
+    if line.startswith("[Step"):
+        return "step"
     if line.startswith("[req]"):
         return "req"
     if line.startswith("[resp]"):
