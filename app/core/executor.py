@@ -68,7 +68,7 @@ class Executor:
         # 传入明文密码，内部自动 AES 加密（与 Ruijie 平台一致）
         encrypted_pwd = encrypt(admin_password, "ADMINPASSWORDKEY")
         body = {"password": encrypted_pwd}
-        status, data = self.http_request("POST", "/rcdc/gss/iac/admin/applyOneTimeToken", body, ctx)
+        status, data = self.http_request("POST", "/gss/iac/admin/applyOneTimeToken", body, ctx)
         if status != 200 or data.get("status") != "SUCCESS":
             raise RuntimeError("applyOneTimeToken 失败: %s" % data.get("message"))
         return data.get("content", {}).get("oneTimeToken")
@@ -192,7 +192,7 @@ class Executor:
             "captchaKey": "",
             "timestamp": int(_time.time() * 1000),
         }
-        status, data = self.http_request("POST", "/rcdc/rco/admin/loginAdmin", body, None)
+        status, data = self.http_request("POST", "/rco/admin/loginAdmin", body, None)
         if status < 200 or status >= 300:
             raise RuntimeError("登录失败: HTTP %s (%s)" % (status, json.dumps(data, ensure_ascii=False, default=str)))
         token = jsonpath_get(data, "$.content.token") or jsonpath_get(data, "$.data.token")
