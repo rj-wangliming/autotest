@@ -697,6 +697,9 @@ class Executor:
                     cn = cn[0] if cn else ""
                 elif not isinstance(cn, str):
                     cn = str(cn)
+                # 跳过空值（如空字符串、空字典转字符串）
+                if not cn or cn in ("{}", "[]", ""):
+                    continue
                 if cn and cn != "":
                     classroom_names.add(cn)
 
