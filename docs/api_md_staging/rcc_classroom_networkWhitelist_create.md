@@ -103,7 +103,7 @@ assertions:
 cleanup:
 - api: POST /rcc/classroom/networkWhitelist/delete
   purpose: 删除创建的网络白名单（需先取 id）
-  depends_on: content.id
+  depends_on: id（create 为异步批任务，响应仅含 taskId，需通过 POST /rcc/classroom/networkWhitelist/list 查询获取）
 idempotency:
   level: data_level
   note: IP查重仅拦截已存在记录，并发/重复提交可能创建重复白名单

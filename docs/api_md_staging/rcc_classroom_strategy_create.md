@@ -184,7 +184,7 @@ assertions:
 cleanup:
 - api: POST /rcc/classroom/strategy/delete
   purpose: 删除创建的教室策略（需先取 strategyId）
-  depends_on: content.strategyId
+  depends_on: strategyId（create 为同步操作 content 为空，需通过 POST /rcc/classroom/strategy/list 查询获取）
 idempotency:
   level: data_level
   note: 名称唯一约束兜底，重复提交同名会失败；无显式幂等键
