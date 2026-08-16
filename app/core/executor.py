@@ -692,6 +692,11 @@ class Executor:
                     cn = ctx["params"].get(param_key, val)
                 elif val:
                     cn = val
+                # 确保 cn 是字符串（params 中可能是列表）
+                if isinstance(cn, list):
+                    cn = cn[0] if cn else ""
+                elif not isinstance(cn, str):
+                    cn = str(cn)
                 if cn and cn != "":
                     classroom_names.add(cn)
 
