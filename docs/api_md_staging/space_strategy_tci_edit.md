@@ -160,9 +160,9 @@ polling:
   terminal_states:
     success:
     - SUCCESS
+    - PARTIAL_SUCCESS
     failure:
     - FAILURE
-    - PARTIAL_SUCCESS
 upstream:
 - api: POST /space/strategy/tci/list
   produces: $.content.itemArr[*].id

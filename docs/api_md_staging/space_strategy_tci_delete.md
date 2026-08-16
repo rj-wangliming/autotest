@@ -72,9 +72,9 @@ polling:
   terminal_states:
     success:
     - SUCCESS
+    - PARTIAL_SUCCESS
     failure:
     - FAILURE
-    - PARTIAL_SUCCESS
 upstream:
 - api: POST /space/strategy/tci/list
   purpose: TCI课程策略ID数组，来源为策略列表

@@ -143,9 +143,9 @@ polling:
   terminal_states:
     success:
     - SUCCESS
+    - PARTIAL_SUCCESS
     failure:
     - FAILURE
-    - PARTIAL_SUCCESS
 upstream:
 - api: POST /rcc/classroom/terminal/list
   purpose: 教室ID在创建教室(POST /rcc/classroom/create)后经教室终端列表查询获得（ViewClassroomInfoEntity.classr

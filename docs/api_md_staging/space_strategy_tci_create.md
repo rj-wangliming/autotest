@@ -207,9 +207,9 @@ polling:
   terminal_states:
     success:
     - SUCCESS
+    - PARTIAL_SUCCESS
     failure:
     - FAILURE
-    - PARTIAL_SUCCESS
 upstream:
 - api: POST /space/deskStrategy/getSupportUsbTyp
   purpose: USB设备类型ID数组（在 platformStrategyGroup 内部配置，推断）

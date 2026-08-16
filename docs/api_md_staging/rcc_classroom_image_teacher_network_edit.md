@@ -90,9 +90,9 @@ polling:
   terminal_states:
     success:
     - SUCCESS
+    - PARTIAL_SUCCESS
     failure:
     - FAILURE
-    - PARTIAL_SUCCESS
 upstream:
 - api: POST /rcc/classroom/create -> POST /rcc/classroom/select
   produces: $.content[0].classroomId

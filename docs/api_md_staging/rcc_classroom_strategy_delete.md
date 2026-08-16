@@ -94,9 +94,9 @@ polling:
   terminal_states:
     success:
     - SUCCESS
+    - PARTIAL_SUCCESS
     failure:
     - FAILURE
-    - PARTIAL_SUCCESS
 upstream:
 - api: 内部调用:rcc/ClassroomStrategyAPI
   purpose: 单条删除时取策略名作为任务描述；批任务内取名称用于审计

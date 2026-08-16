@@ -187,9 +187,9 @@ polling:
   terminal_states:
     success:
     - SUCCESS
-    fail:
-    - FAILURE
     - PARTIAL_SUCCESS
+    failure:
+    - FAILURE
   condition: 仅首次分配镜像（isFirstImage=true）时返回 BatchTaskSubmitResult 需轮询；非首次为同步成功（content 空）
 params:
   required:
