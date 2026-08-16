@@ -11,9 +11,11 @@ import os
 import re
 import sys
 import time
+from urllib.parse import urlparse
 
 from .jsonpath import jsonpath_get
 from .params import resolve_body, gen_config_value, to_snake, materialize_naming
+from .aes_crypto import encrypt
 
 # 目标环境为自签 HTTPS 证书，禁用 SSL 证书验证告警（verify=False 时的 InsecureRequestWarning）
 try:
@@ -21,6 +23,20 @@ try:
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 except Exception:
     pass
+
+
+# 需要 X-One-Time-Token header 的接口路径列表（从 onces_token_api_url_data.py 同步）
+ONCE_TOKEN_PATHS = {
+    "/rcc/classroom/delete",
+    "/rcc/classroom/seat/delete",
+    "/rcc/classroom/image/student/delete",
+    "/rcc/classroom/image/teacher/delete",
+    "/rcc/classroom/editTeacherInfo",
+    "/rcc/classroom/editStudentInfo",
+    "/rcc/classroom/seat/clearTciLocalDisk",
+    "/rcc/classroom/seat/vdiLocalDisk/clear",
+    "/rcc/classroom/desktop/restoreVDIImage",
+}
 
 
 class Executor:
@@ -36,9 +52,26 @@ class Executor:
 
     def __init__(self, base_url=None, log_cb=None):
         self.base_url = (base_url or os.environ.get("TEST_BASE_URL", "http://127.0.0.1:8080")).rstrip("/")
-        print(f"[DEBUG] Executor base_url={self.base_url}")
         self.log_cb = log_cb or (lambda level, msg: None)
         self._session = None  # requests.Session：维持登录 cookie 会话（webmvckit 会话认证）
+
+    def _get_once_token(self, ctx):
+        """获取 X-One-Time-Token header 值。
+
+        调用 POST /gss/iac/admin/applyOneTimeToken，传入 AES 加密的管理员密码。
+        参考：commonlib.api_protocol_lib.http_interface.common_get_once_token
+        """
+        p = ctx.get("params", {})
+        admin_password = p.get("rcdc_passwd") or p.get("admin_password")
+        if not admin_password:
+            return None
+        # 传入明文密码，内部自动 AES 加密（与 Ruijie 平台一致）
+        encrypted_pwd = encrypt(admin_password, "ADMINPASSWORDKEY")
+        body = {"password": encrypted_pwd}
+        status, data = self.http_request("POST", "/gss/iac/admin/applyOneTimeToken", body, ctx)
+        if status != 200 or data.get("status") != "SUCCESS":
+            raise RuntimeError("applyOneTimeToken 失败: %s" % data.get("message"))
+        return data.get("content", {}).get("oneTimeToken")
 
     def _get_session(self):
         """懒加载 requests.Session：登录的 Set-Cookie 被保留，后续请求自动携带会话凭证"""
@@ -70,7 +103,18 @@ class Executor:
 
         ctx 提供 token 与登录凭据；401 自动重登并把新 token 写回 ctx['token']（会话持久化）。
         verify=False：目标环境为自签 HTTPS 证书。
+        二次鉴权：对标注 @OneTimeTokenRequired 的接口，自动通过 applyOneTimeToken 获取
+        X-One-Time-Token header。
         """
+        # 二次鉴权：对需要 oneTimeToken 的接口，先获取 token
+        once_token = None
+        if ctx and path in ONCE_TOKEN_PATHS:
+            try:
+                once_token = self._get_once_token(ctx)
+                if once_token:
+                    self.log("info", "[oneTimeToken] 获取成功: %s..." % str(once_token)[:12])
+            except Exception as e:
+                self.log("warning", "[oneTimeToken] 获取失败: %s（跳过二次鉴权）" % e)
         session = self._get_session()
         token = ctx.get("token") if ctx else None
         headers = {"Content-Type": "application/json"}
@@ -81,6 +125,9 @@ class Executor:
             headers["source"] = "CDC"
             headers["subSystem"] = "CDC"
             cookies = {"iac-token": token, "rcdcAdmin-Token": token}
+        # 二次鉴权：需要 X-One-Time-Token header
+        if once_token:
+            headers["X-One-Time-Token"] = once_token
         url = self.base_url + path
         self.log("req", "%s %s" % (method, path))
         if body:
@@ -97,26 +144,37 @@ class Executor:
             if resp.status_code == 401 and token and "/loginAdmin" not in path and ctx is not None:
                 self.log("auth", "401 → 重新登录")
                 p = ctx.get("params", {})
-                token = self.login(p.get("rcdc_user") or p.get("admin_user"),
-                                   p.get("rcdc_passwd") or p.get("admin_password"))
-                ctx["token"] = token
-                headers["iac-token"] = token
+                new_token = self.login(p.get("rcdc_user") or p.get("admin_user"),
+                                       p.get("rcdc_passwd") or p.get("admin_password"))
+                ctx["token"] = new_token
+                headers["iac-token"] = new_token
                 if cookies is not None:
-                    cookies = {"iac-token": token, "rcdcAdmin-Token": token}
+                    cookies = {"iac-token": new_token, "rcdcAdmin-Token": new_token}
+                # 重登后重新获取一次令牌（会话已刷新）
+                if once_token:
+                    try:
+                        once_token = self._get_once_token(ctx)
+                        headers["X-One-Time-Token"] = once_token
+                    except Exception:
+                        once_token = None  # 如果获取失败，不阻塞重试
                 resp = session.request(method, url, json=body, headers=headers,
                                        cookies=cookies, timeout=30, verify=False)
                 try:
                     data = resp.json()
                 except Exception:
                     data = {"raw": resp.text}
-                self.log("resp", "HTTP %s（重试）" % resp.status_code)
+                self.log("resp", "HTTP %s（重试，含一次令牌）" % resp.status_code)
             return resp.status_code, data
         except Exception as e:
             self.log("error", "请求失败: %s" % e)
             return 0, {"status": "ERROR", "message": str(e)}
 
     def login(self, admin_user=None, admin_password=None):
-        """框架内置登录（loginAdmin）。凭据优先参数传入，其次环境变量，缺失则报错（不留明文默认）。"""
+        """框架内置登录（loginAdmin）。凭据优先参数传入，其次环境变量，缺失则报错（不留明文默认）。
+
+        注意：服务端 loginAdmin 接口要求 pwd 字段为 AES 加密后的密码（key=ADMINPASSWORDKEY）。
+        因此传入的 admin_password 应为明文，内部自动加密。
+        """
         admin_user = admin_user or os.environ.get("TEST_ADMIN_USER")
         admin_password = admin_password or os.environ.get("TEST_ADMIN_PASSWORD")
         if not admin_user or not admin_password:
@@ -125,9 +183,11 @@ class Executor:
                 "或环境变量 TEST_ADMIN_USER/TEST_ADMIN_PASSWORD 中提供"
             )
         import time as _time
+        # AES 加密密码（与服务端 loginAdmin 接口要求一致）
+        encrypted_pwd = encrypt(admin_password, "ADMINPASSWORDKEY")
         body = {
             "userName": admin_user,
-            "pwd": admin_password,
+            "pwd": encrypted_pwd,
             "captchaCode": "",
             "captchaKey": "",
             "timestamp": int(_time.time() * 1000),
@@ -284,7 +344,9 @@ class Executor:
             if is_classroom:
                 del_body = {"idArr": [found_id]}
             elif is_seat:
-                del_body = {"seatIdArr": [found_id]}
+                # 座位 delete 需要 classroomId + seatIdArr
+                del_body = {"classroomId": body.get("classroomId") or "",
+                            "seatIdArr": [found_id]}
             else:
                 del_body = {"idArr": [found_id]}
 
@@ -616,7 +678,12 @@ class Executor:
                 if isinstance(cn, dict):
                     val = cn.get("value", "")
                 else:
-                    val = str(cn)
+                    val = cn
+                # 列表展开：如 ["a_classroom_01"] → "a_classroom_01"
+                if isinstance(val, list):
+                    val = val[0] if val else ""
+                if not isinstance(val, str):
+                    val = str(val)
                 # 解析参数引用
                 import re
                 m = re.search(r"\$\{param\.([\w.]+)\}", val)
@@ -737,7 +804,7 @@ class Executor:
                 self.log("info", "[prerequisite-cleanup] 删除座位 %s" % seat_id)
                 try:
                     self.http_request("POST", "/rcc/classroom/seat/delete",
-                                     {"seatIdArr": [seat_id]}, ctx)
+                                     {"classroomId": classroom_id, "seatIdArr": [seat_id]}, ctx)
                 except Exception as e:
                     self.log("warning", "[prerequisite-cleanup] 座位删除失败: %s" % e)
 
@@ -746,7 +813,7 @@ class Executor:
         self.log("info", "[prerequisite-cleanup] 删除教室 %s (id=%s)" % (classroom_name, classroom_id))
         try:
             status, data = self.http_request("POST", "/rcc/classroom/delete",
-                                             {"idArr": [classroom_id]}, ctx)
+                                             {"classroomId": classroom_id, "idArr": [classroom_id]}, ctx)
             if data.get("status") == "SUCCESS":
                 content = data.get("content") if isinstance(data, dict) else {}
                 task_id = content.get("taskId") if isinstance(content, dict) else None

@@ -11,7 +11,7 @@
 # ── 测试环境 ──
 base_url: https://10.51.167.250:8443/rcdc     # 目标环境地址（也可 --base-url 或环境变量 BASE_URL 注入）
 rcdc_user: admin9
-rcdc_passwd: 9q7DP0GUzDDkHyGsYijcku37wEA4cbgDjH03M6F2T/g=      # 登录密码（环境变量 TEST_ADMIN_PASSWORD 优先覆盖）
+rcdc_passwd: Admin123      # 登录密码（明文，executor 内部自动 AES 加密）
 
 # ── 教室（可多个：值填列表）──
 classroom_name: [a_classroom_01]              # 教室名，多个: [c1, c2]
