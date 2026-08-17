@@ -49,7 +49,7 @@ constraints:
 - level: PARAM
   field: msgType
   rule: query 必填，枚举 BATCH_MSG
-  failure: 缺失/非法时后端参数校验失败（注：引擎当前实现仅传 msgrelationid，若后端严格校验 msgType 需补充该参数）
+  failure: 缺失/非法时后端参数校验失败（引擎已默认补充 msgType=BATCH_MSG，缺失会导致 sk_validation_NotNull）
 assertions:
   success:
   - scenario: 任务已成功
@@ -130,13 +130,12 @@ polling:
 
 ## 引擎实现行为（app/core/executor.py _poll）
 
-1. `path = api`，若不以 `/` 开头则前置 `/`——即默认直发 `/common_get_msgct_detail_info`，**依赖环境网关/mock 适配**；若环境直接暴露真实接口，可将 `api` 字段写为 `/rco/msgct/msg/detail`
-2. 请求体 `{"msgrelationid": taskId}`（仅传关联 ID，未传 msgType）
-3. 轮询间隔 `interval_ms`（默认 2000ms）、超时 `timeout_ms`（默认 240000ms）
-4. 连续 3 次 HTTP 404 → 跳过轮询（假设任务已执行）
-5. `content` 为 null 且无 taskStatus 连续 3 次 → 跳过轮询
-6. 有 `$.status` 但无 taskStatus → 跳过轮询
-7. 超时未到终态 → 抛 `AssertionError("轮询超时: taskId=...")`
+1. `api` 字段支持节点名（orchestrator 经索引别名解析为 `/rco/msgct/msg/detail`）或直接写真实路径
+2. 请求体：文档 `polling.params` 模板优先（`${content.X}` 引用触发步骤响应，如 lesson 的 `lessonTaskId`）；兜底 `{"msgrelationid": taskId, "msgType": "BATCH_MSG"}`（两参数均必填，缺 msgType 后端报 sk_validation_NotNull）
+3. 轮询间隔 `interval_ms`（默认 2000ms）、超时 `timeout_ms`（默认 240000ms）；`terminal_states.failure`（兼容旧键 `fail`）
+4. 连续 3 次 HTTP 404 或 响应无 taskStatus（含参数校验错误）→ 记 warning（poll_api_missing）后按通过处理；strict 模式判失败
+5. 有 `$.status` 但无 taskStatus（content 有值）→ 同步响应，跳过轮询
+6. 任务终态 FAILURE → 抛 `AssertionError("轮询任务失败: ...")`；超时未到终态 → 抛 `AssertionError("轮询超时: ...")`
 
 ## 上游/下游
 

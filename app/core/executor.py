@@ -682,51 +682,62 @@ class Executor:
     def _poll(self, poll, ctx):
         """轮询异步任务至终态。
 
+        请求体：优先文档 polling.params 模板（${content.X} 引用触发步骤响应，
+        如 lesson 的 lessonTaskId）；兜底 {msgrelationid, msgType: BATCH_MSG}
+        （公共轮询接口 /rco/msgct/msg/detail 两参数均必填）。
+
         容错边界（与假绿区分）：
         - 任务终态 FAILURE / 轮询超时 → 抛 AssertionError（真失败）
-        - 轮询接口 404 / 响应无 taskStatus → 说明「无法确认任务状态」：
-          默认记 warning（poll_api_missing）后按通过处理；strict 模式直接失败。
+        - 轮询接口 404 / 响应无 taskStatus（含参数校验错误）→ 「无法确认任务状态」：
+          连续 3 次记 warning（poll_api_missing）后按通过处理；strict 模式直接失败。
         轮询间隔 2 秒，超时 240 秒。
         """
         api = poll.get("api", "common_get_msgct_detail_info")
         path = api if api.startswith("/") else "/" + api
-        task_id = ctx.get("taskId") or jsonpath_get(ctx.get("_last_data") or {}, "$.content.taskId")
+        last = ctx.get("_last_data") or {}
+        task_id = (ctx.get("taskId")
+                   or jsonpath_get(last, "$.content.taskId")
+                   or jsonpath_get(last, "$.content.lessonTaskId"))
         if not task_id:
             self.log("info", "[poll] taskId 为空（同步返回，无异步任务），跳过轮询")
             return True
         interval = poll.get("interval_ms", 2000) / 1000.0
-        timeout = poll.get("timeout_ms", 240000) / 1000.0  # 240 秒超时，给异步任务足够时间
-        ok_states = poll.get("terminal_states", {}).get("success", ["SUCCESS"])
-        fail_states = poll.get("terminal_states", {}).get("fail", ["FAILURE"])
+        timeout = poll.get("timeout_ms", 240000) / 1000.0
+        term = poll.get("terminal_states", {}) or {}
+        ok_states = term.get("success", ["SUCCESS"])
+        fail_states = term.get("fail") or term.get("failure") or ["FAILURE"]
+        body = self._poll_request_body(poll, task_id, ctx)
         deadline = time.time() + timeout
-        consecutive_404 = 0
+        # 连续无效响应计数（404 与 无 taskStatus 共用）：
+        # 仅在收到「结构有效但未到终态」的响应时清零，否则计数被清零永远到不了 3
+        consecutive_invalid = 0
         while time.time() < deadline:
-            status, data = self.http_request("POST", path, {"msgrelationid": task_id}, ctx)
+            status, data = self.http_request("POST", path, body, ctx)
             if status == 404:
-                consecutive_404 += 1
-                self.log("warning", "[poll] 轮询接口 404 (%d/3)" % consecutive_404)
-                if consecutive_404 >= 3:
+                consecutive_invalid += 1
+                self.log("warning", "[poll] 轮询接口 404 (%d/3)" % consecutive_invalid)
+                if consecutive_invalid >= 3:
                     return self._unverified(ctx, "poll_api_missing",
                                             "轮询接口 %s 连续 3 次 404，任务状态无法确认: taskId=%s" % (path, task_id),
                                             "轮询接口 404: taskId=%s" % task_id)
                 time.sleep(interval)
                 continue
-            consecutive_404 = 0
             st = jsonpath_get(data, "$.content.taskStatus") or jsonpath_get(data, "$.content.status")
             self.log("info", "[poll] taskStatus=%s" % st)
             if st in ok_states:
                 self.log("info", "[poll] 任务成功")
                 return True
             if st in fail_states:
-                raise AssertionError("轮询任务失败: taskId=%s" % task_id)
-            # content 为 null 且无 taskStatus（说明轮询接口不匹配）
+                raise AssertionError("轮询任务失败: taskId=%s (taskStatus=%s)" % (task_id, st))
+            # content 为 null 且无 taskStatus（接口不匹配 / 参数校验错误如缺 msgType）
             content = data.get("content") if isinstance(data, dict) else None
             if content is None and st is None:
-                consecutive_404 += 1
-                self.log("warning", "[poll] content 为 null 且无 taskStatus (%d/3)" % consecutive_404)
-                if consecutive_404 >= 3:
+                consecutive_invalid += 1
+                self.log("warning", "[poll] content 为 null 且无 taskStatus (%d/3): %s"
+                         % (consecutive_invalid, jsonpath_get(data, "$.message") or ""))
+                if consecutive_invalid >= 3:
                     return self._unverified(ctx, "poll_api_missing",
-                                            "轮询接口 %s 响应无 taskStatus，任务状态无法确认: taskId=%s" % (path, task_id),
+                                            "轮询接口 %s 连续 3 次无 taskStatus，任务状态无法确认: taskId=%s" % (path, task_id),
                                             "轮询响应无 taskStatus: taskId=%s" % task_id)
                 time.sleep(interval)
                 continue
@@ -735,8 +746,27 @@ class Executor:
             if biz_status and st is None:
                 self.log("info", "[poll] 有业务状态(%s)但无taskStatus，跳过轮询" % biz_status)
                 return True
+            consecutive_invalid = 0  # 有效响应且未到终态（任务进行中）
             time.sleep(interval)
         raise AssertionError("轮询超时: taskId=%s" % task_id)
+
+    def _poll_request_body(self, poll, task_id, ctx):
+        """轮询请求体：文档 polling.params 模板优先，${content.X} 引用触发步骤响应解析；
+        兜底公共轮询接口必填参数（msgrelationid + msgType=BATCH_MSG）"""
+        tmpl = poll.get("params") or poll.get("body") or {}
+        body = {}
+        if isinstance(tmpl, dict):
+            for k, v in tmpl.items():
+                if isinstance(v, str):
+                    m = re.fullmatch(r"\$\{content\.(\w+)\}", v)
+                    if m:
+                        v = jsonpath_get(ctx.get("_last_data") or {}, "$.content." + m.group(1))
+                body[k] = v if v not in (None, "") else task_id
+        if not body:
+            body = {"msgrelationid": task_id}
+        body.setdefault("msgrelationid", task_id)
+        body.setdefault("msgType", "BATCH_MSG")
+        return body
 
     def _unverified(self, ctx, code, warn_msg, fail_msg):
         """「无法确认结果」的统一出口：默认 warning + 通过；strict 模式判失败"""
