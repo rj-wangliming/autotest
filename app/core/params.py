@@ -187,8 +187,19 @@ def resolve_body(body, ctx):
         elif isinstance(v, dict) and v.get("generated_by"):
             out[k] = gen_config_value(k, v, ctx)
         elif isinstance(v, dict) and "type" in v and "value" not in v and not v.get("generated_by"):
-            # 纯类型描述（无值）→ 跳过（可选字段）
-            continue
+            # 纯类型描述（无值）→ 若 required 则赋默认值，否则跳过
+            if v.get("required"):
+                _type = v.get("type", "")
+                if "Integer" in _type or "Long" in _type or "Double" in _type:
+                    out[k] = 0
+                elif "String" in _type:
+                    out[k] = ""
+                elif "Boolean" in _type or "boolean" in _type:
+                    out[k] = False
+                else:
+                    out[k] = None
+            else:
+                continue
         else:
             out[k] = resolve_value(v, ctx)
     # 最终清理：递归移除所有 None 值
