@@ -728,6 +728,10 @@ class Orchestrator:
                             {"name": "classroomId", "valueArr": ["${prev.classroomQuery.output.classroomId}"]}
                         ]
                     }
+        # 特殊处理：assignImage/yetAssign/list 注入 exactMatchArr 过滤条件
+        # （与 pytest 框架 common_get_classroom_yet_assign_lesson_image_list 完全一致，
+        #  避免缺过滤条件时后端走不同分支导致 internal_error）
+        # 注意：clusterId 获取逻辑在 executor 中执行（orchestrator 无法直接调 HTTP）
         return step
 
     def _collect_produce(self, meta):
