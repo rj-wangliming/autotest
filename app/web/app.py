@@ -122,6 +122,7 @@ def _build_plan_with_mode(use_case, params):
             plan = orchestrator.build_plan(use_case, params)
             plan["_channel"] = "A(降级: AI编排失败 %s)" % e
             return plan
+    print("[DEBUG] LLM 未配置, cfg=%s" % repr(cfg))
     plan = orchestrator.build_plan(use_case, params)
     plan["_channel"] = "A(未配置LLM)"
     return plan
