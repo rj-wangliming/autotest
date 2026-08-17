@@ -917,6 +917,17 @@ class Orchestrator:
         for meta in self.index.all():
             url = meta.get("url", "")
             score = 0
+            # 反匹配：接口名称与步骤实体语义冲突时大幅扣分
+            name = meta.get("name", "")
+            if "cluster" in entities and ("存储池" in name or "StoragePool" in name or "storagePool" in name):
+                score -= 10
+            if "storagePool" in entities and ("集群" in name or "Cluster" in name or "cluster" in name):
+                score -= 10
+            if "network" in entities and ("镜像" in name or "Image" in name or "image" in name) and "Assigned" not in name:
+                score -= 10
+            # 反匹配：dashboard/statistics 不是业务查询接口
+            if "/dashboard/statistics/" in url:
+                score -= 10
             # 动作命中：URL 含动作段（大小写不敏感，匹配 vdiLocalDisk/clearTciLocalDisk 等驼峰段）
             for a in actions:
                 if a.lower() in url.lower():
