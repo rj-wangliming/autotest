@@ -925,6 +925,17 @@ class Orchestrator:
             for e in entities:
                 if e.lower() in url.lower():
                     score += 2
+            # RDCD 侧接口优先于 Space 侧（RDCD 侧不穿透 CBB，更稳定）
+            if "cluster" in entities:
+                if "/rco/user/obtainComputeClusterList" in url:
+                    score += 5
+                elif "/space/cluster/" in url:
+                    score -= 3
+            if "storagePool" in entities:
+                if "/rcc/" in url:
+                    score += 3
+                elif "/space/storagePool/" in url:
+                    score -= 3
             # 创建类优先 create 结尾（前置创建场景）
             if prefer_create and (url.endswith("/create") or url.endswith("/add")):
                 score += 1
