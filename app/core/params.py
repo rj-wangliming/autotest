@@ -197,7 +197,7 @@ def resolve_body(body, ctx):
                 if _dm:
                     default_val = int(_dm.group(1))
                 elif "limit" == k:
-                    default_val = 20
+                    default_val = 1000
                 elif "page" == k:
                     default_val = 0
                 elif "Integer" in _type or "Long" in _type or "Double" in _type:
