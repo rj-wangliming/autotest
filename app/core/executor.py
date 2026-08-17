@@ -128,12 +128,8 @@ class Executor:
         # 二次鉴权：需要 X-One-Time-Token header
         if once_token:
             headers["X-One-Time-Token"] = once_token
-        # 补齐 base_url 路径：space/cluster/ → /rcdc/space/cluster/
-        if path.startswith("/space/cluster/"):
-            path = "/rcdc" + path
-
         url = self.base_url + path
-        self.log("req", "%s %s" % (method, path))
+        self.log("req", "%s %s" % (method, url))
         if body:
             self.log("req", "body: %s" % json.dumps(self._mask(body), ensure_ascii=False))
         try:
