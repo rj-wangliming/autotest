@@ -1,3 +1,5 @@
+# 本地代码目录（git 仓库，不纳入外层仓库）
+autotest/
 # macOS
 .DS_Store
 # Python
