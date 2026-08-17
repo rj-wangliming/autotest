@@ -1,0 +1,313 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""四项重构的回归测试（纯 assert，不依赖真实环境与 LLM）
+
+覆盖:
+  1. 语义匹配规则外置: semantic_rules 从 business_rules.md 加载并生效（集群↔存储池惩罚、侧别偏好）
+  2. 文档驱动补数: executor._apply_fill 按 fill 声明注入静态值/接口取值/追加条目/缓存
+  3. 假绿修复: poll 404 与删除等待超时记录 warnings；strict 模式判失败；删除存在性验证
+  4. 引用链接: plan 期 ${prev.*} 改写到真实步骤名，断裂引用记 warns
+"""
+import os
+import re
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+os.environ["API_MD_DIR"] = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "api_md_staging")
+
+from app.core.orchestrator import Orchestrator  # noqa: E402
+from app.core.executor import Executor  # noqa: E402
+
+PASS = []
+FAIL = []
+
+
+def check(name, fn):
+    try:
+        fn()
+        PASS.append(name)
+        print("  ✅ %s" % name)
+    except Exception as e:
+        FAIL.append((name, str(e)))
+        print("  ❌ %s: %s" % (name, e))
+        import traceback
+        traceback.print_exc()
+
+
+# ---------- 1. 语义匹配规则外置 ----------
+
+def test_semantic_rules_loaded():
+    o = Orchestrator()
+    rules = o.rules.get("semantic_rules") or []
+    assert len(rules) >= 8, "semantic_rules 未加载或条目不足: %d" % len(rules)
+
+
+def test_semantic_penalty():
+    o = Orchestrator()
+    # 集群实体 vs 存储池接口名 → -10（URL 不带 /space//rcc/ 等侧别词，只命中惩罚规则）
+    d = o._apply_semantic_rules("/xxx/storagePool/list", "获取存储池列表", ["cluster"])
+    assert d == -10, "cluster→storagePool 惩罚应为 -10, 实际 %s" % d
+    # 存储池实体 vs 集群接口名 → -10
+    d = o._apply_semantic_rules("/xxx/cluster/list", "获取集群列表", ["storagePool"])
+    assert d == -10, "storagePool→cluster 惩罚应为 -10, 实际 %s" % d
+
+
+def test_semantic_side_preference():
+    o = Orchestrator()
+    # 集群实体：RDCD 侧 +5，Space 侧 -3
+    assert o._apply_semantic_rules("/rco/user/obtainComputeClusterList", "获取计算集群", ["cluster"]) == 5
+    assert o._apply_semantic_rules("/space/cluster/obtainComputeClusterList", "获取计算集群", ["cluster"]) == -3
+    # 存储池实体：RCC 侧 +3，Space 侧 -3
+    assert o._apply_semantic_rules("/rcc/classroom/getInfoStoragePoolList", "获取存储池", ["storagePool"]) == 3
+    assert o._apply_semantic_rules("/space/storagePool/list", "获取存储池列表", ["storagePool"]) == -3
+    # 统计接口 -10（不限实体）
+    assert o._apply_semantic_rules("/rcc/dashboard/statistics/desktop", "统计", []) == -10
+    # network vs 镜像（Assigned 例外）
+    assert o._apply_semantic_rules("/x/image/list", "获取镜像", ["network"]) == -10
+    assert o._apply_semantic_rules("/rcc/classroom/image/getAssignedClusterAndNetwork", "获取已分配集群网络", ["network"]) == 0
+
+
+def test_semantic_match_regression():
+    """外置后关键语义匹配结果不回归"""
+    o = Orchestrator()
+    got = o._semantic_match("获取计算集群", prefer_create=False)
+    assert got and "cluster" in got.lower(), "「获取计算集群」应匹配 cluster 接口: %s" % got
+    got = o._semantic_match("获取存储池", prefer_create=False)
+    assert got and "storagepool" in got.lower(), "「获取存储池」应匹配 storagePool 接口: %s" % got
+
+
+def test_poll_node_name_resolved():
+    """polling 节点名（common_get_msgct_detail_info）→ 真实 url /rco/msgct/msg/detail"""
+    o = Orchestrator()
+    assert o.index.resolve("common_get_msgct_detail_info") == "/rco/msgct/msg/detail"
+    step = o._build_step("/rcc/classroom/delete", "删除教室")
+    assert (step.get("poll") or {}).get("api") == "/rco/msgct/msg/detail", \
+        "poll api 应解析为真实 url: %s" % step.get("poll")
+
+
+# ---------- 2. 文档驱动补数（fill 引擎） ----------
+
+class FakeExecutor(Executor):
+    """替身：http 按路径返回固定响应并记录调用"""
+    def __init__(self, responses=None, **kw):
+        super().__init__(**kw)
+        self.responses = responses or {}
+        self.calls = []
+
+    def http_request(self, method, path, body=None, ctx=None):
+        self.calls.append((method, path, body))
+        for prefix, resp in self.responses.items():
+            if path.startswith(prefix):
+                return (200, resp) if not isinstance(resp, tuple) else resp
+        return (200, {"status": "SUCCESS", "content": {}})
+
+
+def test_fill_platform_id_sources_and_cache():
+    ex = FakeExecutor({
+        "/rcc/classroom/getInfo": {"status": "SUCCESS", "content": {"platformId": "plat-1"}},
+    })
+    spec = {"field": "platformId", "when": "missing", "cache_by": "${body.crId}",
+            "sources": [{"api": "POST /rcc/classroom/getInfo",
+                         "body": {"classroomId": "${body.crId}"},
+                         "from": "$.content.platformId"}]}
+    ctx = {"params": {}, "steps": {}, "warnings": []}
+    body = {"crId": "cr-9"}
+    out = ex._apply_fill({"fill": [spec]}, body, ctx)
+    assert out.get("platformId") == "plat-1", "platformId 应从 getInfo 回查注入"
+    # 请求体里 ${body.crId} 已替换
+    assert ex.calls[0][2] == {"classroomId": "cr-9"}, "sources 请求体应替换 ${body.*}: %s" % ex.calls[0][2]
+    # 缓存：第二次同 crId 不再发请求
+    ex2_body = {"crId": "cr-9"}
+    ex._apply_fill({"fill": [spec]}, ex2_body, ctx)
+    assert len([c for c in ex.calls if c[1] == "/rcc/classroom/getInfo"]) == 1, "同 cache_by 键应命中缓存"
+
+
+def test_fill_exact_match_arr_static_and_append():
+    ex = FakeExecutor({
+        "/rcc/classroom/getInfo": {"status": "SUCCESS", "content": {"computeClusterId": "cl-7"}},
+    })
+    fills = [
+        {"field": "exactMatchArr", "when": "missing", "value": [
+            {"name": "imageRoleType", "valueArr": ["TEMPLATE"]},
+            {"name": "cbbImageType", "valueArr": ["VDI"]}]},
+        {"field": "exactMatchArr", "append_item": {"name": "clusterId", "valueArr": ["${fill}"]},
+         "sources": [{"api": "POST /rcc/classroom/getInfo",
+                      "body": {"classroomId": "${body.crId}"},
+                      "from": "$.content.computeClusterId"}]},
+    ]
+    ctx = {"params": {}, "steps": {}, "warnings": []}
+    body = {"crId": "cr-9"}
+    out = ex._apply_fill({"fill": fills}, body, ctx)
+    em = out.get("exactMatchArr")
+    assert isinstance(em, list) and em[0]["name"] == "imageRoleType", "静态条件应注入: %s" % em
+    assert em[-1] == {"name": "clusterId", "valueArr": ["cl-7"]}, "clusterId 条件应追加: %s" % em
+    # 已有同名条目时不重复追加
+    out2 = ex._apply_fill({"fill": fills}, dict(out), ctx)
+    assert len([e for e in out2["exactMatchArr"] if e["name"] == "clusterId"]) == 1, "同名条目不应重复追加"
+
+
+def test_fill_doc_driven_from_yetassign_doc():
+    """yetAssign 文档的 fill 声明可被引擎消费（platformId + exactMatchArr 全链路）"""
+    o = Orchestrator()
+    meta = o.index.get("/rcc/classroom/image/assignImage/yetAssign/list") or {}
+    fills = meta.get("fill") or []
+    assert fills, "yetAssign 文档缺少 fill 声明"
+    ex = FakeExecutor({
+        "/rcc/classroom/getInfo": {"status": "SUCCESS",
+                                   "content": {"platformId": "plat-1", "computeClusterId": "cl-7"}},
+    })
+    ctx = {"params": {}, "steps": {}, "warnings": []}
+    out = ex._apply_fill({"fill": fills}, {"crId": "cr-9"}, ctx)
+    assert out.get("platformId") == "plat-1"
+    em = out.get("exactMatchArr")
+    names = [e["name"] for e in em]
+    assert names == ["imageRoleType", "cbbImageType", "imageUsage", "clusterId"], "exactMatchArr 注入顺序异常: %s" % names
+
+
+# ---------- 3. 假绿修复 ----------
+
+def test_poll_404_warns_not_silent():
+    ex = FakeExecutor({"/common_get_msgct": (404, {})})
+    ctx = {"params": {}, "steps": {}, "warnings": [], "_last_data": {"content": {"taskId": "t-1"}}}
+    ok = ex._poll({"interval_ms": 1}, ctx)
+    assert ok is True, "默认模式 404 应按通过处理"
+    codes = [w["code"] for w in ctx.get("warnings", [])]
+    assert "poll_api_missing" in codes, "404 跳过应记录 warning: %s" % codes
+
+
+def test_poll_404_strict_fails():
+    ex = FakeExecutor({"/common_get_msgct": (404, {})})
+    ex.strict = True
+    ctx = {"params": {}, "steps": {}, "warnings": [], "_last_data": {"content": {"taskId": "t-1"}}}
+    try:
+        ex._poll({"interval_ms": 1}, ctx)
+        raise AssertionError("strict 模式 404 应抛 AssertionError")
+    except AssertionError:
+        pass
+
+
+def test_delete_poll_verified():
+    """删除等待验证：资源消失 → True；资源仍在 → 超时 False + warning"""
+    ex = FakeExecutor({"/rcc/classroom/select": {"status": "SUCCESS", "content": {"itemArr": []}}})
+    ctx = {"params": {}, "steps": {}, "warnings": []}
+    ok = ex._poll_classroom_delete("t-1", ctx, verify={"kind": "classroom", "id": "cr-1"},
+                                   timeout=3, interval=0.05)
+    assert ok is True, "资源已消失应确认删除成功"
+
+    ex2 = FakeExecutor({"/rcc/classroom/select": {"status": "SUCCESS",
+                                                   "content": {"itemArr": [{"classroomId": "cr-1"}]}}})
+    ctx2 = {"params": {}, "steps": {}, "warnings": []}
+    ok2 = ex2._poll_classroom_delete("t-1", ctx2, verify={"kind": "classroom", "id": "cr-1"},
+                                     timeout=1, interval=0.05)
+    assert ok2 is False, "资源仍存在且超时应返回 False"
+    codes = [w["code"] for w in ctx2.get("warnings", [])]
+    assert "delete_timeout" in codes, "删除超时应记录 warning: %s" % codes
+
+
+# ---------- 4. 引用链接 ----------
+
+def _run_channel_b(o, intent):
+    steps, seen = [], set()
+    for s in intent["steps"]:
+        api = s.get("api", "")
+        if not o.index.get(api):
+            continue
+        o._expand_setup(api, steps, seen)
+        if api not in seen:
+            steps.append(o._build_step_named(api, s.get("step_name", ""), "", s.get("section", "action")))
+            seen.add(api)
+    plan = {"id": "t", "steps": steps, "assertions": [], "sections": {"前置": [], "操作": [], "预期": []}}
+    return o.validate_plan(plan)
+
+
+def test_prev_refs_linked():
+    o = Orchestrator()
+    intent = {"steps": [
+        {"api": "/rcc/classroom/strategy/create", "step_name": "createStrategy", "section": "pre"},
+        {"api": "/rcc/classroom/create", "step_name": "create_classroom", "section": "pre"},
+        {"api": "/rcc/classroom/seat/batchCreate", "step_name": "create_seat", "section": "pre"},
+        {"api": "/rcc/space/classroom/cloudDesktop/restart", "step_name": "restart", "section": "action"},
+    ]}
+    plan = _run_channel_b(o, intent)
+    all_names = [s.get("step_name") for s in plan["steps"]]
+    step_names = set(all_names)
+    assert len(all_names) == len(step_names), "step_name 应唯一（产出桶键）: %s" % all_names
+    assert step_names, "所有步骤应有 step_name"
+    flat_broken = []
+    for st in plan["steps"]:
+        def walk(v):
+            if isinstance(v, str):
+                for m in re.finditer(r"\$\{prev\.([\w.]+)", v):
+                    ref = m.group(1)
+                    if ".output." not in ref:
+                        flat_broken.append(ref)
+                    else:
+                        assert ref.split(".")[0] in step_names, \
+                            "引用断裂: %s -> %s" % (st.get("step_name"), v)
+            elif isinstance(v, dict):
+                for x in v.values():
+                    walk(x)
+            elif isinstance(v, list):
+                for x in v:
+                    walk(x)
+        for vv in (st.get("body") or {}).values():
+            walk(vv)
+    assert not flat_broken, "存在未升格的平铺引用: %s" % flat_broken
+
+
+def test_prev_ref_rewrite_warned():
+    """跨文档步骤名不一致（select_classroom_id → query_classroom）应被改写并记 warns"""
+    o = Orchestrator()
+    plan = _run_channel_b(o, {"steps": [
+        {"api": "/rcc/classroom/create", "step_name": "create_classroom", "section": "pre"},
+        {"api": "/rcc/space/classroom/cloudDesktop/restart", "step_name": "restart", "section": "action"},
+    ]})
+    warns = plan.get("warns") or []
+    rewritten = [w for w in warns if w.get("code") == "ref_rewritten"]
+    assert rewritten, "跨文档步骤名不一致应产生 ref_rewritten warns: %s" % warns
+    # 改写目标真实存在
+    step_names = {s.get("step_name") for s in plan["steps"]}
+    for w in rewritten:
+        assert w["to"].split(".output.")[0] in step_names, \
+            "改写目标不存在: %s" % w["to"]
+    # 改写后正文中不再引用旧步骤名
+    for st in plan["steps"]:
+        for v in (st.get("body") or {}).values():
+            if isinstance(v, dict) and isinstance(v.get("value"), str):
+                for w in rewritten:
+                    assert ("${prev.%s.output" % w["ref"].split(".output.")[0]) not in v["value"], \
+                        "旧引用未改写干净: %s" % v["value"]
+
+
+def main():
+    only = sys.argv[1] if len(sys.argv) > 1 else ""
+    tests = [
+        ("规则库-semantic_rules 加载", test_semantic_rules_loaded),
+        ("规则库-语义冲突惩罚", test_semantic_penalty),
+        ("规则库-侧别偏好", test_semantic_side_preference),
+        ("规则库-匹配不回归", test_semantic_match_regression),
+        ("规则库-轮询节点名解析", test_poll_node_name_resolved),
+        ("fill-platformId 回查+缓存", test_fill_platform_id_sources_and_cache),
+        ("fill-exactMatchArr 静态+追加", test_fill_exact_match_arr_static_and_append),
+        ("fill-yetAssign 文档全链路", test_fill_doc_driven_from_yetassign_doc),
+        ("假绿-poll 404 记 warning", test_poll_404_warns_not_silent),
+        ("假绿-poll 404 strict 失败", test_poll_404_strict_fails),
+        ("假绿-删除存在性验证", test_delete_poll_verified),
+        ("引用-plan 期全链接", test_prev_refs_linked),
+        ("引用-改写记录 warns", test_prev_ref_rewrite_warned),
+    ]
+    print("=== 四项重构回归测试 ===\n")
+    for name, fn in tests:
+        if only and only not in name:
+            continue
+        check(name, fn)
+    print("\n结果: %d 通过, %d 失败" % (len(PASS), len(FAIL)))
+    if FAIL:
+        for name, err in FAIL:
+            print("  ❌ %s: %s" % (name, err[:200]))
+        sys.exit(1)
+    print("全部通过 ✅")
+
+
+if __name__ == "__main__":
+    main()

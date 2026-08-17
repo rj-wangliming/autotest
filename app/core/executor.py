@@ -236,6 +236,12 @@ class Executor:
             ctx["context"] = {"token": ctx["token"]}
             return {"status": "SUCCESS", "content": {"token": ctx["token"]}}
 
+        # 特殊处理：若 /rcc/classroom/image/ 路径降级为空结果，跳过 image/create 步骤
+        # （CBB 无可用资源时，image/create 会因 plusImageId=null 报错，直接跳过更合理）
+        if ctx.get("_image_empty_list") and re.match(r"^/rcc/classroom/image/(student|teacher)/create$", path):
+            self.log("warning", "[skip] get_image 降级为空镜像列表，跳过 %s" % api)
+            return {"status": "SUCCESS", "content": {"message": "skipped (no available image)"}}
+
         # 幂等 reuse：存在同名直接复用、跳过创建（用于策略/镜像等环境已有资源）
         if step.get("idempotent") == "reuse" and step.get("reuse_query"):
             reused = self._try_reuse(step, ctx)
@@ -260,6 +266,7 @@ class Executor:
 
         # 文档驱动补数（接口文档 front-matter fill 声明）：platformId 缺失回查、
         # exactMatchArr 注入等由文档声明驱动，executor 只提供通用补数引擎
+        # （远端 a0382a6 的 executor 硬编码注入方案被 fill 声明方案取代）
         body = self._apply_fill(step, body, ctx)
 
         status, data = self.http_request(method, path, body or None, ctx)

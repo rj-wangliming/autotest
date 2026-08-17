@@ -144,7 +144,7 @@ upstream:
   produces: $.content.itemArr[*].id
   purpose: 计算集群ID（推断：编辑桌面配置时选择集群）
 - api: POST /space/storagePool/list
-  produces: $.content.itemArr[*].id
+  produces: $.content.items[*].storagePoolId
   purpose: 存储池ID（推断：编辑桌面配置时选择存储池）
 downstream:
 - api: 内部调用:rcc/RccSpaceAPI#updateSpaceAndSpaceImage

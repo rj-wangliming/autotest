@@ -625,9 +625,14 @@ class Orchestrator:
         else:
             extract = {}
         dep_meta = self.index.get(dep_api) or {}          # setup 项对应接口的 polling
+        dep_poll = dep_meta.get("polling") or None
+        if isinstance(dep_poll, dict) and dep_poll.get("api") and not str(dep_poll["api"]).startswith("/"):
+            resolved = self.index.resolve(dep_poll["api"])
+            if resolved:
+                dep_poll = dict(dep_poll, api=resolved)
         step = {"step_name": sname, "name": (item.get("purpose") or sname)[:24],
                 "api": dep_api, "method": method, "body": body,
-                "extract": extract, "poll": dep_meta.get("polling") or None,
+                "extract": extract, "poll": dep_poll,
                 "section": "pre"}
         if base_step.get("fill"):
             step["fill"] = base_step["fill"]
@@ -764,8 +769,13 @@ class Orchestrator:
                         extract[it["var"]] = it["jsonpath"]
                 if extract:
                     break
-        # polling：接口 polling 配置
+        # polling：接口 polling 配置（api 为节点名时经索引别名解析为真实 url，
+        # 如 common_get_msgct_detail_info → /rco/msgct/msg/detail，避免执行期 404）
         poll = meta.get("polling") or None
+        if isinstance(poll, dict) and poll.get("api") and not str(poll["api"]).startswith("/"):
+            resolved = self.index.resolve(poll["api"])
+            if resolved:
+                poll = dict(poll, api=resolved)
         step = {"name": item[:20], "api": api, "body": body, "extract": extract, "poll": poll}
         # 文档驱动补数声明（executor._apply_fill 执行期消费：字段缺失时按声明查接口取值）
         if meta.get("fill"):
@@ -784,8 +794,9 @@ class Orchestrator:
                 if s.get("reuse_query"):
                     step["reuse_query"] = s["reuse_query"]
                 break
-        # 特殊处理：desktop/list 的最小查询条件（classroomId 过滤）已迁移到该接口文档
-        # front-matter 的 fill 声明（文档驱动补数），编排器不再硬编码
+        # 特殊处理：desktop/list 的最小查询条件（classroomId 过滤）与 yetAssign 的
+        # exactMatchArr 注入均已迁移到接口文档 front-matter 的 fill 声明（文档驱动补数），
+        # 编排器不再硬编码（远端 a0382a6 的代码注入方案被 fill 声明方案取代）
         return step
 
     def _collect_produce(self, meta):

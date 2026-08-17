@@ -38,6 +38,7 @@ class ApiIndex:
         self.api_map = {}          # url -> metadata dict
         self.inverted = {}         # keyword -> [api_url]
         self.dag = {}              # api_url -> [upstream api_urls]
+        self.alias = {}            # 节点名（文件名去 .md）-> url（polling/setup 按节点名引用时解析）
         self.lock = threading.Lock()
         self._loaded = False
 
@@ -49,6 +50,7 @@ class ApiIndex:
             self.api_map = {}
             self.inverted = {}
             self.dag = {}
+            self.alias = {}
             for fname in sorted(os.listdir(self.md_dir)):
                 if not fname.endswith(".md"):
                     continue
@@ -89,6 +91,8 @@ class ApiIndex:
                         "fill": fm.get("fill", []),
                     }
                     self.api_map[url] = meta
+                    # 节点名别名（文件名去扩展名）：polling/setup 以节点名引用接口时解析为真实 url
+                    self.alias[os.path.splitext(fname)[0]] = url
                     # 倒排索引
                     for kw in self._keywords(fm, url):
                         self.inverted.setdefault(kw, [])
@@ -130,6 +134,19 @@ class ApiIndex:
     # ---- 检索服务 ----
     def get(self, url):
         return self.api_map.get(url)
+
+    def resolve(self, name):
+        """接口引用解析：url 原样返回；节点名（文件名，如 common_get_msgct_detail_info）
+        经别名表解析为真实 url；未知名返回 None"""
+        if not name:
+            return None
+        name = str(name).strip()
+        if name.startswith("/"):
+            return name if name in self.api_map else None
+        norm = name.split(" ", 1)[-1] if " " in name else name
+        if norm in self.alias:
+            return self.alias[norm]
+        return norm if norm in self.api_map else None
 
     def search(self, keyword, limit=50):
         """模糊语义检索（倒排）"""

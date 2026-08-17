@@ -279,6 +279,39 @@ params:
 - 登录响应 DTO 在外部 jar（无法从 RCC-Space 源码验证）→ 引擎用配置化 token 路径，规避文档无法覆盖外部接口的盲区
 - 会话过期自动重登，提升长链路用例稳定性
 
+## 11.1 轮询约定（异步批任务公共轮询接口 common_get_msgct_detail_info）
+
+异步批任务接口（create/delete/edit 等）提交后返回 `$.content.taskId`，通过轮询接口判定终态。轮询真实接口为 **`POST /rco/msgct/msg/detail`**（消息中心，swagger operationId `msgDetail`），**完整接口文档见 `common_get_msgct_detail_info.md`**，本节为编排引用约定。
+
+### 引用格式（63 个异步接口文档 polling 段）
+
+```yaml
+polling:
+  api: common_get_msgct_detail_info
+  # 公共轮询接口：POST /rco/msgct/msg/detail（消息中心），完整文档见 common_get_msgct_detail_info.md
+  method: POST
+  params:
+    msgrelationid: ${content.taskId}
+  interval_ms: 2000
+  timeout_ms: 120000
+  terminal_states:
+    success:
+    - SUCCESS
+    - PARTIAL_SUCCESS
+    failure:
+    - FAILURE
+```
+
+### 约定
+
+| 项 | 约定 |
+|---|---|
+| `api` | 编排节点名 `common_get_msgct_detail_info`（引擎默认以此直发路径，依赖环境网关/mock 适配；环境暴露真实接口时可写 `/rco/msgct/msg/detail`） |
+| `msgrelationid` | 批任务 taskId：多数文档 `${content.taskId}`；`rcc_classroom_cmrcef_lesson_start/end` 为 `${content.lessonTaskId}` |
+| 真实接口参数 | `msgRelationId`（必填）+ `msgType`（必填，枚举 `BATCH_MSG`）；引擎当前仅传 `msgrelationid`，若后端严格校验 `msgType` 需补充 |
+| 轮询节奏 | `interval_ms` 2000、`timeout_ms` 120000（引擎默认超时 240000） |
+| 终态判定 | `$.content.taskStatus`（兼容 `$.content.status`）命中 success/failure 列表；连续 3 次 404 或 content 为空跳过轮询 |
+
 
 ## 12. 用例输入模板（降低 AI 解析歧义）
 
