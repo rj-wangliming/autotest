@@ -36,6 +36,15 @@ setup:
         valueArr:
         - ${param.classroom_name}
         matchRule: EQ
+# 文档驱动补数：无任何过滤条件时（matchArr 参数缺省被清空），按教室过滤，
+# 避免全量查询命中其他教室的桌面
+fill:
+- field: exactMatchArr
+  when: missing
+  value:
+  - name: classroomId
+    valueArr:
+    - "${prev.query_classroom.output.classroomId}"
 request:
   dto: PageQueryRequest
   body:

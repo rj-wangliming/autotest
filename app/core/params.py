@@ -76,6 +76,13 @@ def materialize_naming(params, log=None):
 
 
 # ---------- 参数解析 ----------
+def _note_ref_fallback(ctx, ref, step_name, field):
+    """记录 ${prev.*} 模糊回退命中（executor 汇入 result.warnings）"""
+    if isinstance(ctx, dict):
+        ctx.setdefault("_ref_warnings", []).append(
+            "引用 %s 未精确命中，模糊回退到步骤 %s 的产出 %s" % (ref, step_name, field))
+
+
 def _lookup(kind, name, ctx, idx=None):
     """取引用原始值（保留类型）；idx 支持 ${param.x[N]} / ${prev.step.output.y[N]} 显式索引；
     param 值为列表且 ctx 有 _batch_index 时，隐式取当前批量索引（批量展开用）"""
@@ -98,15 +105,19 @@ def _lookup(kind, name, ctx, idx=None):
             v = (ctx.get("steps") or {}).get(sname, {}).get(fld, "")
             # 模糊回退：sname 不存在时，查找所有步骤中产出该 field 的步骤
             # 注意：产出 key 可能因命名规范化使用下划线（如 classroom_id vs classroomId）
+            # 回退属兜底路径（编排期 _link_prev_refs 已应改写正确步骤名），
+            # 命中时记录告警，由 executor 汇入 result.warnings，不再静默
             if v == "" and fld in ("classroomId",):
                 for sn, bucket in (ctx.get("steps") or {}).items():
                     if fld in bucket:
                         v = bucket[fld]
+                        _note_ref_fallback(ctx, name, sn, fld)
                         break
                     # 不区分大小写 + 下划线匹配
                     for bk in bucket:
                         if bk.lower().replace("_", "") == fld.lower().replace("_", ""):
                             v = bucket[bk]
+                            _note_ref_fallback(ctx, name, sn, bk)
                             break
                     if v != "":
                         break

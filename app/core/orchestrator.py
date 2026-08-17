@@ -35,7 +35,8 @@ class Orchestrator:
                     fm = yaml.safe_load(text.split("---\n", 2)[1])
                     if isinstance(fm, dict):
                         rules = {k: v for k, v in fm.items()
-                                 if k in ("resource_chains", "state_prereq", "case_prereq")}
+                                 if k in ("resource_chains", "state_prereq", "case_prereq",
+                                          "semantic_rules")}
                     break
                 except Exception as e:
                     print(f"[orchestrator] business_rules.md 解析失败: {e}")
@@ -140,11 +141,81 @@ class Orchestrator:
         # 3b. 查询产物后置（desktop/list 等查询移到资源链完成后）
         steps = self._fix_query_after_chain(steps)
 
+        # 4. 引用链接：${prev.*} 统一改写到 plan 内真实步骤名（缺省 step_name 补齐），
+        #    断裂引用在编排期暴露（warns），不再依赖执行期模糊回退静默兜底
+        self._link_prev_refs(steps, warns)
+
         plan["steps"] = steps
         plan["rule_added"] = added
         if warns:
             plan["warns"] = warns
         return plan
+
+    def _link_prev_refs(self, steps, warns):
+        """plan 期引用链接（确定性，非 AI）：
+        1. 所有步骤补齐确定 step_name（缺省按 URL 末段生成，执行期产出桶键不再漂移）
+        2. ${prev.X.output.Y} 的 X 不在 plan 步骤名中 / 平铺 ${prev.Y} 有产出者
+           → 改写为「最近的、产出 Y 的前序步骤」标准三段式，warns 记录改写
+        3. 无产出者的三段式引用 → warns 记录 ref_unresolved（执行期将解析为空）
+        改写后执行期 _lookup 精确命中，params 模糊回退仅作最后兜底（会告警）"""
+        used = set()
+        for st in steps:
+            if not st.get("step_name"):
+                st["step_name"] = self._auto_step_name(st.get("api", ""))
+            base = st["step_name"]
+            if base in used:  # URL 末段生成的默认名可能撞名（产出桶键冲突）→ 追加序号
+                i = 2
+                while "%s_%d" % (base, i) in used:
+                    i += 1
+                st["step_name"] = "%s_%d" % (base, i)
+            used.add(st["step_name"])
+        producers = {}      # 产出变量名 -> 最近产出步骤名（按 plan 顺序向后推进）
+        norm_producers = {}  # 归一键（小写去下划线）-> 步骤名（classroomId ≈ classroom_id）
+
+        def norm(s):
+            return str(s).lower().replace("_", "")
+
+        for st in steps:
+            sname = st.get("step_name") or ""
+            if isinstance(st.get("body"), dict):
+                st["body"] = self._rewrite_body_refs(
+                    st["body"], used, producers, norm_producers, sname, warns)
+            for var in (st.get("extract") or {}):
+                if isinstance(var, str):
+                    producers[var] = sname
+                    norm_producers[norm(var)] = sname
+
+    def _rewrite_body_refs(self, obj, names, producers, norm_producers, sname, warns):
+        """递归改写 body 中的 ${prev.*} 引用（见 _link_prev_refs）"""
+        if isinstance(obj, str):
+            def repl(m):
+                ref, idx = m.group(1), m.group(2) or ""
+                if ".output." in ref:
+                    target, fld = ref.split(".output.", 1)
+                    if target in names:
+                        return m.group(0)
+                    p = producers.get(fld) or norm_producers.get(fld.lower().replace("_", ""))
+                    if p:
+                        warns.append({"code": "ref_rewritten", "step": sname, "ref": ref,
+                                      "to": "%s.output.%s" % (p, fld),
+                                      "hint": "引用步骤 %s 不在 plan 中，已改写为产出 %s 的步骤 %s" % (target, fld, p)})
+                        return "${prev.%s.output.%s%s}" % (p, fld, idx)
+                    warns.append({"code": "ref_unresolved", "step": sname, "ref": ref,
+                                  "hint": "引用 %s 无产出步骤，执行期将解析为空" % ref})
+                    return m.group(0)
+                # 平铺 ${prev.Y}：有产出者 → 升格标准三段式；无产出者保留（执行期 ctx 顶层查找，兼容 token 等）
+                p = producers.get(ref) or norm_producers.get(ref.lower().replace("_", ""))
+                if p:
+                    return "${prev.%s.output.%s%s}" % (p, ref, idx)
+                return m.group(0)
+            return re.sub(r"\$\{prev\.([\w.]+?)(?:\[(\d+)\])?\}", repl, obj)
+        if isinstance(obj, dict):
+            return {k: self._rewrite_body_refs(v, names, producers, norm_producers, sname, warns)
+                    for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [self._rewrite_body_refs(v, names, producers, norm_producers, sname, warns)
+                    for v in obj]
+        return obj
 
     def _ensure_case_prereq(self, steps, plan, added):
         """用例前置条件达成：前置文本命中 case_prereq.keyword → 若 plan 无达成步骤则自动补
@@ -558,6 +629,8 @@ class Orchestrator:
                 "api": dep_api, "method": method, "body": body,
                 "extract": extract, "poll": dep_meta.get("polling") or None,
                 "section": "pre"}
+        if base_step.get("fill"):
+            step["fill"] = base_step["fill"]
         if item.get("idempotent"):
             step["idempotent"] = item["idempotent"]
             if item.get("delete_api"):
@@ -694,6 +767,9 @@ class Orchestrator:
         # polling：接口 polling 配置
         poll = meta.get("polling") or None
         step = {"name": item[:20], "api": api, "body": body, "extract": extract, "poll": poll}
+        # 文档驱动补数声明（executor._apply_fill 执行期消费：字段缺失时按声明查接口取值）
+        if meta.get("fill"):
+            step["fill"] = meta.get("fill")
         # 幂等：接口 setup 中若有【该接口自身】的步骤带 idempotent，继承
         # （仅 api 匹配，避免 create_classroom 等前置项泄漏给主接口造成重复调用）
         for s in meta.get("setup") or []:
@@ -708,30 +784,8 @@ class Orchestrator:
                 if s.get("reuse_query"):
                     step["reuse_query"] = s["reuse_query"]
                 break
-        # 特殊处理：desktop/list 若无 body 内容，注入最小查询条件（classroomId）
-        if api == "/rcc/classroom/desktop/list" and not body:
-            step["body"] = {
-                "exactMatchArr": {
-                    "value": [
-                        {"name": "classroomId", "valueArr": ["${prev.classroomQuery.output.classroomId}"]}
-                    ]
-                }
-            }
-        # 特殊处理：desktop/list 若已有 body 但 matchArr 的 valueArr 为空，注入最小查询条件
-        elif api == "/rcc/classroom/desktop/list" and "matchArr" in body:
-            ma_val = body["matchArr"]
-            if isinstance(ma_val, dict):
-                mv = ma_val.get("value")
-                if mv is None or (isinstance(mv, list) and len(mv) == 0):
-                    body["exactMatchArr"] = {
-                        "value": [
-                            {"name": "classroomId", "valueArr": ["${prev.classroomQuery.output.classroomId}"]}
-                        ]
-                    }
-        # 特殊处理：assignImage/yetAssign/list 注入 exactMatchArr 过滤条件
-        # （与 pytest 框架 common_get_classroom_yet_assign_lesson_image_list 完全一致，
-        #  避免缺过滤条件时后端走不同分支导致 internal_error）
-        # 注意：clusterId 获取逻辑在 executor 中执行（orchestrator 无法直接调 HTTP）
+        # 特殊处理：desktop/list 的最小查询条件（classroomId 过滤）已迁移到该接口文档
+        # front-matter 的 fill 声明（文档驱动补数），编排器不再硬编码
         return step
 
     def _collect_produce(self, meta):
@@ -795,13 +849,14 @@ class Orchestrator:
                       "page", "limit", "rows", "sort", "sortArr")
         if field in gen_fields:
             return "generated"
-        # 3. setup extract 产出（prev 变量）
-        for s in meta.get("setup") or []:
+        # 3. setup extract 产出（prev 变量）：引用「该 setup 步骤」的标准三段式
+        for s in meta.get("setup", []):
             ex = s.get("extract") or {}
             if isinstance(ex, dict):
                 for var in ex:
                     if var.lower() == snake or var.lower() == field.lower():
-                        return "${prev." + var + "}"
+                        sname = s.get("name") or self._auto_step_name(s.get("api", ""))
+                        return "${prev.%s.output.%s}" % (sname, var)
         return None
 
     # ---------- 文档语义驱动匹配（灵活，覆盖全部接口文档） ----------
@@ -897,6 +952,31 @@ class Orchestrator:
                 actions.extend(act_urls)
         return actions
 
+    def _apply_semantic_rules(self, url, name, entities):
+        """semantic_rules 打分修正（business_rules.md 数据驱动）：
+        命中 if_entities / url_any / name_any（且不命中 name_none）的规则叠加 delta。
+        语义冲突惩罚、侧别偏好等规则只在规则库维护，代码保持通用。"""
+        delta = 0
+        for r in self.rules.get("semantic_rules", []) or []:
+            if not isinstance(r, dict):
+                continue
+            ents = [str(e) for e in (r.get("if_entities") or [])]
+            if ents and not any(e in entities for e in ents):
+                continue
+            url_any = [str(u) for u in (r.get("url_any") or [])]
+            if url_any and not any(u.lower() in url.lower() for u in url_any):
+                continue
+            name_any = [str(n) for n in (r.get("name_any") or [])]
+            if name_any and not any(n in name for n in name_any):
+                continue
+            name_none = [str(n) for n in (r.get("name_none") or [])]
+            if name_none and any(n in name for n in name_none):
+                continue
+            if not url_any and not name_any:
+                continue
+            delta += int(r.get("delta", 0))
+        return delta
+
     def _semantic_match(self, item, prefer_create, drop_query=False):
         """通用语义匹配：例句动作词+实体词 → 接口 URL 打分"""
         # 提取例句中的动作词与实体词
@@ -917,17 +997,9 @@ class Orchestrator:
         for meta in self.index.all():
             url = meta.get("url", "")
             score = 0
-            # 反匹配：接口名称与步骤实体语义冲突时大幅扣分
             name = meta.get("name", "")
-            if "cluster" in entities and ("存储池" in name or "StoragePool" in name or "storagePool" in name):
-                score -= 10
-            if "storagePool" in entities and ("集群" in name or "Cluster" in name or "cluster" in name):
-                score -= 10
-            if "network" in entities and ("镜像" in name or "Image" in name or "image" in name) and "Assigned" not in name:
-                score -= 10
-            # 反匹配：dashboard/statistics 不是业务查询接口
-            if "/dashboard/statistics/" in url:
-                score -= 10
+            # 规则库修正（semantic_rules）：语义冲突惩罚、RDCD/Space 侧别偏好等
+            score += self._apply_semantic_rules(url, name, entities)
             # 动作命中：URL 含动作段（大小写不敏感，匹配 vdiLocalDisk/clearTciLocalDisk 等驼峰段）
             for a in actions:
                 if a.lower() in url.lower():
@@ -936,17 +1008,6 @@ class Orchestrator:
             for e in entities:
                 if e.lower() in url.lower():
                     score += 2
-            # RDCD 侧接口优先于 Space 侧（RDCD 侧不穿透 CBB，更稳定）
-            if "cluster" in entities:
-                if "/rco/user/obtainComputeClusterList" in url:
-                    score += 5
-                elif "/space/cluster/" in url:
-                    score -= 3
-            if "storagePool" in entities:
-                if "/rcc/" in url:
-                    score += 3
-                elif "/space/storagePool/" in url:
-                    score -= 3
             # 创建类优先 create 结尾（前置创建场景）
             if prefer_create and (url.endswith("/create") or url.endswith("/add")):
                 score += 1

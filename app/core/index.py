@@ -86,6 +86,7 @@ class ApiIndex:
                         "upstream": fm.get("upstream", []),
                         "downstream": fm.get("downstream", []),
                         "idempotency": fm.get("idempotency", {}),
+                        "fill": fm.get("fill", []),
                     }
                     self.api_map[url] = meta
                     # 倒排索引

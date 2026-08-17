@@ -14,7 +14,7 @@ import time
 from urllib.parse import urlparse
 
 from .jsonpath import jsonpath_get
-from .params import resolve_body, gen_config_value, to_snake, materialize_naming
+from .params import resolve_body, resolve_value, gen_config_value, to_snake, materialize_naming
 from .aes_crypto import encrypt
 
 # 目标环境为自签 HTTPS 证书，禁用 SSL 证书验证告警（verify=False 时的 InsecureRequestWarning）
@@ -50,10 +50,21 @@ class Executor:
         "seatIdArr": "/rcc/classroom/seat/delete",
     }
 
-    def __init__(self, base_url=None, log_cb=None):
+    def __init__(self, base_url=None, log_cb=None, strict=False):
         self.base_url = (base_url or os.environ.get("TEST_BASE_URL", "http://127.0.0.1:8080")).rstrip("/")
         self.log_cb = log_cb or (lambda level, msg: None)
+        # strict=True：轮询接口缺失/删除无法验证等「无法确认结果」的场景直接判失败；
+        # 默认 False：降级为通过 + 记录 warning（结果 JSON 的 warnings 数组可查，不再静默假绿）
+        self.strict = strict
         self._session = None  # requests.Session：维持登录 cookie 会话（webmvckit 会话认证）
+
+    def _warn(self, ctx, code, msg):
+        """记录执行期 warning（进入 ctx['warnings'] → 最终 result['warnings']，并落日志）"""
+        entry = {"code": code, "message": msg}
+        if isinstance(ctx, dict):
+            ctx.setdefault("warnings", []).append(entry)
+        self.log("warning", "[%s] %s" % (code, msg))
+        return entry
 
     def _get_once_token(self, ctx):
         """获取 X-One-Time-Token header 值。
@@ -225,12 +236,6 @@ class Executor:
             ctx["context"] = {"token": ctx["token"]}
             return {"status": "SUCCESS", "content": {"token": ctx["token"]}}
 
-        # 特殊处理：若 /rcc/classroom/image/ 路径降级为空结果，跳过 image/create 步骤
-        # （CBB 无可用资源时，image/create 会因 plusImageId=null 报错，直接跳过更合理）
-        if ctx.get("_image_empty_list") and re.match(r"^/rcc/classroom/image/(student|teacher)/create$", path):
-            self.log("warning", "[skip] get_image 降级为空镜像列表，跳过 %s" % api)
-            return {"status": "SUCCESS", "content": {"message": "skipped (no available image)"}}
-
         # 幂等 reuse：存在同名直接复用、跳过创建（用于策略/镜像等环境已有资源）
         if step.get("idempotent") == "reuse" and step.get("reuse_query"):
             reused = self._try_reuse(step, ctx)
@@ -253,40 +258,9 @@ class Executor:
                 self.log("info", "[idempotent] 创建成功或已存在")
             return data
 
-        # 特殊处理：assignImage/yetAssign/list 若 crId 有值但 platformId 缺失，
-        # 自动查询教室详情获取 platformId（若教室详情未返回则 fallback 查询教室镜像列表获取）
-        if "/image/assignImage/yetAssign/list" in path and body and body.get("crId") and not body.get("platformId"):
-            body = self._fill_platform_id_for_image(body, ctx)
-
-        # 特殊处理：assignImage/yetAssign/list 注入 exactMatchArr 过滤条件
-        # 与 pytest 框架 common_get_classroom_yet_assign_lesson_image_list 完全一致，
-        # 避免缺过滤条件时后端走不同分支导致 internal_error
-        if "/image/assignImage/yetAssign/list" in path and body and body.get("crId"):
-            # 已存在 exactMatchArr 则跳过（避免重复注入）
-            has_exact = "exactMatchArr" in body
-            if not has_exact:
-                cr_id = body.get("crId")
-                exact_match = [
-                    {"name": "imageRoleType", "valueArr": ["TEMPLATE"]},
-                    {"name": "cbbImageType", "valueArr": ["VDI"]},
-                    {"name": "imageUsage", "valueArr": ["DESK"]},
-                ]
-                # 从教室详情获取 clusterId
-                cluster_id = None
-                try:
-                    info_status, info_data = self.http_request(
-                        "POST", "/rcc/classroom/getInfo",
-                        {"classroomId": cr_id}, ctx)
-                    cluster_id = jsonpath_get(info_data, "$.content.computeClusterId")
-                except Exception as e:
-                    self.log("warning", "[exactMatchArr] 获取 clusterId 失败: %s" % e)
-                if cluster_id:
-                    exact_match.append({"name": "clusterId", "valueArr": [cluster_id]})
-                    self.log("info", "[exactMatchArr] 注入 exactMatchArr (clusterId=%s)" % cluster_id)
-                else:
-                    self.log("warning", "[exactMatchArr] 未获取到 clusterId，不注入")
-                # 注入（始终注入基础条件，即使没有 clusterId）
-                body["exactMatchArr"] = {"value": exact_match}
+        # 文档驱动补数（接口文档 front-matter fill 声明）：platformId 缺失回查、
+        # exactMatchArr 注入等由文档声明驱动，executor 只提供通用补数引擎
+        body = self._apply_fill(step, body, ctx)
 
         status, data = self.http_request(method, path, body or None, ctx)
 
@@ -309,71 +283,107 @@ class Executor:
         self._assert_step(step, data)
         return data
 
-    def _fill_platform_id_for_image(self, body, ctx):
-        """为 /image/assignImage/yetAssign/list 补齐 platformId。
+    # ---------- 文档驱动补数（fill 声明引擎） ----------
+    def _apply_fill(self, step, body, ctx):
+        """按 step.fill 声明补全请求体（声明来自接口文档 front-matter fill 节）。
 
-        根因：Java 后端 ClassroomImageServiceImpl.getImageState() 查 CBB 镜像需要
-        platformId（pageSearchRequest.setPlatformId(request.getPlatformId())），
-        但 ClassroomDTO（query_classroom/select 返回）和 ClassroomInfoDetailDTO
-        （query_classroom/getInfo 返回）都不含 platformId 字段，
-        导致编排从未注入。
-
-        策略：依次尝试
-        1. 用 crId 查询教室详情 /rcc/classroom/getInfo → 提取 platformId
-        2. 若 getInfo 未返回，查询教室镜像列表 /rcc/classroom/image/list → 提取 platformId
-        3. 若仍无值，查询平台列表 → 取第一个 platformId
-        查询结果缓存，同一 crId 不再重复查询。
+        每条声明：{field, when: missing, value?, append_item?, sources?, cache_by?}
+        - value：字段缺失时注入静态结构（支持 ${prev.*}/${param.*}，先解析再注入）
+        - sources：字段缺失时依次调用声明接口取值（from jsonpath，from_fallback 兜底），
+          取到非空值注入；cache_by 声明缓存键（如 ${body.crId}），同键不重复查询
+        - append_item：向列表字段追加动态条目（sources 取到值才追加，值经 ${fill} 引用；
+          列表中已有同名 name 条目则跳过）
+        ${body.X} 引用当前已解析请求体的字段值。
         """
-        cr_id = body.get("crId")
-        if not cr_id:
+        fills = step.get("fill") or []
+        if not isinstance(body, dict) or not isinstance(fills, list):
             return body
-        # 缓存：同一 crId 不再重复查询
-        plat_cache_key = "_platform_id_cache"
-        plat_cache = ctx.setdefault(plat_cache_key, {})
-        if cr_id in plat_cache:
-            body["platformId"] = plat_cache[cr_id]
-            self.log("info", "[platformId] 从缓存注入 platformId=%s (crId=%s)" % (plat_cache[cr_id], cr_id))
-            return body
-        # 依次尝试三种来源
-        plat_id = None
-        # 来源1：教室详情
-        self.log("info", "[platformId] crId=%s 缺失 platformId，尝试查询教室详情" % cr_id)
-        try:
-            status, data = self.http_request("POST", "/rcc/classroom/getInfo", {"classroomId": cr_id}, ctx)
-            plat_id = jsonpath_get(data, "$.content.platformId")
-        except Exception as e:
-            self.log("warning", "[platformId] 查询教室详情失败: %s" % e)
-        # 来源2：教室镜像列表
-        if not plat_id:
-            self.log("info", "[platformId] 教室详情无 platformId，尝试查询教室镜像列表")
-            try:
-                status, data = self.http_request("POST", "/rcc/classroom/image/list",
-                                                 {"crId": cr_id}, ctx)
-                plat_id = jsonpath_get(data, "$.content.itemArr[0].platformId")
-                if plat_id:
-                    self.log("info", "[platformId] 从镜像列表获取 platformId=%s" % plat_id)
-            except Exception as e:
-                self.log("warning", "[platformId] 查询教室镜像列表失败: %s" % e)
-        # 来源3：平台列表
-        if not plat_id:
-            self.log("info", "[platformId] 镜像列表无 platformId，尝试查询平台列表")
-            try:
-                status, data = self.http_request("POST", "/space/platform/list",
-                                                 {"searchKeyword": ""}, ctx)
-                # 平台列表返回中 platformId 字段名可能是 platformId 或 id
-                plat_id = jsonpath_get(data, "$.content.itemArr[0].platformId")
-                if not plat_id:
-                    plat_id = jsonpath_get(data, "$.content.itemArr[0].id")
-                if plat_id:
-                    self.log("info", "[platformId] 从平台列表获取 platformId=%s" % plat_id)
-            except Exception as e:
-                self.log("warning", "[platformId] 查询平台列表失败: %s" % e)
-        if plat_id:
-            plat_cache[cr_id] = plat_id
-            body["platformId"] = plat_id
-        else:
-            self.log("warning", "[platformId] 所有来源均未获取到 platformId（crId=%s），继续使用无 platformId 的请求" % cr_id)
+        for spec in fills:
+            if not isinstance(spec, dict):
+                continue
+            field = spec.get("field")
+            if not field:
+                continue
+            cur = body.get(field)
+            if spec.get("value") is not None and cur in (None, "", [], {}):
+                val = resolve_value(self._subst_body_refs(spec["value"], body), ctx)
+                if val not in (None, "", [], {}):
+                    body[field] = val
+                    self.log("info", "[fill] %s 注入声明值" % field)
+                    cur = body[field]
+            ai = spec.get("append_item")
+            if isinstance(ai, dict) and isinstance(cur, list):
+                item_name = ai.get("name")
+                if not item_name or any(isinstance(x, dict) and x.get("name") == item_name for x in cur):
+                    continue
+                got = self._fill_from_sources(spec, body, ctx)
+                if got not in (None, ""):
+                    item = resolve_value(self._subst_fill_ref(ai, got), ctx)
+                    if isinstance(item, dict) and item.get("valueArr"):
+                        body[field].append(item)
+                        self.log("info", "[fill] %s 追加条目 %s=%s" % (field, item_name, item.get("valueArr")))
+            elif "sources" in spec and body.get(field) in (None, ""):
+                got = self._fill_from_sources(spec, body, ctx)
+                if got not in (None, ""):
+                    body[field] = got
+                    self.log("info", "[fill] %s 从接口取值注入: %s" % (field, got))
         return body
+
+    def _fill_from_sources(self, spec, body, ctx):
+        """按声明依次尝试 sources 接口取值；cache_by 命中缓存直接返回"""
+        cache_key = None
+        if spec.get("cache_by"):
+            cache_key = str(self._subst_body_refs(spec["cache_by"], body))
+            cache = ctx.setdefault("_fill_cache", {})
+            if cache_key in cache:
+                self.log("info", "[fill] 缓存命中 %s" % cache_key)
+                return cache[cache_key]
+        for src in spec.get("sources", []) or []:
+            raw = str(src.get("api", "") or "")
+            if not raw:
+                continue
+            method = raw.split(" ", 1)[0] if " " in raw else "POST"
+            path = raw.split(" ", 1)[-1]
+            qbody = resolve_value(self._subst_body_refs(src.get("body") or {}, body), ctx)
+            try:
+                status, data = self.http_request(method, path, qbody or None, ctx)
+            except Exception as e:
+                self.log("warning", "[fill] %s 调用失败: %s" % (path, e))
+                continue
+            val = jsonpath_get(data, src.get("from", ""))
+            if val in (None, "") and src.get("from_fallback"):
+                val = jsonpath_get(data, src["from_fallback"])
+            if val not in (None, ""):
+                if cache_key:
+                    ctx["_fill_cache"][cache_key] = val
+                return val
+        return None
+
+    def _subst_body_refs(self, obj, body):
+        """把 ${body.X} 替换为当前请求体字段值（非字符串值序列化为 JSON）"""
+        if isinstance(obj, str):
+            def repl(m):
+                v = body.get(m.group(1))
+                if v is None:
+                    return ""
+                return v if isinstance(v, str) else json.dumps(v, ensure_ascii=False)
+            return re.sub(r"\$\{body\.(\w+)\}", repl, obj)
+        if isinstance(obj, dict):
+            return {k: self._subst_body_refs(v, body) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [self._subst_body_refs(v, body) for v in obj]
+        return obj
+
+    @staticmethod
+    def _subst_fill_ref(obj, got):
+        """递归把 append_item 模板中的 ${fill} 替换为 sources 取到的值"""
+        if isinstance(obj, str):
+            return obj.replace("${fill}", str(got))
+        if isinstance(obj, dict):
+            return {k: Executor._subst_fill_ref(v, got) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [Executor._subst_fill_ref(v, got) for v in obj]
+        return obj
 
     def _build_skip_response(self, step, body, ctx):
         """构建跳过创建的响应（复用已有资源）"""
@@ -511,8 +521,10 @@ class Executor:
                 self.log("info", "[recreate] 删除成功（同步返回），后续创建新资源")
                 return True
 
-            self.log("info", "[recreate] 异步%s中，taskId=%s" % ("删除" if is_classroom else "删除", task_id))
-            ok = self._poll_classroom_delete(task_id, ctx)
+            self.log("info", "[recreate] 异步删除中，taskId=%s" % task_id)
+            verify = ({"kind": "seat", "id": found_id, "classroom_id": body.get("classroomId")}
+                      if is_seat else {"kind": "classroom", "id": found_id})
+            ok = self._poll_classroom_delete(task_id, ctx, verify=verify)
             if ok:
                 self.log("info", "[recreate] 删除成功（异步完成），后续创建新资源")
                 return True
@@ -528,35 +540,59 @@ class Executor:
 
         return "skip"
 
-    def _poll_classroom_delete(self, task_id, ctx):
-        """教室删除是异步任务，但当前环境异步轮询接口路径未知。
+    def _poll_classroom_delete(self, task_id, ctx, verify=None, timeout=60, interval=5):
+        """异步删除等待 + 资源存在性验证（不再「假设删除成功」）。
 
-        策略：获取 oneTimeToken 后等待 10 秒，假设删除完成。
+        轮询任务状态的接口路径未知 → 改为分段等待后查询资源是否仍存在：
+        - 资源已消失 → 删除确认完成
+        - 资源仍存在 → 继续等待至 timeout；超时记 warning 并返回 False
+          （_recreate 收到 False 会降级为复用已有资源，不会误建重名资源）
+        - 验证查询本身失败 → 无法确认（默认 warning + 通过，strict 模式失败）
+        verify: {"kind": "classroom"|"seat", "id": 资源ID, "classroom_id": 座位所属教室}
         """
-        self.log("info", "[poll-delete] 获取 oneTimeToken 并等待删除完成: taskId=%s" % task_id)
-
-        # 获取 oneTimeToken
-        p = ctx.get("params", {})
-        admin_password = p.get("rcdc_passwd") or p.get("admin_password")
-        if admin_password:
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            time.sleep(interval)
             try:
-                encrypted_pwd = encrypt(admin_password, "ADMINPASSWORDKEY")
-                status, token_data = self.http_request("POST", "/gss/iac/admin/applyOneTimeToken",
-                    {"password": encrypted_pwd}, ctx)
-                token_val = token_data.get("content", {}).get("oneTimeToken", "") if isinstance(token_data, dict) else ""
-                if token_val:
-                    ctx["oneTimeToken"] = token_val
-                    self.log("info", "[poll-delete] oneTimeToken 已获取")
+                gone = self._verify_deleted(verify, ctx)
             except Exception as e:
-                self.log("warning", "[poll-delete] oneTimeToken 获取失败: %s" % e)
+                return self._unverified(ctx, "delete_verify_error",
+                                        "删除验证查询失败，删除结果无法确认: taskId=%s (%s)" % (task_id, e),
+                                        "删除验证失败: taskId=%s (%s)" % (task_id, e))
+            if gone:
+                self.log("info", "[poll-delete] 资源已删除确认: taskId=%s" % task_id)
+                return True
+            remain = int(deadline - time.time())
+            self.log("info", "[poll-delete] 资源仍存在，继续等待...（剩余 %ds）" % max(remain, 0))
+        self._warn(ctx, "delete_timeout",
+                   "删除等待 %ds 超时，资源仍存在: taskId=%s" % (timeout, task_id))
+        return False
 
-        # 等待删除操作完成（异步）— 每 2 秒输出一次日志防止超时
-        self.log("info", "[poll-delete] 等待 10 秒（删除中）...")
-        for i in range(5):
-            time.sleep(2)
-            self.log("info", "[poll-delete] 等待中... %d/5" % (i + 1))
-        self.log("info", "[poll-delete] 等待完成，假设删除成功")
-        return True
+    def _verify_deleted(self, verify, ctx):
+        """查询资源是否已删除（select/seat/list 按精确条件查询；仍能查到=未删除）"""
+        if not isinstance(verify, dict) or not verify.get("id"):
+            return True  # 无验证信息（历史调用方兜底，视为已删除）
+        if verify.get("kind") == "seat":
+            status, data = self.http_request("POST", "/rcc/classroom/seat/list",
+                                             {"exactMatchArr": [{"name": "classroomId",
+                                                                 "valueArr": [verify.get("classroom_id")]}]}, ctx)
+            content = data.get("content") if isinstance(data, dict) else None
+            items = content.get("itemArr") if isinstance(content, dict) else (
+                content if isinstance(content, list) else None)
+            for s in items or []:
+                if (s.get("id") or s.get("seatId")) == verify.get("id"):
+                    return False
+            return True
+        status, data = self.http_request("POST", "/rcc/classroom/select",
+                                         {"exactMatchArr": [{"name": "classroomId",
+                                                             "valueArr": [verify.get("id")]}]}, ctx)
+        content = data.get("content") if isinstance(data, dict) else None
+        items = None
+        if isinstance(content, list):
+            items = content
+        elif isinstance(content, dict):
+            items = content.get("itemArr") or content.get("items") or content.get("list")
+        return not items
 
     def _try_reuse(self, step, ctx):
         """幂等 reuse：按 reuse_query 查已有资源；命中则把产出写入
@@ -639,10 +675,11 @@ class Executor:
     def _poll(self, poll, ctx):
         """轮询异步任务至终态。
 
-        注意：当前环境异步轮询接口路径可能不存在（返回 404），
-        连续 3 次 404 时自动跳过轮询（假设任务已执行）。
-
-        轮询间隔 2 秒，超时 240 秒；期间每 2 秒检查一次任务状态。
+        容错边界（与假绿区分）：
+        - 任务终态 FAILURE / 轮询超时 → 抛 AssertionError（真失败）
+        - 轮询接口 404 / 响应无 taskStatus → 说明「无法确认任务状态」：
+          默认记 warning（poll_api_missing）后按通过处理；strict 模式直接失败。
+        轮询间隔 2 秒，超时 240 秒。
         """
         api = poll.get("api", "common_get_msgct_detail_info")
         path = api if api.startswith("/") else "/" + api
@@ -660,10 +697,11 @@ class Executor:
             status, data = self.http_request("POST", path, {"msgrelationid": task_id}, ctx)
             if status == 404:
                 consecutive_404 += 1
-                self.log("warning", "[poll] 轮询接口 404 (%d/3)，跳过轮询" % consecutive_404)
+                self.log("warning", "[poll] 轮询接口 404 (%d/3)" % consecutive_404)
                 if consecutive_404 >= 3:
-                    self.log("info", "[poll] 连续 3 次 404，跳过轮询")
-                    return True
+                    return self._unverified(ctx, "poll_api_missing",
+                                            "轮询接口 %s 连续 3 次 404，任务状态无法确认: taskId=%s" % (path, task_id),
+                                            "轮询接口 404: taskId=%s" % task_id)
                 time.sleep(interval)
                 continue
             consecutive_404 = 0
@@ -674,14 +712,15 @@ class Executor:
                 return True
             if st in fail_states:
                 raise AssertionError("轮询任务失败: taskId=%s" % task_id)
-            # content 为 null 且无 taskStatus（说明轮询接口不匹配），跳过轮询
+            # content 为 null 且无 taskStatus（说明轮询接口不匹配）
             content = data.get("content") if isinstance(data, dict) else None
             if content is None and st is None:
                 consecutive_404 += 1
-                self.log("warning", "[poll] content 为 null 且无 taskStatus (%d/3)，跳过轮询" % consecutive_404)
+                self.log("warning", "[poll] content 为 null 且无 taskStatus (%d/3)" % consecutive_404)
                 if consecutive_404 >= 3:
-                    self.log("info", "[poll] 连续 3 次 content 为空，跳过轮询")
-                    return True
+                    return self._unverified(ctx, "poll_api_missing",
+                                            "轮询接口 %s 响应无 taskStatus，任务状态无法确认: taskId=%s" % (path, task_id),
+                                            "轮询响应无 taskStatus: taskId=%s" % task_id)
                 time.sleep(interval)
                 continue
             # content 有值但无 taskStatus（业务状态为 ERROR/SUCCESS 但无异步字段），跳过
@@ -691,6 +730,13 @@ class Executor:
                 return True
             time.sleep(interval)
         raise AssertionError("轮询超时: taskId=%s" % task_id)
+
+    def _unverified(self, ctx, code, warn_msg, fail_msg):
+        """「无法确认结果」的统一出口：默认 warning + 通过；strict 模式判失败"""
+        self._warn(ctx, code, warn_msg)
+        if self.strict:
+            raise AssertionError(fail_msg)
+        return True
 
     def _assert_step(self, step, data):
         """步骤断言（eq/not_empty/contains 三态），逐条记录 PASS/FAIL 到日志"""
@@ -746,10 +792,18 @@ class Executor:
         return max(sizes) if sizes else 0
 
     # ---------- 完整执行 ----------
-    def execute(self, plan, params=None, timeout=120):
-        """执行完整用例计划（真实方法调用）"""
+    def execute(self, plan, params=None):
+        """执行完整用例计划（真实方法调用）。
+
+        返回结构含 warnings 数组（poll 接口缺失/删除无法验证/引用模糊回退等
+        「无法确认结果」的降级记录），假绿可从结果 JSON 直接识别。
+        """
         ctx = {"params": {to_snake(k): v for k, v in (params or {}).items()},
-               "token": None, "context": {}, "steps": {}, "_last_data": None}
+               "token": None, "context": {}, "steps": {}, "_last_data": None,
+               "warnings": []}
+        # params.strict=true → 本次执行启用严格模式（无法确认结果直接判失败）
+        if ctx["params"].get("strict"):
+            self.strict = True
         materialize_naming(ctx["params"], self.log)
         # 执行前主动登录：token 持久化到 ctx，后续所有步骤复用，401 时 http_request 自动重登写回
         try:
@@ -760,7 +814,8 @@ class Executor:
         except Exception as e:
             self.log("error", "[登录] 登录失败: %s" % e)
             return {"status": "FAIL", "duration_ms": 0, "steps": [],
-                    "error": "登录失败: %s" % e, "cleanup": "SKIP"}
+                    "error": "登录失败: %s" % e, "cleanup": "SKIP",
+                    "warnings": []}
         # 前置清理：在计划步骤执行前，先清理同名教室（下课→删桌面→删座位→删教室）
         self._prerequisite_cleanup(plan, ctx)
         results = []
@@ -815,13 +870,23 @@ class Executor:
                                 "api": step_api, "status": "PASS",
                                 "duration_ms": step_duration})
             return {"status": "PASS", "duration_ms": int((time.time() - start) * 1000),
-                    "steps": results, "cleanup": "PASS"}
+                    "steps": results, "cleanup": "PASS",
+                    "warnings": self._collect_warnings(ctx)}
         except Exception as e:
             import traceback
             self.log("error", "步骤失败: %s\n%s" % (e, traceback.format_exc()))
             self._cleanup(ctx)
             return {"status": "FAIL", "duration_ms": int((time.time() - start) * 1000),
-                    "steps": results, "error": str(e), "cleanup": "DONE"}
+                    "steps": results, "error": str(e), "cleanup": "DONE",
+                    "warnings": self._collect_warnings(ctx)}
+
+    def _collect_warnings(self, ctx):
+        """汇总执行期 warnings（executor 降级记录 + params 引用模糊回退记录）"""
+        warnings = list(ctx.get("warnings") or [])
+        for w in ctx.get("_ref_warnings") or []:
+            warnings.append({"code": "ref_fuzzy_fallback", "message": str(w)})
+            self.log("warning", "[ref] %s" % w)
+        return warnings
 
     def _prerequisite_cleanup(self, plan, ctx):
         """执行前清理：查找 plan 中要创建的教室，若已存在同名教室则按依赖顺序清理。
@@ -996,7 +1061,8 @@ class Executor:
                 content = data.get("content") if isinstance(data, dict) else {}
                 task_id = content.get("taskId") if isinstance(content, dict) else None
                 if task_id:
-                    self._poll_classroom_delete(task_id, ctx)
+                    self._poll_classroom_delete(task_id, ctx,
+                                                verify={"kind": "classroom", "id": classroom_id})
                 else:
                     self.log("info", "[prerequisite-cleanup] 删除同步返回，等待 5 秒...")
                     for i in range(5):

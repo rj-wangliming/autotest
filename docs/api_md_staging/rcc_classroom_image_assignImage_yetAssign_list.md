@@ -31,6 +31,48 @@ setup:
   request:
     body:
       searchKeyword: ${param.classroom_name}
+# 文档驱动补数（executor._apply_fill 执行期消费）
+# platformId：后端 getImageState 查 CBB 镜像需要 platformId，但教室 DTO 不返回 →
+#   依次从 教室详情/教室镜像列表/平台列表 回查，按 crId 缓存
+# exactMatchArr：与 pytest 框架 common_get_classroom_yet_assign_lesson_image_list 一致，
+#   注入 TEMPLATE/VDI/DESK 过滤（避免后端走不同分支 internal_error），
+#   并从教室详情取 computeClusterId 追加 clusterId 条件
+fill:
+- field: platformId
+  when: missing
+  cache_by: "${body.crId}"
+  sources:
+  - api: POST /rcc/classroom/getInfo
+    body: {"classroomId": "${body.crId}"}
+    from: $.content.platformId
+  - api: POST /rcc/classroom/image/list
+    body: {"crId": "${body.crId}"}
+    from: $.content.itemArr[0].platformId
+  - api: POST /space/platform/list
+    body: {"searchKeyword": ""}
+    from: $.content.itemArr[0].platformId
+    from_fallback: $.content.itemArr[0].id
+- field: exactMatchArr
+  when: missing
+  value:
+  - name: imageRoleType
+    valueArr:
+    - TEMPLATE
+  - name: cbbImageType
+    valueArr:
+    - VDI
+  - name: imageUsage
+    valueArr:
+    - DESK
+- field: exactMatchArr
+  append_item:
+    name: clusterId
+    valueArr:
+    - "${fill}"
+  sources:
+  - api: POST /rcc/classroom/getInfo
+    body: {"classroomId": "${body.crId}"}
+    from: $.content.computeClusterId
 request:
   dto: GetClassroomAssignInfoDefaultlWebRequest
   body:

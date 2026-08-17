@@ -167,6 +167,44 @@ state_prereq:
     achieve_via: []
     note: 终端操作要求终端在线(ONLINE)；无接口可达成上线
 
+# 语义匹配修正规则：_semantic_match 基础打分（动作+2/实体+2）后叠加 delta
+# 字段：if_entities=用例句须命中的实体词（URL 段）；url_any/name_any=接口 URL/名称含任一词才命中；
+#       name_none=名称含任一词则排除（例外条件）；delta=命中加减分
+# 新增反规则只需在此追加条目，无需修改编排器代码
+semantic_rules:
+  - if_entities: [cluster]
+    name_any: [存储池, StoragePool, storagePool]
+    delta: -10
+    note: 集群语义不匹配存储池接口（语义冲突重罚）
+  - if_entities: [storagePool]
+    name_any: [集群, Cluster, cluster]
+    delta: -10
+    note: 存储池语义不匹配集群接口（语义冲突重罚）
+  - if_entities: [network]
+    name_any: [镜像, Image, image]
+    name_none: [Assigned]
+    delta: -10
+    note: 网络语义不匹配镜像接口（getAssignedClusterAndNetwork 例外）
+  - url_any: [/dashboard/statistics/]
+    delta: -10
+    note: 统计接口不是业务查询
+  - if_entities: [cluster]
+    url_any: [/rco/user/obtainComputeClusterList]
+    delta: 5
+    note: 集群优先 RDCD 侧接口（不穿透 CBB，更稳定）
+  - if_entities: [cluster]
+    url_any: [/space/cluster/]
+    delta: -3
+    note: Space 侧集群接口穿透 CBB，降权
+  - if_entities: [storagePool]
+    url_any: [/rcc/]
+    delta: 3
+    note: 存储池优先 RCC 侧接口
+  - if_entities: [storagePool]
+    url_any: [/space/storagePool/]
+    delta: -3
+    note: Space 侧存储池接口穿透 CBB，降权
+
 # 用例前置条件：前置步骤关键词 -> 需满足的资源状态 + 达成途径
 # （校验用例前置声明是否被编排步骤覆盖，不满足时自动补达成步骤）
 case_prereq:
