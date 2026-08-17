@@ -97,10 +97,18 @@ def _lookup(kind, name, ctx, idx=None):
             sname, fld = name.split(".output.", 1)
             v = (ctx.get("steps") or {}).get(sname, {}).get(fld, "")
             # 模糊回退：sname 不存在时，查找所有步骤中产出该 field 的步骤
+            # 注意：产出 key 可能因命名规范化使用下划线（如 classroom_id vs classroomId）
             if v == "" and fld in ("classroomId",):
                 for sn, bucket in (ctx.get("steps") or {}).items():
                     if fld in bucket:
                         v = bucket[fld]
+                        break
+                    # 不区分大小写 + 下划线匹配
+                    for bk in bucket:
+                        if bk.lower().replace("_", "") == fld.lower().replace("_", ""):
+                            v = bucket[bk]
+                            break
+                    if v != "":
                         break
         else:
             v = ctx.get(name, "")
