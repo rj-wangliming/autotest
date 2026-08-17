@@ -190,8 +190,28 @@ def resolve_body(body, ctx):
             # 纯类型描述（无值）→ 若 required 则赋默认值，否则跳过
             if v.get("required"):
                 _type = v.get("type", "")
-                if "Integer" in _type or "Long" in _type or "Double" in _type:
-                    out[k] = 0
+                _constraint = v.get("constraint", "") or ""
+                # 优先从 constraint 中提取默认值（如 "@Range(1-1000) 默认20" → 20）
+                import re as _re
+                _dm = _re.search(r"默认(\d+)", _constraint)
+                if _dm:
+                    default_val = int(_dm.group(1))
+                elif "limit" == k:
+                    default_val = 20
+                elif "page" == k:
+                    default_val = 0
+                elif "Integer" in _type or "Long" in _type or "Double" in _type:
+                    default_val = 0
+                else:
+                    default_val = None
+                if _type and "Integer" in _type:
+                    # Integer 默认最小为 1（除非 constraint 指定了范围下限）
+                    _rng = _re.search(r"@Range\(\d+", _constraint)
+                    if _rng:
+                        pass  # 用 constraint 中的范围
+                    elif default_val is not None and default_val == 0:
+                        default_val = 1 if k != "page" else 0
+                out[k] = default_val
                 elif "String" in _type:
                     out[k] = ""
                 elif "Boolean" in _type or "boolean" in _type:
