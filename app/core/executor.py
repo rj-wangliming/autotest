@@ -318,7 +318,7 @@ class Executor:
                             break
                 if cr_id:
                     rco_status, rco_data = self.http_request("POST", "/rcc/classroom/image/getAssignedClusterAndNetwork",
-                                                             {"classroomId": cr_id}, ctx)
+                                                             {"classroomId": cr_id, "enableTeacher": False}, ctx)
                     if rco_status == 200 and rco_data and jsonpath_get(rco_data, "$.status") == "SUCCESS":
                         items = jsonpath_get(rco_data, "$.content.itemArr")
                         if isinstance(items, list) and items:
@@ -342,7 +342,7 @@ class Executor:
                             break
                 if cr_id:
                     info_status, info_data = self.http_request("POST", "/rcc/classroom/image/getAssignedClusterAndNetwork",
-                                                               {"classroomId": cr_id}, ctx)
+                                                               {"classroomId": cr_id, "enableTeacher": False}, ctx)
                     items = jsonpath_get(info_data, "$.content.itemArr") if info_data else None
                     if isinstance(items, list) and items:
                         pool_id = jsonpath_get(items[0], "$.storagePool.id")
