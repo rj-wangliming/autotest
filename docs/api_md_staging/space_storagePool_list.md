@@ -14,6 +14,11 @@ setup:
 - name: login
   api: POST /rco/admin/loginAdmin
   purpose: 管理员登录（框架内置，引擎自动处理）
+- name: get_storage_pool
+  api: POST /space/storagePool/list
+  extract:
+    storagePoolId: $.content.itemArr[0].id
+  purpose: 获取存储池ID（取第一条）
 request:
   dto: PageQueryRequest（框架类，matchArr 支持 imageTemplateId/clusterId/networkId/hasNotAllowRedundancyRAID1 特殊字段）
   body:

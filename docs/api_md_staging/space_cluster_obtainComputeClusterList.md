@@ -14,6 +14,12 @@ setup:
 - name: login
   api: POST /rco/admin/loginAdmin
   purpose: 管理员登录（框架内置，引擎自动处理）
+- name: get_cluster
+  api: POST /space/cluster/obtainComputeClusterList
+  extract:
+    clusterId: $.content.itemArr[0].computerClusterId
+    platformId: $.content.itemArr[0].platformId
+  purpose: 获取计算集群ID与云平台ID（取第一条，无名称过滤）
 request:
   dto: PageQueryRequest（框架类，matchArr 支持 imageTemplateId/storagePoolId/networkId 特殊字段）
   body:
