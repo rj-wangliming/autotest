@@ -96,6 +96,12 @@ def _lookup(kind, name, ctx, idx=None):
         if ".output." in name:
             sname, fld = name.split(".output.", 1)
             v = (ctx.get("steps") or {}).get(sname, {}).get(fld, "")
+            # 模糊回退：sname 不存在时，查找所有步骤中产出该 field 的步骤
+            if v == "" and fld in ("classroomId",):
+                for sn, bucket in (ctx.get("steps") or {}).items():
+                    if fld in bucket:
+                        v = bucket[fld]
+                        break
         else:
             v = ctx.get(name, "")
         if idx is not None and isinstance(v, list):
