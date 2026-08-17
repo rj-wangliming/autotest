@@ -66,12 +66,38 @@ request:
       type: ExactMatch[]
       required: false
       constraint: 可空
-      description: 精确匹配条件（可含 storagePoolId）
+      description: 精确匹配条件（真实请求按 imageRoleType=TEMPLATE 过滤镜像模板、cbbImageType=VOI、imageUsage=DESK）
+      value:
+      - name: imageRoleType
+        valueArr:
+        - TEMPLATE
+      - name: cbbImageType
+        valueArr:
+        - VOI
+      - name: imageUsage
+        valueArr:
+        - DESK
     matchArr:
       type: Match[]
       required: false
       constraint: 可空
-      description: 模糊匹配条件
+      description: 精确/模糊匹配条件（真实请求按 imageRoleType=TEMPLATE/cbbImageType=VOI/imageUsage=DESK 过滤镜像模板）
+      value:
+      - type: EXACT
+        fieldName: imageRoleType
+        valueArr:
+        - TEMPLATE
+        matchRule: EQ
+      - type: EXACT
+        fieldName: cbbImageType
+        valueArr:
+        - VOI
+        matchRule: EQ
+      - type: EXACT
+        fieldName: imageUsage
+        valueArr:
+        - DESK
+        matchRule: EQ
     sortArr:
       type: Sort[]
       required: false
@@ -87,6 +113,26 @@ request:
       required: false
       constraint: 可空
       description: 云平台ID过滤
+    classroomId:
+      type: UUID
+      required: false
+      description: 前端同时传的教室ID（与 crId 同值；DTO 无此字段，pass-through）
+    teacherModeArr:
+      type: String[]
+      required: false
+      description: 教师机模式数组（前端传 [VOI]；DTO 无此字段，pass-through）
+    todo:
+      type: Boolean
+      required: false
+      description: 待办标记（前端传 false；DTO 无此字段，pass-through）
+    needForceRefresh:
+      type: Boolean
+      required: false
+      description: 是否强制刷新（框架分页字段，默认 false）
+    isAutomaticRefresh:
+      type: Boolean
+      required: false
+      description: 是否自动刷新（前端字段，默认 false）
 response:
   wrapper:
     status: String
@@ -198,11 +244,16 @@ graph LR
 | page | Integer | 是 | @Range(0-2147483647) 默认0 | 分页页码 |
 | limit | Integer | 是 | @Range(1-2147483647) 默认1 | 每页条数 |
 | searchKeyword | String | 否 | 可空 | 搜索关键字 |
-| exactMatchArr | ExactMatch[] | 否 | 可空 | 精确匹配条件（可含 storagePoolId） |
-| matchArr | Match[] | 否 | 可空 | 模糊匹配条件 |
+| exactMatchArr | ExactMatch[] | 否 | 可空 | 精确匹配条件（真实请求按 imageRoleType=TEMPLATE 过滤镜像模板、cbbImageType=VOI、imageUsage=DESK） |
+| matchArr | Match[] | 否 | 可空 | 精确/模糊匹配条件（真实请求按 imageRoleType=TEMPLATE/cbbImageType=VOI/imageUsage=DESK 过滤镜像模板） |
 | sortArr | Sort[] | 否 | 可空 | 排序条件 |
 | customData | String | 否 | 可空 | 自定义扩展数据 |
 | platformId | UUID | 否 | 可空 | 云平台ID过滤 |
+| classroomId | UUID | 否 | 可空 | 前端同时传的教室ID（与 crId 同值；DTO 无此字段，pass-through） |
+| teacherModeArr | String[] | 否 | 可空 | 教师机模式数组（前端传 [VOI]；DTO 无此字段，pass-through） |
+| todo | Boolean | 否 | 可空 | 待办标记（前端传 false；DTO 无此字段，pass-through） |
+| needForceRefresh | Boolean | 否 | 可空 | 是否强制刷新（框架分页字段，默认 false） |
+| isAutomaticRefresh | Boolean | 否 | 可空 | 是否自动刷新（前端字段，默认 false） |
 
 ## 出参详情
 
