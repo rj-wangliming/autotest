@@ -303,20 +303,30 @@ class Executor:
         elif step.get("poll") and biz_status != "SUCCESS":
             self.log("warning", "[poll] 业务状态非 SUCCESS（%s），跳过轮询" % biz_status)
 
-        # 通用 internal_error 降级：/space/cluster/ 路径 fallback 到 /rco/user/obtainComputeClusterList
+        # 通用 internal_error 降级：/space/cluster/ 路径 fallback 到 /rcc/classroom/image/getAssignedClusterAndNetwork
         if "/space/cluster/" in path and isinstance(data, dict) and data.get("status") == "ERROR" \
                 and data.get("msgKey") == "sk_webmvckit_internal_error":
             try:
-                rco_status, rco_data = self.http_request("POST", "/rcc/classroom/image/getAssignedClusterAndNetwork",
-                                                         {"classroomId": ctx.get("context", {}).get("crId")}, ctx)
-                if rco_status == 200 and jsonpath_get(rco_data, "$.status") == "SUCCESS":
-                    items = jsonpath_get(rco_data, "$.content.itemArr")
-                    if isinstance(items, list) and items:
-                        data = {"status": "SUCCESS", "content": {"itemArr": items, "total": len(items)}}
-                        self.log("info", "[fallback] /space/cluster 降级到 /rcc/classroom/image/getAssignedClusterAndNetwork，获取 %d 条" % len(items))
-                        self._extract(step, data, ctx)
-                        self._assert_step(step, data)
-                        return data
+                cr_id = body.get("classroomId") or body.get("crId")
+                if not cr_id:
+                    cr_id = ctx.get("context", {}).get("crId")
+                if not cr_id:
+                    # 从 ctx.steps 中查找 classroomId
+                    for sn, bucket in (ctx.get("steps") or {}).items():
+                        cr_id = bucket.get("classroomId")
+                        if cr_id:
+                            break
+                if cr_id:
+                    rco_status, rco_data = self.http_request("POST", "/rcc/classroom/image/getAssignedClusterAndNetwork",
+                                                             {"classroomId": cr_id}, ctx)
+                    if rco_status == 200 and jsonpath_get(rco_data, "$.status") == "SUCCESS":
+                        items = jsonpath_get(rco_data, "$.content.itemArr")
+                        if isinstance(items, list) and items:
+                            data = {"status": "SUCCESS", "content": {"itemArr": items, "total": len(items)}}
+                            self.log("info", "[fallback] /space/cluster 降级到 /rcc/classroom/image/getAssignedClusterAndNetwork，crId=%s, 获取 %d 条" % (cr_id, len(items)))
+                            self._extract(step, data, ctx)
+                            self._assert_step(step, data)
+                            return data
             except Exception as e:
                 self.log("warning", "[fallback] /rcc/classroom/image/getAssignedClusterAndNetwork 失败: %s" % e)
 
@@ -325,16 +335,20 @@ class Executor:
                 and data.get("msgKey") == "sk_webmvckit_internal_error":
             try:
                 cr_id = body.get("classroomId") or body.get("crId")
+                if not cr_id:
+                    for sn, bucket in (ctx.get("steps") or {}).items():
+                        cr_id = bucket.get("classroomId")
+                        if cr_id:
+                            break
                 if cr_id:
                     info_status, info_data = self.http_request("POST", "/rcc/classroom/image/getAssignedClusterAndNetwork",
                                                                {"classroomId": cr_id}, ctx)
                     items = jsonpath_get(info_data, "$.content.itemArr")
                     if isinstance(items, list) and items:
-                        # 取第一个镜像的 storagePoolId
                         pool_id = jsonpath_get(items[0], "$.storagePool.id")
                         if pool_id:
                             data = {"status": "SUCCESS", "content": {"itemArr": [{"id": pool_id}], "total": 1}}
-                            self.log("info", "[fallback] /space/storagePool 降级到 getAssignedClusterAndNetwork，获取 storagePoolId=%s" % pool_id)
+                            self.log("info", "[fallback] /space/storagePool 降级到 getAssignedClusterAndNetwork，storagePoolId=%s" % pool_id)
                             self._extract(step, data, ctx)
                             self._assert_step(step, data)
                             return data
