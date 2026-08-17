@@ -66,14 +66,14 @@ request:
       type: ExactMatch[]
       required: false
       constraint: 可空
-      description: 精确匹配条件（真实请求按 imageRoleType=TEMPLATE 过滤镜像模板、cbbImageType=VOI、imageUsage=DESK）
+      description: 精确匹配条件（真实请求按 imageRoleType=TEMPLATE 过滤镜像模板、cbbImageType=VDI、imageUsage=DESK）
       value:
       - name: imageRoleType
         valueArr:
         - TEMPLATE
       - name: cbbImageType
         valueArr:
-        - VOI
+        - VDI
       - name: imageUsage
         valueArr:
         - DESK
@@ -81,7 +81,7 @@ request:
       type: Match[]
       required: false
       constraint: 可空
-      description: 精确/模糊匹配条件（真实请求按 imageRoleType=TEMPLATE/cbbImageType=VOI/imageUsage=DESK 过滤镜像模板）
+      description: 精确/模糊匹配条件（真实请求按 imageRoleType=TEMPLATE/cbbImageType=VDI/imageUsage=DESK 过滤镜像模板）
       value:
       - type: EXACT
         fieldName: imageRoleType
@@ -91,7 +91,7 @@ request:
       - type: EXACT
         fieldName: cbbImageType
         valueArr:
-        - VOI
+        - VDI
         matchRule: EQ
       - type: EXACT
         fieldName: imageUsage
@@ -244,8 +244,8 @@ graph LR
 | page | Integer | 是 | @Range(0-2147483647) 默认0 | 分页页码 |
 | limit | Integer | 是 | @Range(1-2147483647) 默认1 | 每页条数 |
 | searchKeyword | String | 否 | 可空 | 搜索关键字 |
-| exactMatchArr | ExactMatch[] | 否 | 可空 | 精确匹配条件（真实请求按 imageRoleType=TEMPLATE 过滤镜像模板、cbbImageType=VOI、imageUsage=DESK） |
-| matchArr | Match[] | 否 | 可空 | 精确/模糊匹配条件（真实请求按 imageRoleType=TEMPLATE/cbbImageType=VOI/imageUsage=DESK 过滤镜像模板） |
+| exactMatchArr | ExactMatch[] | 否 | 可空 | 精确匹配条件（真实请求按 imageRoleType=TEMPLATE 过滤镜像模板、cbbImageType=VDI、imageUsage=DESK） |
+| matchArr | Match[] | 否 | 可空 | 精确/模糊匹配条件（真实请求按 imageRoleType=TEMPLATE/cbbImageType=VDI/imageUsage=DESK 过滤镜像模板） |
 | sortArr | Sort[] | 否 | 可空 | 排序条件 |
 | customData | String | 否 | 可空 | 自定义扩展数据 |
 | platformId | UUID | 否 | 可空 | 云平台ID过滤 |
@@ -324,7 +324,7 @@ create 为异步批任务，响应为 BatchTaskSubmitResult 不直接返回 ID�
 | page | user_input/from_query | 按业务构造 |
 | limit | user_input/from_query | 按业务构造 |
 | searchKeyword | user_input/from_query | 按业务构造 |
-| exactMatchArr | user_input/from_query | 按业务构造 |
+| exactMatchArr | user_input/from_query | 按业务构造（建议注入 imageRoleType=cbbImageType=VDI=imageUsage 过滤） |
 | matchArr | user_input/from_query | 按业务构造 |
 | sortArr | user_input/from_query | 按业务构造 |
 | customData | user_input/from_query | 按业务构造 |
