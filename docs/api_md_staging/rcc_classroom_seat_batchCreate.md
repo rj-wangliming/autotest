@@ -105,6 +105,7 @@ response:
       description: 批处理任务ID（需创建桌面时），提交创建桌面的批任务标识
 polling:
   api: common_get_msgct_detail_info
+  # 公共轮询接口：POST /rco/msgct/msg/detail（消息中心），完整文档见 common_get_msgct_detail_info.md
   method: POST
   params:
     msgrelationid: ${content.taskId}

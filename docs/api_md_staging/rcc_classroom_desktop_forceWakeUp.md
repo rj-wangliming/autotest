@@ -177,6 +177,7 @@ response:
       description: 批量任务提交结果（taskId等），唤醒指令由后台批任务异步下发
 polling:
   api: common_get_msgct_detail_info
+  # 公共轮询接口：POST /rco/msgct/msg/detail（消息中心），完整文档见 common_get_msgct_detail_info.md
   method: POST
   params:
     msgrelationid: ${content.taskId}

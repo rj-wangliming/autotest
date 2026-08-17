@@ -193,6 +193,7 @@ idempotency:
   note: 重复分配同一镜像被62110027拦截；不同镜像重复调用会新增记录，非幂等
 polling:
   api: common_get_msgct_detail_info
+  # 公共轮询接口：POST /rco/msgct/msg/detail（消息中心），完整文档见 common_get_msgct_detail_info.md
   method: POST
   params:
     msgrelationid: ${content.taskId}

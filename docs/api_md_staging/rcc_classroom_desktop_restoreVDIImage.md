@@ -183,6 +183,7 @@ response:
       description: 批量任务提交结果（还原由后台异步执行）
 polling:
   api: common_get_msgct_detail_info
+  # 公共轮询接口：POST /rco/msgct/msg/detail（消息中心），完整文档见 common_get_msgct_detail_info.md
   method: POST
   params:
     msgrelationid: ${content.taskId}
