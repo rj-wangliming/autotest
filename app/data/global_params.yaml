@@ -52,8 +52,9 @@ tci_terminal_ip:                     # TCI 终端 IP
 vdi_terminal_ip:                     # VDI 终端 IP
 idv_terminal_ip:                     # IDV 终端 IP
 
-# ── 集群/空间/外设（可多个）──
-cluster_name:                        # 集群名
+# ── 网络策略（可多选：值填列表，按列表索引依次取对应网络）──
+network_id_arr: [1a054d1c-3ad6-46f6-94b8-657cda80bdaf]       # 网络策略ID数组（可选多个，逗号分隔；留空则不传 networkId 字段）
+network_name_arr: [180]                                       # 网络策略名称（与 network_id_arr 索引对应；优先按名称匹配）
 space_name:                          # 空间名
 usb_type_id_arr:                     # USB 类型 ID 数组
 
