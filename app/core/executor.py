@@ -307,9 +307,9 @@ class Executor:
         if "/space/cluster/" in path and isinstance(data, dict) and data.get("status") == "ERROR" \
                 and data.get("msgKey") == "sk_webmvckit_internal_error":
             try:
-                cr_id = body.get("classroomId") or body.get("crId")
+                cr_id = (body or {}).get("classroomId") or (body or {}).get("crId")
                 if not cr_id:
-                    cr_id = ctx.get("context", {}).get("crId")
+                    cr_id = (ctx.get("context") or {}).get("crId")
                 if not cr_id:
                     # 从 ctx.steps 中查找 classroomId
                     for sn, bucket in (ctx.get("steps") or {}).items():
@@ -319,7 +319,7 @@ class Executor:
                 if cr_id:
                     rco_status, rco_data = self.http_request("POST", "/rcc/classroom/image/getAssignedClusterAndNetwork",
                                                              {"classroomId": cr_id}, ctx)
-                    if rco_status == 200 and jsonpath_get(rco_data, "$.status") == "SUCCESS":
+                    if rco_status == 200 and rco_data and jsonpath_get(rco_data, "$.status") == "SUCCESS":
                         items = jsonpath_get(rco_data, "$.content.itemArr")
                         if isinstance(items, list) and items:
                             data = {"status": "SUCCESS", "content": {"itemArr": items, "total": len(items)}}
@@ -334,7 +334,7 @@ class Executor:
         if "/space/storagePool/" in path and isinstance(data, dict) and data.get("status") == "ERROR" \
                 and data.get("msgKey") == "sk_webmvckit_internal_error":
             try:
-                cr_id = body.get("classroomId") or body.get("crId")
+                cr_id = (body or {}).get("classroomId") or (body or {}).get("crId")
                 if not cr_id:
                     for sn, bucket in (ctx.get("steps") or {}).items():
                         cr_id = bucket.get("classroomId")
@@ -343,7 +343,7 @@ class Executor:
                 if cr_id:
                     info_status, info_data = self.http_request("POST", "/rcc/classroom/image/getAssignedClusterAndNetwork",
                                                                {"classroomId": cr_id}, ctx)
-                    items = jsonpath_get(info_data, "$.content.itemArr")
+                    items = jsonpath_get(info_data, "$.content.itemArr") if info_data else None
                     if isinstance(items, list) and items:
                         pool_id = jsonpath_get(items[0], "$.storagePool.id")
                         if pool_id:
