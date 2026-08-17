@@ -202,6 +202,10 @@ def resolve_body(body, ctx):
                     default_val = 0
                 elif "Integer" in _type or "Long" in _type or "Double" in _type:
                     default_val = 0
+                elif "String" in _type:
+                    default_val = ""
+                elif "Boolean" in _type or "boolean" in _type:
+                    default_val = False
                 else:
                     default_val = None
                 if _type and "Integer" in _type:
@@ -212,12 +216,6 @@ def resolve_body(body, ctx):
                     elif default_val is not None and default_val == 0:
                         default_val = 1 if k != "page" else 0
                 out[k] = default_val
-                elif "String" in _type:
-                    out[k] = ""
-                elif "Boolean" in _type or "boolean" in _type:
-                    out[k] = False
-                else:
-                    out[k] = None
             else:
                 continue
         else:
