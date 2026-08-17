@@ -222,7 +222,7 @@ def _run_use_case(sid, use_case, params, base_url):
                            "section": s.get("section", ""), "auto_by_rules": bool(s.get("_auto_by_rules"))}
                           for s in plan.get("steps", [])],
             }
-            result = runner.run_isolated(plan, merged, base_url, timeout=120,
+            result = runner.run_isolated(plan, merged, base_url, timeout=300,
                                          log_cb=lambda l, m: log(_map_log_level(m), m))
             exec_sessions[sid]["result"] = result
             exec_sessions[sid]["status"] = result["status"]

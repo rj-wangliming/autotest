@@ -37,6 +37,13 @@ def materialize_naming(params, log=None):
     pre = (params.get("desktop_pre_name") or "").strip()
     start = to_int(params.get("desktop_name_start_num"), 0)
 
+    # 确保非数组参数是标量（从全局 params YAML 中列表转为字符串）
+    for k in ("classroom_name", "image_name", "student_image_name",
+              "teacher_mode", "student_start_ip", "student_end_ip"):
+        v = params.get(k)
+        if isinstance(v, list) and v:
+            params[k] = v[0]
+
     raw = params.get("desktop_name")
     names = [] if raw in (None, "") else (
         [raw] if isinstance(raw, str) else [x for x in raw if x])
@@ -79,6 +86,9 @@ def _lookup(kind, name, ctx, idx=None):
         if isinstance(v, list) and "_batch_index" in ctx:
             i = ctx["_batch_index"]
             return v[i] if i < len(v) else None
+        # 非批量上下文：值为列表时自动取首元素
+        if isinstance(v, list):
+            return v[0] if v else v
         return v
     if kind == "prev":
         # 嵌套 ${prev.<step>.output.<field>}（接口文档 body 标准格式）

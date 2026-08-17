@@ -43,7 +43,7 @@ if not sid:
 
 # 2. 轮询执行状态
 print("\n=== 轮询执行状态 ===")
-for i in range(60):
+for i in range(90):  # 90 × 2s = 180s
     time.sleep(2)
     r2 = requests.get(f"{base_url}/api/execution/{sid}", timeout=5)
     d = r2.json()
