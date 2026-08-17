@@ -87,6 +87,13 @@ def api_search():
     } for m in results]})
 
 
+@app.route("/api/settings")
+def api_settings():
+    """返回全局配置（base_url 等），供前端回填"""
+    global_params = _load_global_params()
+    return jsonify({"base_url": global_params.get("base_url", "")})
+
+
 def _load_global_params():
     """读取全局参数文件（yaml 优先，回退 json）；作为默认参数基线，请求参数覆盖之"""
     base = os.path.join(PROJECT_ROOT, "app", "data")

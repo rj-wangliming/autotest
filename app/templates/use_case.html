@@ -36,6 +36,15 @@
 {% endblock %}
 {% block scripts %}
 <script>
+// 页面加载时回填 base_url
+(async () => {
+    try {
+        const r = await fetch('/api/settings');
+        const d = await r.json();
+        if (d.base_url) document.getElementById('base-url').value = d.base_url;
+    } catch(e) {}
+})();
+
 function fillTemplate() {
     document.getElementById('use-case').value =
 '前置步骤：\n' +
