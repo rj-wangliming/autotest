@@ -180,7 +180,7 @@ upstream:
   produces: $.content.itemArr[*].id
   purpose: 镜像模板ID筛选（可空），来源为镜像列表
 - api: POST /space/storagePool/list
-  produces: $.content.itemArr[*].id
+  produces: $.content.items[*].storagePoolId
   purpose: 存储池ID筛选（可空）
 - api: POST /space/clouddesktop/deskNetwork/list
   produces: $.content.itemArr[*].id

@@ -114,73 +114,73 @@ response:
     canUsedMessage:
       type: String
       description: 不可用原因
-    itemArr:
+    items:
       type: StoragePoolDetailResponse[]
       description: 存储池详情列表
-    "itemArr[]_id":
+    "items[]_id":
       type: UUID
       description: 存储池ID
-    "itemArr[]_storagePoolId":
+    "items[]_storagePoolId":
       type: UUID
       description: 存储池ID（业务侧）
-    "itemArr[]_name":
+    "items[]_name":
       type: String
       description: 存储池名称
-    "itemArr[]_storagePoolType":
+    "items[]_storagePoolType":
       type: StoragePoolType
       description: 存储池类型（POS/SAN/SAMBA/RG_PDS 等）
-    "itemArr[]_redundancyStrategy":
+    "items[]_redundancyStrategy":
       type: RedundancyStrategy
       description: 冗余策略（RAID0/RAID1 等）
-    "itemArr[]_totalCapacity":
+    "items[]_totalCapacity":
       type: Long
       description: 总容量
-    "itemArr[]_usedCapacity":
+    "items[]_usedCapacity":
       type: Long
       description: 已用容量
-    "itemArr[]_storagePoolMgmtState":
+    "items[]_storagePoolMgmtState":
       type: StoragePoolMgmtState
       description: 存储池管理状态
-    "itemArr[]_storagePoolHealthState":
+    "items[]_storagePoolHealthState":
       type: StoragePoolHealthState
       description: 存储池健康状态
-    "itemArr[]_description":
+    "items[]_description":
       type: String
       description: 存储池描述
-    "itemArr[]_createTime":
+    "items[]_createTime":
       type: Date
       description: 创建时间
-    "itemArr[]_updateTime":
+    "items[]_updateTime":
       type: Date
       description: 更新时间
-    "itemArr[]_storageClusterId":
+    "items[]_storageClusterId":
       type: UUID
       description: 存储集群ID
-    "itemArr[]_platformId":
+    "items[]_platformId":
       type: UUID
       description: 平台ID
-    "itemArr[]_platformName":
+    "items[]_platformName":
       type: String
       description: 云平台名称
-    "itemArr[]_platformType":
+    "items[]_platformType":
       type: CloudPlatformType
       description: 云平台类型
-    "itemArr[]_platformStatus":
+    "items[]_platformStatus":
       type: CloudPlatformStatus
       description: 云平台状态
-    "itemArr[]_cloudPlatformId":
+    "items[]_cloudPlatformId":
       type: String
       description: 云平台唯一标识
-    "itemArr[]_options":
+    "items[]_options":
       type: StoragePoolOptionsDTO
       description: 存储扩展参数
-    "itemArr[]_canUsed":
+    "items[]_canUsed":
       type: Boolean
       description: 是否可用（默认true）
-    "itemArr[]_useInLocalDisk":
+    "items[]_useInLocalDisk":
       type: Boolean
       description: 是否可用于本地磁盘（默认true；SAN 环境非 SAN 存储置 false）
-    "itemArr[]_canUsedMessage":
+    "items[]_canUsedMessage":
       type: String
       description: 不可用原因
 upstream:
@@ -220,9 +220,9 @@ constraints:
 assertions:
   success:
   - scenario: 存储池全部兼容
-    expect: $.content.itemArr 非空
+    expect: $.content.items 非空
   - scenario: 存在不可用存储池
-    expect: $.content.itemArr 非空 且 itemArr 中存在 canUsed==false 的记录
+    expect: $.content.items 非空 且 items 中存在 canUsed==false 的记录
   failure:
   - scenario: pageQueryRequest 为 null
     trigger: 请求体缺失
@@ -303,7 +303,7 @@ graph LR
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
-| itemArr | StoragePoolDetailResponse[] | 存储池详情列表（元素字段见下） |
+| items | StoragePoolDetailResponse[] | 存储池详情列表（元素字段见下） |
 | total | long | 总条数 |
 | id | UUID | 存储池ID |
 | storagePoolId | UUID | 存储池ID（业务侧） |
@@ -380,8 +380,8 @@ graph LR
 
 | 场景 | 断言点 |
 |---|---|
-| 存储池全部兼容 | $.content.itemArr 非空 |
-| 存在不可用存储池 | $.content.itemArr 非空 且 itemArr 中存在 canUsed==false 的记录 |
+| 存储池全部兼容 | $.content.items 非空 |
+| 存在不可用存储池 | $.content.items 非空 且 items 中存在 canUsed==false 的记录 |
 
 ### 失败场景
 

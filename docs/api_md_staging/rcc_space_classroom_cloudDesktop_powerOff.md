@@ -71,7 +71,7 @@ setup:
 - name: get_storage_pool
   api: POST /space/storagePool/list
   extract:
-    storagePoolId: $.content.itemArr[0].storagePoolId
+    storagePoolId: $.content.items[0].storagePoolId
   purpose: 获取存储池ID（镜像分配用）（取第一条，无名称过滤）
 - name: get_network
   api: POST /space/clouddesktop/deskNetwork/list
