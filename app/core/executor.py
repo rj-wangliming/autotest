@@ -303,6 +303,43 @@ class Executor:
         elif step.get("poll") and biz_status != "SUCCESS":
             self.log("warning", "[poll] 业务状态非 SUCCESS（%s），跳过轮询" % biz_status)
 
+        # 通用 internal_error 降级：/space/storagePool/ 路径 fallback 到 /rco/user/obtainComputeClusterList（从教室详情获取）
+        if "/space/storagePool/" in path and isinstance(data, dict) and data.get("status") == "ERROR" \
+                and data.get("msgKey") == "sk_webmvckit_internal_error":
+            try:
+                cr_id = body.get("classroomId") or body.get("crId")
+                if cr_id:
+                    info_status, info_data = self.http_request("POST", "/rcc/classroom/getInfo",
+                                                               {"classroomId": cr_id}, ctx)
+                    storage_pool_id = jsonpath_get(info_data, "$.content.storagePoolId")
+                    if storage_pool_id:
+                        data = {"status": "SUCCESS", "content": {"storagePoolId": storage_pool_id}}
+                        self.log("info", "[fallback] /space/storagePool 降级到教室详情获取 storagePoolId=%s" % storage_pool_id)
+                        self._extract(step, data, ctx)
+                        self._assert_step(step, data)
+                        return data
+            except Exception as e:
+                self.log("warning", "[fallback] /space/storagePool 降级失败: %s" % e)
+
+        # 通用 internal_error 降级：/space/cluster/ 路径 fallback 到 /rco/user/obtainComputeClusterList
+        if "/space/cluster/" in path and isinstance(data, dict) and data.get("status") == "ERROR" \
+                and data.get("msgKey") == "sk_webmvckit_internal_error":
+            # 尝试从 RDCD 侧接口获取集群信息（不穿透 CBB）
+            try:
+                rco_status, rco_data = self.http_request("POST", "/rco/user/obtainComputeClusterList",
+                                                         {"page": 0, "limit": 20}, ctx)
+                if rco_status == 200 and jsonpath_get(rco_data, "$.status") == "SUCCESS":
+                    items = jsonpath_get(rco_data, "$.content.items")
+                    if isinstance(items, list) and items:
+                        data = {"status": "SUCCESS", "content": {"items": items, "total": len(items)}}
+                        self.log("info", "[fallback] /space/cluster 降级到 /rco/user/obtainComputeClusterList，获取 %d 条" % len(items))
+                        # 重新走 extract + assert
+                        self._extract(step, data, ctx)
+                        self._assert_step(step, data)
+                        return data
+            except Exception as e:
+                self.log("warning", "[fallback] /rco/user/obtainComputeClusterList 失败: %s" % e)
+
         # 断言
         self._assert_step(step, data)
         return data
