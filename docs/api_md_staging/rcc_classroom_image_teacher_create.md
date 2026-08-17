@@ -52,7 +52,7 @@ setup:
       pick: max
       sort_key: cbbImageTemplateDetailDTO.name
       field: cbbImageTemplateDetailDTO.id
-  purpose: 按镜像名精确过滤（searchKeyword + matchArr.fieldName=imageName）；同名多版本取模板名最大（尾部时间戳最新）的可分配镜像
+  purpose: 按镜像名精确过滤（searchKeyword + matchArr.fieldName=imageName）；同名多版本取模板名最大（尾部时间戳最新）的可分配镜像模板
   request:
     body:
       searchKeyword: ${param.teacher_image_name}
@@ -91,7 +91,7 @@ request:
       type: UUID
       required: true
       constraint: '@NotNull'
-      description: 分配的镜像ID；ID 来自前置步骤 setup 产出（${prev.*}）
+      description: 分配的镜像模板ID；ID 来自前置步骤 setup 产出（${prev.*}）
       value: ${prev.get_image.output.plusImageId}
     enableHide:
       type: Boolean
@@ -212,7 +212,7 @@ constraints:
   failure: 抛 62100233/62100234/62100235
 - level: BIZ
   field: role
-  rule: 镜像工作模式需匹配教师机
+  rule: 镜像模板工作模式需匹配教师机
   failure: 抛 RCDC_RCC_IMAGE_TEACHER_WORK_MODE_NOT_MATCH
 assertions:
   success:
@@ -318,7 +318,7 @@ graph LR
 | 参数名 | 类型 | 必填 | 约束 | 说明 |
 |---|---|---|---|---|
 | crId | UUID | 是 | @NotNull | 分配的教室ID |
-| plusImageId | UUID | 是 | @NotNull | 分配的镜像ID |
+| plusImageId | UUID | 是 | @NotNull | 分配的镜像模板ID |
 | enableHide | Boolean | 是 | @NotNull | 是否隐藏镜像 |
 | storagePoolIdList | List<UUID> | 是 | @NotEmpty 非空 | 存储池ID集合 |
 | clusterId | UUID | 是 | @NotNull | 计算集群ID |
@@ -422,7 +422,7 @@ VDI数据盘存储池ID（由 field_map 契约映射）
 | BIZ | crId | 教师桌面删除中不可分配新镜像 | 抛 RCDC_RCC_CLASSROOM_DELETING_TEACHER_DESKTOP |
 | BIZ | plusImageId | 镜像模板需存在 | getImageName 失败返回 RCDC_ASSIGN_CLASSROOM_TEACHER_IMAGE_FAIL_NOT_FIND_IMAGE_LOG |
 | BIZ | networkId+clusterId/platformId | 网络策略、集群、平台匹配 | 抛 62100233/62100234/62100235 |
-| BIZ | role | 镜像工作模式需匹配教师机 | 抛 RCDC_RCC_IMAGE_TEACHER_WORK_MODE_NOT_MATCH |
+| BIZ | role | 镜像模板工作模式需匹配教师机 | 抛 RCDC_RCC_IMAGE_TEACHER_WORK_MODE_NOT_MATCH |
 
 ## 参数取值策略
 

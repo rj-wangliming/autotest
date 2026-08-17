@@ -52,7 +52,7 @@ setup:
       pick: max
       sort_key: cbbImageTemplateDetailDTO.name
       field: cbbImageTemplateDetailDTO.id
-  purpose: 按镜像名精确过滤（searchKeyword + matchArr.fieldName=imageName）；同名多版本取模板名最大（尾部时间戳最新）的可分配镜像
+  purpose: 按镜像名精确过滤（searchKeyword + matchArr.fieldName=imageName）；同名多版本取模板名最大（尾部时间戳最新）的可分配镜像模板
   request:
     body:
       searchKeyword: ${param.student_image_name}
@@ -91,7 +91,7 @@ request:
       type: UUID
       required: true
       constraint: '@NotNull'
-      description: 分配的镜像ID；ID 来自前置步骤 setup 产出（${prev.*}）
+      description: 分配的镜像模板ID；ID 来自前置步骤 setup 产出（${prev.*}）
       value: ${prev.get_image.output.plusImageId}
     enableHide:
       type: Boolean
@@ -202,7 +202,7 @@ constraints:
   failure: 不一致抛 RCDC_RCC_ASSIGN_IMAGE_DIFF_PLATFORM(62100233)/RCDC_RCC_
 - level: BIZ
   field: plusImageId
-  rule: 镜像需存在且可用
+  rule: 镜像模板需存在且可用
   failure: 抛 RCDC_RCC_IMAGE_NOT_AVAILABLE_UN_SUPPORT / RCDC_RCC_CLASSRO
 - level: BIZ
   field: strategyId
@@ -210,7 +210,7 @@ constraints:
   failure: 抛 RCDC_RCC_CLASSROOM_IMAGE_DESK_STRATEGY_NOT_RCC / RCDC_RCC_
 - level: BIZ
   field: role
-  rule: 镜像工作模式需匹配学生机
+  rule: 镜像模板工作模式需匹配学生机
   failure: 抛 RCDC_RCC_IMAGE_STUDENT_WORK_MODE_NOT_MATCH
 - level: CONCURRENCY
   field: crId+plusImageId
@@ -226,8 +226,8 @@ assertions:
   - scenario: 网络策略与集群不匹配
     trigger: networkId 不属于 clusterId
     expect: $.status==ERROR && $.msgKey==rcdc_assign_classroom_student_image_fail_log（底层抛 62100235）
-  - scenario: 镜像已被删除
-    trigger: plusImageId 对应镜像已删除
+  - scenario: 镜像模板已被删除
+    trigger: plusImageId 对应镜像模板已删除
     expect: $.status==ERROR && $.msgKey==rcdc_assign_classroom_student_image_fail_log（底层抛 rcdc_rcc_image_has_be_delete）
   - scenario: 参数校验失败
     trigger: storagePoolIdList 为空
@@ -326,7 +326,7 @@ graph LR
 | 参数名 | 类型 | 必填 | 约束 | 说明 |
 |---|---|---|---|---|
 | crId | UUID | 是 | @NotNull | 分配的教室ID |
-| plusImageId | UUID | 是 | @NotNull | 分配的镜像ID |
+| plusImageId | UUID | 是 | @NotNull | 分配的镜像模板ID |
 | enableHide | Boolean | 是 | @NotNull | 是否隐藏镜像 |
 | storagePoolIdList | List<UUID> | 是 | @NotEmpty 非空 | 存储池ID集合 |
 | clusterId | UUID | 是 | @NotNull | 计算集群ID |
@@ -412,9 +412,9 @@ VDI数据盘存储池ID；需先开启VDI数据盘后才有值（由 field_map �
 | PARAM | crId/plusImageId/enableHide/storagePoolIdList/clusterId/platformId/strategyId/networkId | @NotNull/@NotEmpty | 参数缺失或列表为空时校验失败 |
 | BIZ | networkId+clusterId | 网络策略必须与集群匹配 | 不匹配抛 RCDC_RCC_ASSIGN_IMAGE_DIFF_NET_STRATEGY(62100235) |
 | BIZ | platformId/clusterId | 镜像所属平台/集群与目标一致 | 不一致抛 RCDC_RCC_ASSIGN_IMAGE_DIFF_PLATFORM(62100233)/RCDC_RCC_ASSIGN_IMAGE_DIFF_CLUSTER(62100234) |
-| BIZ | plusImageId | 镜像需存在且可用 | 抛 RCDC_RCC_IMAGE_NOT_AVAILABLE_UN_SUPPORT / RCDC_RCC_CLASSROOM_IMAGE_NOT_FOUND / RCDC_RCC_IMAGE_HAS_BE_DELETE |
+| BIZ | plusImageId | 镜像模板需存在且可用 | 抛 RCDC_RCC_IMAGE_NOT_AVAILABLE_UN_SUPPORT / RCDC_RCC_CLASSROOM_IMAGE_NOT_FOUND / RCDC_RCC_IMAGE_HAS_BE_DELETE |
 | BIZ | strategyId | 策略需为课程策略且与镜像类型匹配 | 抛 RCDC_RCC_CLASSROOM_IMAGE_DESK_STRATEGY_NOT_RCC / RCDC_RCC_IMAGE_STRATEGY_NOT_SAME_TYPE |
-| BIZ | role | 镜像工作模式需匹配学生机 | 抛 RCDC_RCC_IMAGE_STUDENT_WORK_MODE_NOT_MATCH |
+| BIZ | role | 镜像模板工作模式需匹配学生机 | 抛 RCDC_RCC_IMAGE_STUDENT_WORK_MODE_NOT_MATCH |
 | CONCURRENCY | crId+plusImageId | synchronized 锁串行化同一教室镜像分配 | 并发下重复分配由校验拦截 |
 
 ## 参数取值策略
@@ -447,7 +447,7 @@ VDI数据盘存储池ID；需先开启VDI数据盘后才有值（由 field_map �
 | 场景 | 触发条件 | 断言点 |
 |---|---|---|
 | 网络策略与集群不匹配 | networkId 不属于 clusterId | $.status==ERROR && $.msgKey==rcdc_assign_classroom_student_image_fail_log（底层抛 62100235） |
-| 镜像已被删除 | plusImageId 对应镜像已删除 | $.status==ERROR && $.msgKey==rcdc_assign_classroom_student_image_fail_log（底层抛 rcdc_rcc_image_has_be_delete） |
+| 镜像模板已被删除 | plusImageId 对应镜像模板已删除 | $.status==ERROR && $.msgKey==rcdc_assign_classroom_student_image_fail_log（底层抛 rcdc_rcc_image_has_be_delete） |
 | 参数校验失败 | storagePoolIdList 为空 | $.status==ERROR（@NotEmpty 参数校验拦截） |
 
 ## 环境清理机制
