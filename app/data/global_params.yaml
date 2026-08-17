@@ -26,9 +26,9 @@ strategy_name: [a_strategy_01]                         # VDI 策略名
 initial_strategy_name:               # 初始策略名（镜像分配关联）
 
 # ── 镜像（可多个）──
-student_image_name:                  # 学生镜像名
-teacher_image_name:                  # 教师镜像名
-image_name:                          # 镜像名（matchArr.fieldName=imageName，精确匹配）
+student_image_name: [TEST_WIN10_64_VDI_P]            # 学生镜像名
+teacher_image_name: [TEST_WIN10_64_VDI_P]               # 教师镜像名
+image_name: [TEST_WIN10_64_VDI_P]                # 镜像名（matchArr.fieldName=imageName，精确匹配）
 
 # ── 桌面/座位 ──
 # 命名规则：desktop_pre_name 为空随机生成（字母开头8位小写字母数字）；

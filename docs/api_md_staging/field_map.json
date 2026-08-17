@@ -285,6 +285,12 @@
    "api": "POST /rcc/classroom/create -> POST /rcc/classroom/select",
    "from_jsonpath": "$.content[0].classroomId",
    "to": "crId"
+  },
+  {
+   "api": "executor_auto_fill (classroom/getInfo → image/list → platform/list)",
+   "from_jsonpath": "$.content.platformId → $.content.itemArr[0].platformId → $.content.itemArr[0].id",
+   "to": "platformId",
+   "note": "ClassroomDTO/ClassroomInfoDetailDTO 不含 platformId，由 executor 自动填充；降级：internal_error → 空列表"
   }
  ],
  "rcc_classroom_image_getAssignedClusterAndNetwork": [
