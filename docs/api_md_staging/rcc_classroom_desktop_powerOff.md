@@ -186,9 +186,9 @@ polling:
   terminal_states:
     success:
     - SUCCESS
-    - PARTIAL_SUCCESS
     failure:
     - FAILURE
+    - PARTIAL_SUCCESS
 
 upstream:
 - api: POST /rcc/classroom/desktop/list

@@ -64,6 +64,17 @@ response:
     taskId:
       type: UUID
       description: 启用网络批处理任务ID（无座位时为空）
+polling:
+  api: common_get_msgct_detail_info
+  method: POST
+  params:
+    msgrelationid: ${content.taskId}
+  optional_when_no_correlation: true
+  interval_ms: 2000
+  timeout_ms: 120000
+  terminal_states:
+    success: [SUCCESS]
+    failure: [FAILURE, PARTIAL_SUCCESS]
 upstream:
 - api: 内部调用:ClassroomAPI
   purpose: 设置教室级网络状态为启用

@@ -79,6 +79,16 @@ response:
     taskId:
       type: UUID
       description: 提交的上课批处理任务ID
+polling:
+  api: common_get_msgct_detail_info
+  method: POST
+  params:
+    msgrelationid: ${content.taskId}
+  interval_ms: 2000
+  timeout_ms: 120000
+  terminal_states:
+    success: [SUCCESS]
+    failure: [FAILURE, PARTIAL_SUCCESS]
 upstream:
 - api: 内部调用:ClassroomAPI
   purpose: 按教室ID取教室基础信息（含terminalGroupId、classroomName）

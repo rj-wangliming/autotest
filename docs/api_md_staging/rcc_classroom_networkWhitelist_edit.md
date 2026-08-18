@@ -88,6 +88,16 @@ response:
     taskDesc:
       type: String
       description: 任务描述（编辑白名单批任务）
+polling:
+  api: common_get_msgct_detail_info
+  method: POST
+  params:
+    msgrelationid: ${content.taskId}
+  interval_ms: 2000
+  timeout_ms: 120000
+  terminal_states:
+    success: [SUCCESS]
+    failure: [FAILURE, PARTIAL_SUCCESS]
 upstream:
 - api: POST /rcc/classroom/create -> POST /rcc/classroom/select
   produces: $.content[0].classroomId

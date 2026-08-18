@@ -858,51 +858,77 @@ class Executor:
         如 lesson 的 lessonTaskId）；兜底 {msgrelationid, msgType: BATCH_MSG}
         （公共轮询接口 /rco/msgct/msg/detail 两参数均必填）。
 
-        容错边界（与假绿区分）：
-        - 任务终态 FAILURE / 轮询超时 → 抛 AssertionError（真失败）
-        - 轮询接口 404 / 响应无 taskStatus（含参数校验错误）→ 「无法确认任务状态」：
-          连续 3 次记 warning（poll_api_missing）后按通过处理；strict 模式直接失败。
+        轮询接口 404、业务 ERROR、连续无状态、PARTIAL_SUCCESS 和超时均显式失败。
+        条件异步接口只有声明 optional_when_no_correlation 时，才允许无关联 ID 的
+        同步成功响应跳过轮询。
         轮询间隔 2 秒，超时 240 秒。
         """
-        api = poll.get("api", "common_get_msgct_detail_info")
+        api = str(poll.get("api", "common_get_msgct_detail_info")).strip()
+        method = str(poll.get("method", "POST")).upper()
+        if " " in api:
+            prefix, api = api.split(None, 1)
+            method = prefix.upper()
         path = api if api.startswith("/") else "/" + api
         last = ctx.get("_last_data") or {}
         task_id = (ctx.get("taskId")
                    or jsonpath_get(last, "$.content.taskId")
                    or jsonpath_get(last, "$.content.lessonTaskId"))
+        body = self._poll_request_body(poll, task_id, ctx, path)
+        correlation_id = task_id or self._poll_correlation_id(body)
         if not task_id:
-            self.log("info", "[poll] taskId 为空（同步返回，无异步任务），跳过轮询")
-            return True
+            if not correlation_id and poll.get("optional_when_no_correlation"):
+                self.log("info", "[poll] 条件异步接口未返回关联 ID，按文档同步完成语义跳过")
+                return True
+            if not correlation_id:
+                raise AssertionError("异步轮询缺少可解析的关联 ID")
+        if self._contains_template(body):
+            raise AssertionError("polling.params 存在未解析模板: %s" % body)
         interval = poll.get("interval_ms", 2000) / 1000.0
         timeout = poll.get("timeout_ms", 240000) / 1000.0
         term = poll.get("terminal_states", {}) or {}
         ok_states = term.get("success", ["SUCCESS"])
         fail_states = term.get("fail") or term.get("failure") or ["FAILURE"]
-        body = self._poll_request_body(poll, task_id, ctx, path)
         deadline = time.time() + timeout
         # 连续无效响应计数（404 与 无 taskStatus 共用）：
         # 仅在收到「结构有效但未到终态」的响应时清零，否则计数被清零永远到不了 3
         consecutive_invalid = 0
         while time.time() < deadline:
-            status, data = self.http_request("POST", path, body, ctx)
+            status, data = self.http_request(method, path, body, ctx)
             if status == 404:
                 consecutive_invalid += 1
                 self.log("warning", "[poll] 轮询接口 404 (%d/3)" % consecutive_invalid)
                 if consecutive_invalid >= 3:
-                    return self._unverified(ctx, "poll_api_missing",
-                                            "轮询接口 %s 连续 3 次 404，任务状态无法确认: taskId=%s" % (path, task_id),
-                                            "轮询接口 404: taskId=%s" % task_id)
+                    raise AssertionError("轮询接口 %s 连续 3 次 404，任务状态无法确认: correlationId=%s"
+                                         % (path, correlation_id))
                 time.sleep(interval)
                 continue
+            if status < 200 or status >= 300:
+                raise AssertionError("轮询接口 HTTP %s，任务状态无法确认: correlationId=%s"
+                                     % (status, correlation_id))
+            biz_status = jsonpath_get(data, "$.status")
+            if biz_status == "ERROR":
+                raise AssertionError("轮询业务失败: correlationId=%s (%s)"
+                                     % (correlation_id, jsonpath_get(data, "$.message") or "ERROR"))
             st = (jsonpath_get(data, "$.content.taskStatus")
               or jsonpath_get(data, "$.content.status")
-              or jsonpath_get(data, "$.content.msgState"))
+              or jsonpath_get(data, "$.content.msgState")
+              or jsonpath_get(data, "$.content.state"))
             self.log("info", "[poll] taskStatus=%s" % st)
+            if st == "PARTIAL_SUCCESS" and not poll.get("allow_partial_success"):
+                raise AssertionError("轮询任务部分成功，按失败处理: correlationId=%s" % correlation_id)
+            if st in fail_states:
+                raise AssertionError("轮询任务失败: correlationId=%s (taskStatus=%s)"
+                                     % (correlation_id, st))
+            if poll.get("success_when"):
+                if self._poll_conditions_met(data, poll["success_when"]):
+                    self.log("info", "[poll] 查询验证成功")
+                    return True
+                self.log("info", "[poll] 查询验证条件尚未满足")
+                time.sleep(interval)
+                continue
             if st in ok_states:
                 self.log("info", "[poll] 任务成功")
                 return True
-            if st in fail_states:
-                raise AssertionError("轮询任务失败: taskId=%s (taskStatus=%s)" % (task_id, st))
             # content 为 null 且无 taskStatus（接口不匹配 / 参数校验错误如缺 msgType）
             content = data.get("content") if isinstance(data, dict) else None
             if content is None and st is None:
@@ -910,19 +936,20 @@ class Executor:
                 self.log("warning", "[poll] content 为 null 且无 taskStatus (%d/3): %s"
                          % (consecutive_invalid, jsonpath_get(data, "$.message") or ""))
                 if consecutive_invalid >= 3:
-                    return self._unverified(ctx, "poll_api_missing",
-                                            "轮询接口 %s 连续 3 次无 taskStatus，任务状态无法确认: taskId=%s" % (path, task_id),
-                                            "轮询响应无 taskStatus: taskId=%s" % task_id)
+                    raise AssertionError("轮询接口 %s 连续 3 次无任务状态，结果无法确认: correlationId=%s"
+                                         % (path, correlation_id))
                 time.sleep(interval)
                 continue
-            # content 有值但无 taskStatus（业务状态为 ERROR/SUCCESS 但无异步字段），跳过
-            biz_status = jsonpath_get(data, "$.status")
+            # content 有值但无任务状态也不能据外层 SUCCESS 判定异步任务成功。
             if biz_status and st is None:
-                self.log("info", "[poll] 有业务状态(%s)但无taskStatus，跳过轮询" % biz_status)
-                return True
+                consecutive_invalid += 1
+                if consecutive_invalid >= 3:
+                    raise AssertionError("轮询响应连续 3 次无任务状态: correlationId=%s" % correlation_id)
+                time.sleep(interval)
+                continue
             consecutive_invalid = 0  # 有效响应且未到终态（任务进行中）
             time.sleep(interval)
-        raise AssertionError("轮询超时: taskId=%s" % task_id)
+        raise AssertionError("轮询超时: correlationId=%s" % correlation_id)
 
     def _poll_request_body(self, poll, task_id, ctx, path=""):
         """轮询请求体：文档 polling.params 模板优先，${content.X} 引用触发步骤响应解析。
@@ -935,14 +962,48 @@ class Executor:
                 if isinstance(v, str):
                     m = re.fullmatch(r"\$\{content\.(\w+)\}", v)
                     if m:
-                        v = jsonpath_get(ctx.get("_last_data") or {}, "$.content." + m.group(1))
-                body[k] = v if v not in (None, "") else task_id
+                        resolved = jsonpath_get(ctx.get("_last_data") or {}, "$.content." + m.group(1))
+                        v = resolved if resolved not in (None, "") else v
+                body[k] = v
         if "msgct" in str(path):
             body.setdefault("msgrelationid", task_id)
             body.setdefault("msgType", "BATCH_MSG")
         elif not body:
             body = {"msgrelationid": task_id}
         return body
+
+    @staticmethod
+    def _contains_template(value):
+        if isinstance(value, str):
+            return "${" in value
+        if isinstance(value, dict):
+            return any(Executor._contains_template(v) for v in value.values())
+        if isinstance(value, list):
+            return any(Executor._contains_template(v) for v in value)
+        return False
+
+    @staticmethod
+    def _poll_correlation_id(body):
+        if not isinstance(body, dict):
+            return None
+        for key in ("msgrelationid", "msgRelationId", "taskId", "lessonTaskId", "id"):
+            if body.get(key) not in (None, "") and not Executor._contains_template(body[key]):
+                return body[key]
+        return None
+
+    @staticmethod
+    def _poll_conditions_met(data, conditions):
+        for cond in conditions or []:
+            actual = jsonpath_get(data, cond.get("path", ""))
+            op = cond.get("op", "eq")
+            expected = cond.get("value")
+            if op == "eq" and actual != expected:
+                return False
+            if op == "not_empty" and not actual:
+                return False
+            if op == "in" and actual not in (expected or []):
+                return False
+        return bool(conditions)
 
     def _unverified(self, ctx, code, warn_msg, fail_msg):
         """「无法确认结果」的统一出口：默认 warning + 通过；strict 模式判失败"""

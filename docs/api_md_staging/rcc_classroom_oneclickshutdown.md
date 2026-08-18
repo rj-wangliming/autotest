@@ -58,6 +58,16 @@ response:
     taskId:
       type: UUID
       description: 一键关机批处理任务ID
+polling:
+  api: common_get_msgct_detail_info
+  method: POST
+  params:
+    msgrelationid: ${content.taskId}
+  interval_ms: 2000
+  timeout_ms: 120000
+  terminal_states:
+    success: [SUCCESS]
+    failure: [FAILURE, PARTIAL_SUCCESS]
 upstream:
 - api: 内部调用:RccPermissionChecker
   purpose: 校验教室终端组权限

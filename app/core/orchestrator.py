@@ -181,6 +181,7 @@ class Orchestrator:
             used.add(st["step_name"])
         producers = {}      # 产出变量名 -> 最近产出步骤名（按 plan 顺序向后推进）
         norm_producers = {}  # 归一键（小写去下划线）-> 步骤名（classroomId ≈ classroom_id）
+        produced_by_step = {}  # 已执行到当前位置的步骤 -> 该步骤实际产出字段
 
         def norm(s):
             return str(s).lower().replace("_", "")
@@ -189,13 +190,15 @@ class Orchestrator:
             sname = st.get("step_name") or ""
             if isinstance(st.get("body"), dict):
                 st["body"] = self._rewrite_body_refs(
-                    st["body"], used, producers, norm_producers, sname, warns)
+                    st["body"], used, producers, norm_producers, produced_by_step, sname, warns)
             for var in (st.get("extract") or {}):
                 if isinstance(var, str):
                     producers[var] = sname
                     norm_producers[norm(var)] = sname
+                    produced_by_step.setdefault(sname, set()).add(norm(var))
 
-    def _rewrite_body_refs(self, obj, names, producers, norm_producers, sname, warns, _skip_key=None):
+    def _rewrite_body_refs(self, obj, names, producers, norm_producers,
+                           produced_by_step, sname, warns, _skip_key=None):
         """递归改写 body 中的 ${prev.*} 引用（见 _link_prev_refs）
         _skip_key: 若不为 None，该 key 对应的 dict 值含 _locked 标记，跳过改写"""
         if isinstance(obj, str):
@@ -203,7 +206,10 @@ class Orchestrator:
                 ref, idx = m.group(1), m.group(2) or ""
                 if ".output." in ref:
                     target, fld = ref.split(".output.", 1)
-                    if target in names:
+                    # 仅当目标步骤在当前位置之前确实产出该字段时引用才有效。
+                    # “计划里存在同名步骤”不足以保证执行期可解析。
+                    target_produces = fld.lower().replace("_", "") in produced_by_step.get(target, set())
+                    if target in names and target_produces:
                         return m.group(0)
                     p = producers.get(fld) or norm_producers.get(fld.lower().replace("_", ""))
                     if p:
@@ -224,12 +230,15 @@ class Orchestrator:
             # 跳过 _locked 标记的字段（value 含 # LOCK 标记，由文档 value 严格锁定）
             if obj.get("_locked"):
                 return obj
-            return {k: self._rewrite_body_refs(v, names, producers, norm_producers, sname, warns,
+            return {k: self._rewrite_body_refs(v, names, producers, norm_producers,
+                                                produced_by_step, sname, warns,
                                                _skip_key=k) if isinstance(v, dict) and v.get("_locked")
-                    else self._rewrite_body_refs(v, names, producers, norm_producers, sname, warns)
+                    else self._rewrite_body_refs(v, names, producers, norm_producers,
+                                                 produced_by_step, sname, warns)
                     for k, v in obj.items()}
         if isinstance(obj, list):
-            return [self._rewrite_body_refs(v, names, producers, norm_producers, sname, warns)
+            return [self._rewrite_body_refs(v, names, producers, norm_producers,
+                                            produced_by_step, sname, warns)
                     for v in obj]
         return obj
 
@@ -654,8 +663,12 @@ class Orchestrator:
             extract = {}
         dep_meta = self.index.get(dep_api) or {}          # setup 项对应接口的 polling
         dep_poll = dep_meta.get("polling") or None
-        if isinstance(dep_poll, dict) and dep_poll.get("api") and not str(dep_poll["api"]).startswith("/"):
-            resolved = self.index.resolve(dep_poll["api"])
+        if isinstance(dep_poll, dict) and dep_poll.get("api"):
+            poll_api = str(dep_poll["api"]).strip()
+            if " " in poll_api:
+                method, poll_api = poll_api.split(None, 1)
+                dep_poll = dict(dep_poll, method=method.upper(), api=poll_api)
+            resolved = self.index.resolve(poll_api) if not poll_api.startswith("/") else None
             if resolved:
                 dep_poll = dict(dep_poll, api=resolved)
         step = {"step_name": sname, "name": (item.get("purpose") or sname)[:24],
@@ -832,8 +845,12 @@ class Orchestrator:
         # polling：接口 polling 配置（api 为节点名时经索引别名解析为真实 url，
         # 如 common_get_msgct_detail_info → /rco/msgct/msg/detail，避免执行期 404）
         poll = meta.get("polling") or None
-        if isinstance(poll, dict) and poll.get("api") and not str(poll["api"]).startswith("/"):
-            resolved = self.index.resolve(poll["api"])
+        if isinstance(poll, dict) and poll.get("api"):
+            poll_api = str(poll["api"]).strip()
+            if " " in poll_api:
+                method, poll_api = poll_api.split(None, 1)
+                poll = dict(poll, method=method.upper(), api=poll_api)
+            resolved = self.index.resolve(poll_api) if not poll_api.startswith("/") else None
             if resolved:
                 poll = dict(poll, api=resolved)
         step = {"name": item[:20], "api": api, "body": body, "extract": extract, "poll": poll}
@@ -1248,4 +1265,3 @@ class Orchestrator:
                 steps_list.insert(0, create_step)
 
         return intent
-

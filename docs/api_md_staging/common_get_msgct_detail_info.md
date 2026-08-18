@@ -133,9 +133,9 @@ polling:
 1. `api` 字段支持节点名（orchestrator 经索引别名解析为 `/rco/msgct/msg/detail`）或直接写真实路径
 2. 请求体：文档 `polling.params` 模板优先（`${content.X}` 引用触发步骤响应，如 lesson 的 `lessonTaskId`）；兜底 `{"msgrelationid": taskId, "msgType": "BATCH_MSG"}`（两参数均必填，缺 msgType 后端报 sk_validation_NotNull）
 3. 轮询间隔 `interval_ms`（默认 2000ms）、超时 `timeout_ms`（默认 240000ms）；`terminal_states.failure`（兼容旧键 `fail`）
-4. 连续 3 次 HTTP 404 或 响应无 taskStatus（含参数校验错误）→ 记 warning（poll_api_missing）后按通过处理；strict 模式判失败
-5. 有 `$.status` 但无 taskStatus（content 有值）→ 同步响应，跳过轮询
-6. 任务终态 FAILURE → 抛 `AssertionError("轮询任务失败: ...")`；超时未到终态 → 抛 `AssertionError("轮询超时: ...")`
+4. 连续 3 次 HTTP 404 或响应无 taskStatus（含参数校验错误）→ 显式失败
+5. 外层业务状态 ERROR、任务 FAILURE/PARTIAL_SUCCESS、轮询超时 → 显式失败
+6. 仅文档声明 `optional_when_no_correlation: true` 的条件异步接口，允许同步成功且无关联 ID 时跳过轮询
 
 ## 上游/下游
 

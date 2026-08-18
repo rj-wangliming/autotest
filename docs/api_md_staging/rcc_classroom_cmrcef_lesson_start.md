@@ -72,9 +72,9 @@ polling:
   terminal_states:
     success:
     - SUCCESS
-    - PARTIAL_SUCCESS
     failure:
     - FAILURE
+    - PARTIAL_SUCCESS
 
 upstream:
 - api: 内部调用:classroomLessonStatusAPI

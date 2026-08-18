@@ -18,6 +18,7 @@ setup:
   api: POST /space/cluster/obtainComputeClusterList
   extract:
     clusterId: $.content.itemArr[0].computerClusterId
+    platformId: $.content.itemArr[0].platformId
   purpose: 按集群名过滤（matchArr.fieldName=clusterName）
   request:
     body:

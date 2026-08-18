@@ -88,6 +88,12 @@ def test_poll_node_name_resolved():
         "poll api 应解析为真实 url: %s" % step.get("poll")
 
 
+def test_poll_method_prefix_normalized():
+    step = Orchestrator()._build_step("/space/strategygroup/vdi/create", "创建 VDI 策略")
+    assert step["poll"]["api"] == "/space/strategygroup/vdi/detail"
+    assert step["poll"]["method"] == "POST"
+
+
 # ---------- 2. 文档驱动补数（fill 引擎） ----------
 
 class FakeExecutor(Executor):
@@ -202,13 +208,15 @@ def test_vdi_create_document_parameterizes_strategy_defaults():
 
 # ---------- 3. 假绿修复 ----------
 
-def test_poll_404_warns_not_silent():
+def test_poll_404_fails():
     ex = FakeExecutor({"/common_get_msgct": (404, {})})
     ctx = {"params": {}, "steps": {}, "warnings": [], "_last_data": {"content": {"taskId": "t-1"}}}
-    ok = ex._poll({"interval_ms": 1}, ctx)
-    assert ok is True, "默认模式 404 应按通过处理"
-    codes = [w["code"] for w in ctx.get("warnings", [])]
-    assert "poll_api_missing" in codes, "404 跳过应记录 warning: %s" % codes
+    try:
+        ex._poll({"interval_ms": 1}, ctx)
+    except AssertionError as e:
+        assert "404" in str(e)
+    else:
+        raise AssertionError("404 不得返回成功")
     # 请求体必须带公共轮询接口必填的 msgType
     bodies = [c[2] for c in ex.calls if c[1] == "/common_get_msgct_detail_info"]
     assert bodies and all(b.get("msgType") == "BATCH_MSG" for b in bodies), \
@@ -216,21 +224,45 @@ def test_poll_404_warns_not_silent():
 
 
 def test_poll_validation_error_not_infinite():
-    """计数器修复：200+content null（如缺 msgType 的校验错误）连续 3 次即止，
-    不再每轮被清零导致死循环到超时"""
+    """轮询接口业务 ERROR 应立即失败，不得循环或降级成功。"""
     ex = FakeExecutor({"/rco/msgct/msg/detail": {
         "status": "ERROR", "content": None,
         "message": "字段msgType不能为空", "msgKey": "sk_validation_NotNull"}})
     ctx = {"params": {}, "steps": {}, "warnings": [], "_last_data": {"content": {"taskId": "t-1"}}}
     import time as _t
     t0 = _t.time()
-    ok = ex._poll({"api": "/rco/msgct/msg/detail", "interval_ms": 1, "timeout_ms": 60000}, ctx)
-    assert ok is True, "3 次无效响应应走 _unverified 通过"
+    try:
+        ex._poll({"api": "/rco/msgct/msg/detail", "interval_ms": 1, "timeout_ms": 60000}, ctx)
+        raise AssertionError("业务 ERROR 不得返回成功")
+    except AssertionError as e:
+        assert "轮询业务失败" in str(e)
     assert _t.time() - t0 < 10, "不应轮询到超时（计数器死循环回归）"
     n = len([c for c in ex.calls if c[1] == "/rco/msgct/msg/detail"])
-    assert n == 3, "应恰好轮询 3 次即止, 实际 %d" % n
-    codes = [w["code"] for w in ctx.get("warnings", [])]
-    assert "poll_api_missing" in codes, "应记录 poll_api_missing: %s" % codes
+    assert n == 1, "业务 ERROR 应立即失败, 实际请求 %d 次" % n
+
+
+def test_poll_http_error_fails():
+    ex = FakeExecutor({"/rco/msgct/msg/detail": (
+        500, {"status": "SUCCESS", "content": {"taskStatus": "SUCCESS"}})})
+    ctx = {"params": {}, "steps": {}, "_last_data": {"content": {"taskId": "t-1"}}}
+    try:
+        ex._poll({"api": "/rco/msgct/msg/detail", "interval_ms": 1}, ctx)
+    except AssertionError as e:
+        assert "HTTP 500" in str(e)
+    else:
+        raise AssertionError("轮询 HTTP 非 2xx 不得返回成功")
+
+
+def test_poll_missing_status_fails():
+    ex = FakeExecutor({"/rco/msgct/msg/detail": {
+        "status": "SUCCESS", "content": {}}})
+    ctx = {"params": {}, "steps": {}, "_last_data": {"content": {"taskId": "t-1"}}}
+    try:
+        ex._poll({"api": "/rco/msgct/msg/detail", "interval_ms": 1}, ctx)
+        raise AssertionError("连续无状态不得返回成功")
+    except AssertionError as e:
+        assert "无任务状态" in str(e)
+    assert len(ex.calls) == 3
 
 
 def test_poll_params_template_resolved():
@@ -245,6 +277,30 @@ def test_poll_params_template_resolved():
     sent = ex.calls[0][2]
     assert sent.get("msgrelationid") == "lt-9", "模板引用应解析为 lessonTaskId: %s" % sent
     assert sent.get("msgType") == "BATCH_MSG", "模板缺 msgType 时应补默认值: %s" % sent
+
+
+def test_poll_query_failure_state_fails_immediately():
+    """查询型轮询应识别 content.state 的失败终态，不得等待到超时。"""
+    ex = FakeExecutor({"/space/strategygroup/vdi/detail": {
+        "status": "SUCCESS", "content": {"id": "strategy-1", "state": "ERROR"}}})
+    ctx = {"params": {}, "steps": {}, "_last_data": {"content": {"id": "strategy-1"}}}
+    poll = {
+        "api": "POST /space/strategygroup/vdi/detail",
+        "params": {"id": "${content.id}"},
+        "interval_ms": 1,
+        "timeout_ms": 1000,
+        "terminal_states": {"success": ["SUCCESS"], "failure": ["ERROR"]},
+        "success_when": [
+            {"path": "$.status", "op": "eq", "value": "SUCCESS"},
+            {"path": "$.content.state", "op": "eq", "value": "AVAILABLE"},
+        ],
+    }
+    try:
+        ex._poll(poll, ctx)
+    except AssertionError as e:
+        assert "taskStatus=ERROR" in str(e)
+    else:
+        raise AssertionError("查询型轮询失败终态不得返回成功")
 
 
 def test_poll_failure_states_key():
@@ -277,6 +333,31 @@ def test_poll_processing_then_success():
     assert ok is True
     assert len(ex.calls) == 3 and not ctx.get("warnings"), \
         "PROCESSING 不应计入无效响应: calls=%d warnings=%s" % (len(ex.calls), ctx.get("warnings"))
+
+
+def test_poll_partial_success_fails_by_default():
+    ex = FakeExecutor({"/rco/msgct/msg/detail": {
+        "status": "SUCCESS", "content": {"taskStatus": "PARTIAL_SUCCESS"}}})
+    ctx = {"params": {}, "steps": {}, "_last_data": {"content": {"taskId": "t-1"}}}
+    try:
+        ex._poll({"api": "/rco/msgct/msg/detail", "interval_ms": 1,
+                  "terminal_states": {"success": ["SUCCESS", "PARTIAL_SUCCESS"]}}, ctx)
+        raise AssertionError("PARTIAL_SUCCESS 不得默认成功")
+    except AssertionError as e:
+        assert "部分成功" in str(e)
+
+
+def test_poll_explicit_params_without_task_id():
+    ex = FakeExecutor({"/space/strategygroup/vdi/detail": {
+        "status": "SUCCESS", "content": {"state": "AVAILABLE"}}})
+    ctx = {"params": {}, "steps": {}, "_last_data": {"content": {"id": "vdi-1"}}}
+    assert ex._poll({
+        "api": "POST /space/strategygroup/vdi/detail", "interval_ms": 1,
+        "params": {"id": "${content.id}"},
+        "success_when": [{"path": "$.status", "op": "eq", "value": "SUCCESS"},
+                         {"path": "$.content.state", "op": "eq", "value": "AVAILABLE"}],
+    }, ctx)
+    assert ex.calls[0][:3] == ("POST", "/space/strategygroup/vdi/detail", {"id": "vdi-1"})
 
 
 def test_poll_404_strict_fails():
@@ -383,6 +464,40 @@ def test_prev_ref_rewrite_warned():
                         "旧引用未改写干净: %s" % v["value"]
 
 
+def test_explicit_ref_keeps_its_producer():
+    o = Orchestrator()
+    steps = [
+        {"step_name": "first", "api": "/first",
+         "extract": {"classroomId": "$.content.first"}},
+        {"step_name": "second", "api": "/second",
+         "extract": {"classroomId": "$.content.second"}},
+        {"step_name": "action", "api": "/action", "extract": {},
+         "body": {"classroomId": {"value": "${prev.first.output.classroomId}"}}},
+    ]
+    warns = []
+    o._link_prev_refs(steps, warns)
+    assert steps[-1]["body"]["classroomId"]["value"] == "${prev.first.output.classroomId}"
+    assert not warns
+
+
+def test_student_image_platform_ref_resolves():
+    o = Orchestrator()
+    plan = _run_channel_b(o, {"steps": [
+        {"api": "/rcc/classroom/image/student/create",
+         "step_name": "assign_student_image", "section": "action"},
+    ]})
+    action = next(s for s in plan["steps"]
+                  if s.get("api") == "/rcc/classroom/image/student/create")
+    raw = action["body"]["platformId"]["value"]
+    match = re.fullmatch(r"\$\{prev\.([^.]+)\.output\.platformId\}", raw)
+    assert match, "platformId 应绑定 setup 产出: %s" % raw
+    producer = next(s for s in plan["steps"] if s.get("step_name") == match.group(1))
+    assert producer.get("extract", {}).get("platformId") == "$.content.itemArr[0].platformId"
+    ctx = {"params": {}, "steps": {match.group(1): {"platformId": "platform-1"}}}
+    resolved = resolve_body(action["body"], ctx)
+    assert resolved.get("platformId") == "platform-1", resolved
+
+
 def main():
     only = sys.argv[1] if len(sys.argv) > 1 else ""
     tests = [
@@ -391,19 +506,27 @@ def main():
         ("规则库-侧别偏好", test_semantic_side_preference),
         ("规则库-匹配不回归", test_semantic_match_regression),
         ("规则库-轮询节点名解析", test_poll_node_name_resolved),
+        ("规则库-轮询 POST 前缀归一", test_poll_method_prefix_normalized),
         ("fill-platformId 回查+缓存", test_fill_platform_id_sources_and_cache),
         ("fill-exactMatchArr 静态+追加", test_fill_exact_match_arr_static_and_append),
         ("fill-yetAssign 文档全链路", test_fill_doc_driven_from_yetassign_doc),
         ("VDI 创建策略参数化默认值", test_vdi_create_document_parameterizes_strategy_defaults),
-        ("假绿-poll 404 记 warning", test_poll_404_warns_not_silent),
+        ("假绿-poll 404 显式失败", test_poll_404_fails),
         ("假绿-poll 校验错误不 死循环", test_poll_validation_error_not_infinite),
+        ("假绿-poll HTTP 错误失败", test_poll_http_error_fails),
+        ("假绿-poll 连续无状态失败", test_poll_missing_status_fails),
         ("假绿-poll params 模板解析", test_poll_params_template_resolved),
+        ("假绿-查询轮询失败终态", test_poll_query_failure_state_fails_immediately),
         ("假绿-poll failure 键兼容", test_poll_failure_states_key),
         ("假绿-poll 正常轮询路径", test_poll_processing_then_success),
+        ("假绿-PARTIAL_SUCCESS 默认失败", test_poll_partial_success_fails_by_default),
+        ("轮询-显式 params 无 taskId", test_poll_explicit_params_without_task_id),
         ("假绿-poll 404 strict 失败", test_poll_404_strict_fails),
         ("假绿-删除存在性验证", test_delete_poll_verified),
         ("引用-plan 期全链接", test_prev_refs_linked),
         ("引用-改写记录 warns", test_prev_ref_rewrite_warned),
+        ("引用-显式产出者保持不变", test_explicit_ref_keeps_its_producer),
+        ("引用-学生镜像 platformId 可解析", test_student_image_platform_ref_resolves),
     ]
     print("=== 四项重构回归测试 ===\n")
     for name, fn in tests:

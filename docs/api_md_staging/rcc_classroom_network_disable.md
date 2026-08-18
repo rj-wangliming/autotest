@@ -64,6 +64,17 @@ response:
     taskId:
       type: UUID
       description: 无座位时为空，有座位时为禁网批处理任务ID
+polling:
+  api: common_get_msgct_detail_info
+  method: POST
+  params:
+    msgrelationid: ${content.taskId}
+  optional_when_no_correlation: true
+  interval_ms: 2000
+  timeout_ms: 120000
+  terminal_states:
+    success: [SUCCESS]
+    failure: [FAILURE, PARTIAL_SUCCESS]
 upstream:
 - api: 内部调用:ClassroomAPI
   purpose: 设置教室级网络禁用/启用状态

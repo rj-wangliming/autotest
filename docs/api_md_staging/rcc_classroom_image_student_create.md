@@ -202,14 +202,15 @@ polling:
   method: POST
   params:
     msgrelationid: ${content.taskId}
+  optional_when_no_correlation: true
   interval_ms: 2000
   timeout_ms: 120000
   terminal_states:
     success:
     - SUCCESS
-    - PARTIAL_SUCCESS
     failure:
     - FAILURE
+    - PARTIAL_SUCCESS
 upstream:
 - api: POST /rcc/classroom/seat/batchCreate
   purpose: 座位创建是本接口前置——桌面由「座位 + 镜像分配」生成，先批量创建座位（异步批任务，轮询完成）再分配学生机镜像，分配后该座位才具备云桌面

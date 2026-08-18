@@ -170,14 +170,15 @@ polling:
   method: POST
   params:
     msgrelationid: ${content.taskId}
+  optional_when_no_correlation: true
   interval_ms: 2000
   timeout_ms: 120000
   terminal_states:
     success:
     - SUCCESS
-    - PARTIAL_SUCCESS
     failure:
     - FAILURE
+    - PARTIAL_SUCCESS
 upstream:
 - api: POST /rcc/classroom/create -> POST /rcc/classroom/select
   purpose: create 为异步批任务，响应为 BatchTaskSubmitResult 不直接返回 ID；实际经 select 按名称查询 content[0].cla

@@ -146,14 +146,15 @@ polling:
   method: POST
   params:
     msgrelationid: ${content.taskId}
+  optional_when_no_correlation: true
   interval_ms: 2000
   timeout_ms: 120000
   terminal_states:
     success:
     - SUCCESS
-    - PARTIAL_SUCCESS
     failure:
     - FAILURE
+    - PARTIAL_SUCCESS
 upstream:
 - api: POST /rcc/classroom/create
   produces: $.content.classroomId
