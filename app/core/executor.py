@@ -358,15 +358,18 @@ class Executor:
         biz_status = jsonpath_get(data, "$.status") if isinstance(data, dict) else None
         if step.get("poll") and status in (200, 201) and biz_status == "SUCCESS":
             self._poll(step["poll"], ctx)
-            # 重启类操作：任务完成后确认桌面恢复运行中（RUNNING）
-            # （对齐 pytest common_restart_classroom_desktop：重启后桌面先未注册再恢复 RUNNING）
-            if "desktop/restart" in path:
+            # 上课/重启类操作：任务完成后确认桌面状态
+            # - lesson/start：上课任务 SUCCESS 后桌面仍在启动中，须等待全部 RUNNING 才能继续
+            #   （否则后续 restart 等操作会在桌面关机态执行失败）
+            # - desktop/restart：重启后桌面先未注册再恢复 RUNNING（对齐 pytest）
+            if "lesson/start" in path or "desktop/restart" in path:
                 cr_bucket = (ctx.get("steps") or {}).get("query_classroom") or {}
                 classroom_id = cr_bucket.get("classroomId")
                 if classroom_id:
                     self._wait_desktops_state(classroom_id, "RUNNING", ctx, timeout=180)
                 else:
-                    self.log("warning", "[restart] 无 query_classroom.classroomId，跳过运行中状态确认")
+                    self.log("warning", "[%s] 无 query_classroom.classroomId，跳过运行中状态确认"
+                             % ("lesson" if "lesson" in path else "restart"))
         elif step.get("poll") and biz_status != "SUCCESS":
             self.log("warning", "[poll] 业务状态非 SUCCESS（%s），跳过轮询" % biz_status)
 
