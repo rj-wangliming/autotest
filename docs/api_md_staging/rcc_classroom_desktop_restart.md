@@ -90,7 +90,6 @@ setup:
       platformId: ${prev.get_cluster.output.platformId}
       strategyId: ${prev.create_vdi_strategy.output.vdiStrategyId}
       networkId: ${prev.get_network.output.networkId}
-      desktopStartIp: ${param.student_start_ip}
       vdiDiskStorageId: ${prev.get_vdi_disk_storage.output.vdiDiskStorageId}
 - name: query_desktop
   api: POST /rcc/classroom/desktop/list
@@ -196,7 +195,6 @@ params:
   - name: image_name
     desc: ''
     used_by: setup（分配学生镜像按名精确过滤）
-  - name: student_start_ip
   - name: desktopNameStartNum
     desc: ''
     used_by: 见 setup/request

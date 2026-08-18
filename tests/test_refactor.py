@@ -496,6 +496,18 @@ def test_student_image_platform_ref_resolves():
     ctx = {"params": {}, "steps": {match.group(1): {"platformId": "platform-1"}}}
     resolved = resolve_body(action["body"], ctx)
     assert resolved.get("platformId") == "platform-1", resolved
+    assert "desktopStartIp" not in resolved, \
+        "桌面IP应由服务端网络策略分配，不得复用 student_start_ip: %s" % resolved
+
+
+def test_restart_setup_does_not_override_desktop_ip():
+    o = Orchestrator()
+    meta = o.index.get("/rcc/classroom/desktop/restart")
+    assign = next(item for item in meta.get("setup", [])
+                  if item.get("api") == "POST /rcc/classroom/image/student/create")
+    body = ((assign.get("request") or {}).get("body") or {})
+    assert "desktopStartIp" not in body, \
+        "重启造数不应把终端 student_start_ip 注入桌面IP: %s" % body
 
 
 def main():
@@ -527,6 +539,7 @@ def main():
         ("引用-改写记录 warns", test_prev_ref_rewrite_warned),
         ("引用-显式产出者保持不变", test_explicit_ref_keeps_its_producer),
         ("引用-学生镜像 platformId 可解析", test_student_image_platform_ref_resolves),
+        ("引用-终端IP不注入桌面", test_restart_setup_does_not_override_desktop_ip),
     ]
     print("=== 四项重构回归测试 ===\n")
     for name, fn in tests:

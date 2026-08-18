@@ -172,9 +172,8 @@ request:
     desktopStartIp:
       type: String
       required: false
-      constraint: '@Nullable（首次新增时必填）'
-      description: 网络策略开始IP
-      value: ${param.student_start_ip}
+      constraint: '@Nullable'
+      description: 桌面网络起始IP；自动化不传，由服务端按 networkId 对应网络策略自动分配
     vdiDiskStorageId:
       type: UUID
       required: false
@@ -297,9 +296,6 @@ params:
     desc: ''
     used_by: setup/request
   - name: classroom_strategy_name
-  - name: student_start_ip
-    desc: ''
-    used_by: 见 setup/request
 ---
 # POST /rcc/classroom/image/student/create
 
@@ -377,7 +373,7 @@ graph LR
 | platformId | UUID | 是 | @NotNull | 平台ID |
 | strategyId | UUID | 是 | @NotNull | 课程策略ID（VDI deskStrategy，非教室策略 classroomStrategy） |
 | networkId | UUID | 是 | @NotNull | 网络策略ID |
-| desktopStartIp | String | 否 | @Nullable（首次新增时必填） | 网络策略开始IP |
+| desktopStartIp | String | 否 | @Nullable | 自动化不传；服务端按 networkId 对应网络策略自动分配桌面IP |
 | vdiDiskStorageId | UUID | 否 | @Nullable | vdi数据盘存储池 |
 | imageReplicationStoragePoolId | UUID | 否 | @Nullable | 同步镜像副本的存储池 |
 
@@ -473,7 +469,7 @@ VDI数据盘存储池ID；需先开启VDI数据盘后才有值（由 field_map �
 | platformId | user_input/from_query | 按业务构造 |
 | strategyId | user_input/from_query | 按业务构造 |
 | networkId | user_input/from_query | 按业务构造 |
-| desktopStartIp | user_input/from_query | 按业务构造 |
+| desktopStartIp | server_assigned | 请求省略，由服务端按 networkId 对应网络策略自动分配 |
 | vdiDiskStorageId | user_input/from_query | 按业务构造 |
 | imageReplicationStoragePoolId | user_input/from_query | 按业务构造 |
 
