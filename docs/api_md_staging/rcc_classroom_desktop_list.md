@@ -69,7 +69,7 @@ request:
       - type: EXACT
         fieldName: classroomId
         valueArr:
-        - ${param.classroom_id}
+        - ${prev.query_classroom.output.classroomId}
         matchRule: EQ
     sortArr:
       type: Sort[]

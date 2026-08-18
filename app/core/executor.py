@@ -380,7 +380,11 @@ class Executor:
         ${body.X} 引用当前已解析请求体的字段值。
         """
         fills = step.get("fill") or []
-        if not isinstance(body, dict) or not isinstance(fills, list):
+        if not isinstance(body, dict):
+            # resolve_body 全空（如 matchArr 参数缺失被清空）返回 None → 兜底为空 dict，
+            # 使 fill（exactMatchArr 等）仍能注入，避免请求体为 null 触发后端 internal_error
+            body = {}
+        if not isinstance(fills, list):
             return body
         for spec in fills:
             if not isinstance(spec, dict):
