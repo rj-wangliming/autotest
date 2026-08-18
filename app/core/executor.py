@@ -358,6 +358,15 @@ class Executor:
         biz_status = jsonpath_get(data, "$.status") if isinstance(data, dict) else None
         if step.get("poll") and status in (200, 201) and biz_status == "SUCCESS":
             self._poll(step["poll"], ctx)
+            # 重启类操作：任务完成后确认桌面恢复运行中（RUNNING）
+            # （对齐 pytest common_restart_classroom_desktop：重启后桌面先未注册再恢复 RUNNING）
+            if "desktop/restart" in path:
+                cr_bucket = (ctx.get("steps") or {}).get("query_classroom") or {}
+                classroom_id = cr_bucket.get("classroomId")
+                if classroom_id:
+                    self._wait_desktops_state(classroom_id, "RUNNING", ctx, timeout=180)
+                else:
+                    self.log("warning", "[restart] 无 query_classroom.classroomId，跳过运行中状态确认")
         elif step.get("poll") and biz_status != "SUCCESS":
             self.log("warning", "[poll] 业务状态非 SUCCESS（%s），跳过轮询" % biz_status)
 
@@ -1186,9 +1195,53 @@ class Executor:
             self.log("warning", "[prerequisite-cleanup] 下课接口未返回 taskId，可能需要轮询")
         return task_id
 
+    def _wait_task_done(self, task_id, ctx, timeout=180, what="异步任务"):
+        """轮询异步批任务至终态（msgct/msg/detail，taskId → msgState）。
+        删除/下课等批任务必须先异步等待完成，否则后续操作（如删教室）会因资源删除中失败。"""
+        if not task_id:
+            self.log("warning", "[cleanup] %s 无 taskId，跳过等待" % what)
+            return False
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            status, data = self.http_request(
+                "POST", "/rco/msgct/msg/detail",
+                {"msgrelationid": task_id, "msgType": "BATCH_MSG"}, ctx)
+            content = data.get("content") if isinstance(data, dict) else {}
+            msg_state = content.get("msgState") if isinstance(content, dict) else None
+            if msg_state in ("SUCCESS", "DONE"):
+                self.log("info", "[cleanup] %s 完成（taskId=%s）" % (what, task_id))
+                return True
+            if msg_state in ("FAILURE", "ERROR", "PARTIAL_SUCCESS"):
+                self.log("warning", "[cleanup] %s 状态 %s，按失败处理" % (what, msg_state))
+                return False
+            time.sleep(2)
+        self.log("warning", "[cleanup] %s 轮询超时（taskId=%s）" % (what, task_id))
+        return False
+
+    def _wait_desktops_state(self, classroom_id, target_state, ctx, timeout=120):
+        """轮询等待教室下所有桌面进入目标状态（如 CLOSE 关闭、RUNNING 运行中）"""
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            status, data = self.http_request(
+                "POST", "/rcc/classroom/desktop/list",
+                {"exactMatchArr": [{"name": "classroomId", "valueArr": [classroom_id]}]}, ctx)
+            content = data.get("content") if isinstance(data, dict) else {}
+            items = content.get("itemArr") or content.get("items") or []
+            if isinstance(items, dict):
+                items = items.get("itemArr") or items.get("items") or []
+            states = [(d.get("desktopId") or d.get("id"), d.get("desktopState")) for d in items]
+            if states and all(st == target_state for _, st in states):
+                self.log("info", "[cleanup] 桌面全部 %s: %s" % (target_state, states))
+                return True
+            self.log("info", "[cleanup] 桌面状态未达 %s: %s" % (target_state, states or "无桌面"))
+            time.sleep(3)
+        self.log("warning", "[cleanup] 等待桌面 %s 超时" % target_state)
+        return False
+
     def _wait_lesson_end(self, classroom_id, ctx, timeout=120):
         """轮询等待下课完成（下课为异步批任务：经 msgct/msg/detail 轮询 taskId，
-        非 CMR progress；与 lesson/end 文档 polling 声明一致）"""
+        非 CMR progress；与 lesson/end 文档 polling 声明一致）。
+        下课完成后还需等待所有桌面进入关闭态（CLOSE），否则删除教室会失败。"""
         task_id = (ctx.get("_last_data") or {}).get("content", {}).get("taskId")
         if not task_id:
             self.log("info", "[prerequisite-cleanup] 下课无 taskId（同步返回），跳过轮询")
@@ -1203,12 +1256,16 @@ class Executor:
             self.log("info", "[prerequisite-cleanup] 下课进度: %s" % msg_state)
             if msg_state in ("SUCCESS", "DONE"):
                 self.log("info", "[prerequisite-cleanup] 下课完成")
-                return
+                break
             if msg_state in ("FAILURE", "ERROR", "PARTIAL_SUCCESS"):
                 self.log("warning", "[prerequisite-cleanup] 下课状态 %s，按失败处理" % msg_state)
                 return
             time.sleep(3)
-        self.log("warning", "[prerequisite-cleanup] 下课轮询超时")
+        else:
+            self.log("warning", "[prerequisite-cleanup] 下课轮询超时")
+            return
+        # 下课完成后等待所有桌面进入关闭态（CLOSE）
+        self._wait_desktops_state(classroom_id, "CLOSE", ctx, timeout=timeout)
 
     def _delete_classroom_desktops(self, classroom_id, ctx):
         """删除教室下的所有桌面（规则：桌面必须先关机再删除）"""
@@ -1235,20 +1292,26 @@ class Executor:
             try:
                 status, data = self.http_request("POST", "/rcc/classroom/desktop/powerOff",
                                                  {"idArr": [desktop_id]}, ctx)
+                task_id = (data.get("content") or {}).get("taskId") if isinstance(data, dict) else None
+                if task_id:
+                    self._wait_task_done(task_id, ctx, what="桌面 %s 关机" % desktop_id)
                 self.log("info", "[prerequisite-cleanup] 桌面 %s 关机: %s" % (desktop_id,
                     data.get("status")))
             except Exception as e:
                 self.log("warning", "[prerequisite-cleanup] 桌面 %s 关机异常: %s" % (desktop_id, e))
 
-        self.log("info", "[prerequisite-cleanup] 等待桌面关机完成（10秒）...")
-        time.sleep(10)
+        # 等待桌面全部进入关闭态（替代固定 sleep，避免未关机删除失败）
+        self._wait_desktops_state(classroom_id, "CLOSE", ctx, timeout=120)
 
-        # 删除桌面
+        # 删除桌面（异步批任务，逐个等待完成）
         for desktop_id in desktop_ids:
             self.log("info", "[prerequisite-cleanup] 删除桌面 %s" % desktop_id)
             try:
-                self.http_request("POST", "/rcc/classroom/desktop/delete",
-                                 {"id": desktop_id}, ctx)
+                status, data = self.http_request("POST", "/rcc/classroom/desktop/delete",
+                                                 {"id": desktop_id}, ctx)
+                task_id = (data.get("content") or {}).get("taskId") if isinstance(data, dict) else None
+                if task_id:
+                    self._wait_task_done(task_id, ctx, what="删除桌面 %s" % desktop_id)
             except Exception as e:
                 self.log("warning", "[prerequisite-cleanup] 桌面删除失败: %s" % e)
 
@@ -1266,8 +1329,12 @@ class Executor:
             if seat_id:
                 self.log("info", "[prerequisite-cleanup] 删除座位 %s" % seat_id)
                 try:
-                    self.http_request("POST", "/rcc/classroom/seat/delete",
+                    status, data = self.http_request("POST", "/rcc/classroom/seat/delete",
                                      {"classroomId": classroom_id, "seatIdArr": [seat_id]}, ctx)
+                    # 座位删除为异步批任务（async: true）：须等待完成，否则删除教室会因座位删除中失败
+                    task_id = (data.get("content") or {}).get("taskId") if isinstance(data, dict) else None
+                    if task_id:
+                        self._wait_task_done(task_id, ctx, what="删除座位 %s" % seat_id)
                 except Exception as e:
                     self.log("warning", "[prerequisite-cleanup] 座位删除失败: %s" % e)
 

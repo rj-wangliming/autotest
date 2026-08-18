@@ -103,7 +103,14 @@ resource_chains:
       - POST /rcc/classroom/desktop/powerOff
       - POST /rcc/classroom/seat/delete
       - POST /rcc/classroom/delete
-    note: 删除教室的清理链：下课 → 桌面关机 → 删除座位 → 删除教室（desktop/delete 接口当前环境不存在（404），删除教室时座位随教室级联清理）
+    note: >-
+      删除教室的清理链：下课 → 桌面关机 → 删除座位 → 删除教室
+      （desktop/delete 接口当前环境不存在（404），删除教室时座位随教室级联清理）。
+      每步均为异步批任务，必须轮询等待完成后再进行下一步：
+      下课 taskId 轮询成功后还须等待所有桌面进入 CLOSE 关闭态；
+      seat/delete、desktop/powerOff、desktop/delete 返回 taskId 须等待完成，
+      否则「座位还在删除中/桌面未关机」时删除教室会失败。
+    source: 业务语义（删除教室前提：先下课且所有桌面关机；executor finally 清理按本链执行）
 
 # 操作前置状态：资源+动作 模式 -> 目标状态 + 达成途径
 # （模式匹配：URL 同时含 resource 段与 action 段即命中，覆盖所有域的同类操作，无需逐接口列举）
