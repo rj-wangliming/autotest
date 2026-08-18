@@ -123,29 +123,6 @@ setup:
   extract:
     networkId: $.content.itemArr[0].id
   purpose: 获取网络ID（镜像分配用）（取第一条，无名称过滤）
-- name: get_free_vdi_ip
-  api: POST /rcc/classroom/network/deliverIPForVDISeat
-  purpose: 按教室、座位数和所选网络策略动态计算空闲桌面起始IP
-  request:
-    body:
-      classroomId: ${prev.query_classroom.output.classroomId}
-      number: ${param.seat_num}
-      networkId: ${prev.get_network.output.networkId}
-      clusterId: ${prev.get_cluster.output.clusterId}
-      platformId: ${prev.get_cluster.output.platformId}
-  extract:
-    desktopStartIp: $.content.vdiStartIP
-    isOverflow: $.content.isOverflow
-    shortOfIp: $.content.shortOfIp
-  assert:
-  - path: $.status
-    op: eq
-    value: SUCCESS
-  - path: $.content.isOverflow
-    op: eq
-    value: false
-  - path: $.content.vdiStartIP
-    op: not_empty
 request:
   dto: AssignNewStudentImageRequest
   body:
@@ -201,8 +178,8 @@ request:
       type: String
       required: false
       constraint: '@Nullable'
-      description: 桌面网络起始IP；由 deliverIPForVDISeat 按当前资源动态计算
-      value: ${prev.get_free_vdi_ip.output.desktopStartIp}
+      description: 桌面网络起始IP；可选，首次分配可不传，后端在分配事务内自动计算空闲起始IP
+      value: ${param.desktop_start_ip}
     vdiDiskStorageId:
       type: UUID
       required: false
@@ -402,7 +379,7 @@ graph LR
 | platformId | UUID | 是 | @NotNull | 平台ID |
 | strategyId | UUID | 是 | @NotNull | 课程策略ID（VDI deskStrategy，非教室策略 classroomStrategy） |
 | networkId | UUID | 是 | @NotNull | 网络策略ID |
-| desktopStartIp | String | 否 | @Nullable | 调用 deliverIPForVDISeat 动态计算，不从全局参数或固定值构造 |
+| desktopStartIp | String | 否 | @Nullable | 云桌面起始IP；可选，首次分配可不传，后端自动计算（StudentAfterAssignAdapter） |
 | vdiDiskStorageId | UUID | 否 | @Nullable | vdi数据盘存储池 |
 | imageReplicationStoragePoolId | UUID | 否 | @Nullable | 同步镜像副本的存储池 |
 
@@ -498,7 +475,7 @@ VDI数据盘存储池ID；需先开启VDI数据盘后才有值（由 field_map �
 | platformId | user_input/from_query | 按业务构造 |
 | strategyId | user_input/from_query | 按业务构造 |
 | networkId | user_input/from_query | 按业务构造 |
-| desktopStartIp | from_query | `${prev.get_free_vdi_ip.output.desktopStartIp}`，按教室、座位数和网络策略动态计算 |
+| desktopStartIp | from_query/optional | 可选不传，后端自动计算空闲起始IP（首次分配无需 deliverIPForVDISeat 前置） |
 | vdiDiskStorageId | user_input/from_query | 按业务构造 |
 | imageReplicationStoragePoolId | user_input/from_query | 按业务构造 |
 

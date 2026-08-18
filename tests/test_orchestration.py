@@ -45,7 +45,6 @@ def check(name, fn):
 def test_rules_yaml():
     d = yaml.safe_load(open(os.path.join(index_mod.API_MD_DIR, "business_rules.md")).read().split("---\n", 2)[1])
     assert "resource_chains" in d and "state_prereq" in d and "case_prereq" in d
-    assert "field_prereq" in d
     assert len(d["resource_chains"]) >= 3
     assert len(d["state_prereq"]) >= 10
 

@@ -132,8 +132,8 @@ request:
     desktopStartIp:
       type: String
       required: false
-      constraint: '@Nullable（首次新增时必填）'
-      description: 云桌面起始IP
+      constraint: '@Nullable'
+      description: 云桌面起始IP；可选，首次分配可不传，后端自动取预留教师桌面IP（TeacherAfterAssignAdapter）
     vdiDiskStorageId:
       type: UUID
       required: false
@@ -327,7 +327,7 @@ graph LR
 | platformId | UUID | 是 | @NotNull | 平台ID |
 | strategyId | UUID | 是 | @NotNull | 云桌面策略ID |
 | networkId | UUID | 是 | @NotNull | 网络策略ID |
-| desktopStartIp | String | 否 | @Nullable（首次新增时必填） | 云桌面起始IP |
+| desktopStartIp | String | 否 | @Nullable | 云桌面起始IP；可选，首次分配可不传，后端自动取预留教师桌面IP（TeacherAfterAssignAdapter） |
 | vdiDiskStorageId | UUID | 否 | @Nullable | vdi数据盘存储池 |
 | imageReplicationStoragePoolId | UUID | 否 | @Nullable | 同步镜像副本的存储池 |
 

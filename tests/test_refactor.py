@@ -498,13 +498,13 @@ def test_student_image_platform_ref_resolves():
     resolved = resolve_body(action["body"], ctx)
     assert resolved.get("platformId") == "platform-1", resolved
     desktop_ref = action["body"]["desktopStartIp"]["value"]
-    assert desktop_ref == "${prev.get_free_vdi_ip.output.desktopStartIp}", desktop_ref
-    ctx["steps"]["get_free_vdi_ip"] = {"desktopStartIp": "10.51.180.2"}
+    assert desktop_ref == "${param.desktop_start_ip}", desktop_ref
+    ctx["params"] = {"desktop_start_ip": "10.51.180.2"}
     resolved = resolve_body(action["body"], ctx)
     assert resolved.get("desktopStartIp") == "10.51.180.2", resolved
 
 
-def test_restart_setup_uses_dynamic_desktop_ip():
+def test_restart_setup_no_deliver_ip_injection():
     o = Orchestrator()
     meta = o.index.get("/rcc/classroom/desktop/restart")
     assign = next(item for item in meta.get("setup", [])
@@ -515,16 +515,17 @@ def test_restart_setup_uses_dynamic_desktop_ip():
     plan = _run_channel_b(o, {"steps": [
         {"api": "/rcc/classroom/desktop/restart", "step_name": "restart", "section": "action"},
     ]})
-    free_ip = next(s for s in plan["steps"]
-                   if s.get("api") == "/rcc/classroom/network/deliverIPForVDISeat")
+    apis = [s.get("api") for s in plan["steps"]]
+    assert "/rcc/classroom/network/deliverIPForVDISeat" not in apis, \
+        "首次分配前教室未绑定集群，deliverIPForVDISeat 必然失败，不得注入为前置步骤"
     assign = next(s for s in plan["steps"]
                   if s.get("api") == "/rcc/classroom/image/student/create")
-    assert free_ip["extract"]["desktopStartIp"] == "$.content.vdiStartIP"
-    assert assign["body"]["desktopStartIp"]["value"] == \
-        "${prev.get_free_vdi_ip.output.desktopStartIp}"
+    dv = (assign["body"].get("desktopStartIp") or {}).get("value", "")
+    assert not dv.startswith("${prev.get_free_vdi_ip."), \
+        "desktopStartIp 不得引用已移除的 get_free_vdi_ip 产出: %s" % dv
 
 
-def test_field_prereq_repairs_trimmed_plan():
+def test_field_prereq_removed_no_deliver_ip_injection():
     o = Orchestrator()
     consumer = o._build_step("/rcc/classroom/image/student/create", "分配学生镜像")
     consumer["step_name"] = "assign_student_image"
@@ -536,17 +537,11 @@ def test_field_prereq_repairs_trimmed_plan():
         "sections": {"前置": [], "操作": [], "预期": []},
     })
     apis = [s.get("api") for s in plan["steps"]]
-    assert "/rcc/classroom/network/deliverIPForVDISeat" in apis
-    repaired = next(s for s in plan["steps"]
-                    if s.get("api") == "/rcc/classroom/image/student/create")
-    producer = next(s for s in plan["steps"]
-                    if s.get("api") == "/rcc/classroom/network/deliverIPForVDISeat")
-    assert producer["body"]["number"]["value"] == "${param.seat_num}"
-    assert repaired["body"]["desktopStartIp"]["value"] == \
-        "${prev.get_free_vdi_ip.output.desktopStartIp}"
+    assert "/rcc/classroom/network/deliverIPForVDISeat" not in apis, \
+        "field_prereq 规则已移除（deliverIP 需教室先绑定集群），裁剪计划不得自动注入"
 
 
-def test_field_prereq_applies_to_case_added_consumer():
+def test_case_added_student_create_no_deliver_ip():
     o = Orchestrator()
     plan = o.validate_plan({
         "id": "case-field-prereq",
@@ -556,13 +551,13 @@ def test_field_prereq_applies_to_case_added_consumer():
     })
     apis = [s.get("api") for s in plan["steps"]]
     assert "/rcc/classroom/image/student/create" in apis
-    assert "/rcc/classroom/network/deliverIPForVDISeat" in apis
+    assert "/rcc/classroom/network/deliverIPForVDISeat" not in apis, \
+        "case 补步骤不得再注入 deliverIPForVDISeat 前置（教室未绑定集群）"
     consumer = next(s for s in plan["steps"]
                     if s.get("api") == "/rcc/classroom/image/student/create")
-    assert consumer["body"]["desktopStartIp"]["value"] == \
-        "${prev.get_free_vdi_ip.output.desktopStartIp}"
+    assert consumer["body"]["desktopStartIp"]["value"] == "${param.desktop_start_ip}"
     required_refs = ("plusImageId", "storagePoolIdList", "clusterId",
-                     "platformId", "strategyId", "networkId", "desktopStartIp")
+                     "platformId", "strategyId", "networkId")
     for field in required_refs:
         value = (consumer["body"].get(field) or {}).get("value")
         assert value and value.startswith("${prev."), "%s 引用未补齐: %s" % (field, value)
@@ -685,9 +680,9 @@ def main():
         ("引用-改写记录 warns", test_prev_ref_rewrite_warned),
         ("引用-显式产出者保持不变", test_explicit_ref_keeps_its_producer),
         ("引用-学生镜像 platformId 可解析", test_student_image_platform_ref_resolves),
-        ("引用-动态桌面IP", test_restart_setup_uses_dynamic_desktop_ip),
-        ("规则-字段前置依赖修复", test_field_prereq_repairs_trimmed_plan),
-        ("规则-case补步骤字段依赖", test_field_prereq_applies_to_case_added_consumer),
+        ("引用-重启不注入deliverIP", test_restart_setup_no_deliver_ip_injection),
+        ("规则-field_prereq移除不注入deliverIP", test_field_prereq_removed_no_deliver_ip_injection),
+        ("规则-case补步骤不注入deliverIP", test_case_added_student_create_no_deliver_ip),
         ("规则-case忽略后置重复setup", test_case_prereq_ignores_later_duplicate_setup_api),
         ("规则-case忽略后置达成步骤", test_case_prereq_ignores_later_achieve_step),
         ("规则-case不复用空setup", test_case_prereq_does_not_reuse_empty_setup_step),

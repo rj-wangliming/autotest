@@ -3,13 +3,13 @@ version: '2.0'
 api:
   url: /rcc/classroom/network/deliverIPForVDISeat
   method: POST
-  name: 创建教室座位时为VDI座位分配IP，支持从指定起始IP预分配
+  name: 查询教室关联计算集群的空闲VDI桌面起始IP（教室须已绑定计算集群；适用于改网络/加座位等场景，首次分配镜像前不可用）
   controller: RccClassroomNetworkController
   method_ref: getIPForVDIWhenCreateSeat
   permission: 无
   exec_mode: sync
   async: false
-  description: 创建教室座位时为VDI座位分配IP，支持从指定起始IP预分配
+  description: 按教室、座位数、网络、集群和平台查询空闲VDI桌面起始IP。前置条件：教室已绑定计算集群与网络策略（classroom_cluster_resources），否则报 rcdc_rcc_classroom_no_find_cluster。首次分配镜像（student/teacher create）前教室未绑定集群，本接口不可用；镜像分配事务内后端会自动计算起始IP，无需本接口前置。
 setup:
 - name: login
   api: POST /rco/admin/loginAdmin
@@ -116,8 +116,10 @@ upstream:
 - api: 内部调用:RccVDIIpDeliverAPI
   purpose: 无起始IP时为座位分配空闲IP
 downstream:
-- api: POST /rcc/classroom/seat/create
-  purpose: 推断：出参 vdiStartIP 供 POST /rcc/classroom/seat/create 座位IP填写
+- api: POST /rcc/classroom/network/{student,teacher}/edit
+  purpose: 改网络场景下先查询空闲IP区间（教室已绑定集群后）
+- api: POST /rcc/classroom/seat/batchCreate
+  purpose: 已有集群绑定的教室追加座位时查询起始IP
 constraints:
 - level: request
   field: classroomId/number
@@ -127,6 +129,10 @@ constraints:
   field: vdiStartIP
   rule: 若填写必须是合法IPv4
   failure: webmvc IPv4 格式校验异常
+- level: BUSINESS
+  field: classroomId/clusterId
+  rule: 教室须已绑定该计算集群（classroom_cluster_resources 存在 classroomId+clusterId+enableTeacher 记录）
+  failure: 'rcdc_rcc_classroom_no_find_cluster：教室[{教室名}][学生机/教师机]未绑定计算集群[{集群名}]；首次分配镜像前必触发'
 assertions:
   success:
   - scenario: 教室+网络+数量有效
