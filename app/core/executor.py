@@ -255,114 +255,9 @@ class Executor:
                             bucket[var] = nid
                 return {"status": "SUCCESS", "content": {"networkId": nid}}
 
-        # 特殊处理：strategy/list 步骤优先复用已有资源，其次从配置读取
-        # （global_params.yaml 已配置 strategy_id_arr 时，作为 API 查询的 fallback）
-        # 同时按 VDI/TCI 名称参数自动设置 matchArr 的 classroomStrategyName
-        if "strategy/list" in path and "delete" not in path:
-            strategy_id_arr = ctx["params"].get("strategy_id_arr")
-            sname = step.get("step_name") or step.get("name") or "get_strategy"
-            bucket = ctx.setdefault("steps", {}).setdefault(sname, {})
-
-            # 1. 先检查当前步骤 bucket 是否已有（reuse 已填充或重复调用）
-            reuse_val = None
-            for var in ("strategyId", "studentClassroomStrategyId", "classroomStrategyId"):
-                if var in bucket and bucket[var] is not None:
-                    reuse_val = bucket[var]
-                    break
-            # 2. 当前步骤 bucket 没有，检查同 plan 里其他 strategy 步骤的产出（如 createStrategy reuse 写入）
-            if not reuse_val:
-                for other_sname, other_bucket in ctx.get("steps", {}).items():
-                    if other_sname == sname:
-                        continue
-                    for var in ("classroomStrategyId", "strategyId", "studentClassroomStrategyId"):
-                        if var in other_bucket and other_bucket[var] is not None:
-                            reuse_val = other_bucket[var]
-                            break
-                    if reuse_val:
-                        break
-            # 3. reuse 查不到时 fallback 到配置
-            if not reuse_val and strategy_id_arr:
-                reuse_val = strategy_id_arr[0] if isinstance(strategy_id_arr, list) else strategy_id_arr
-
-            if reuse_val:
-                src = "reuse(current)" if reuse_val in (bucket.get("strategyId"), bucket.get("studentClassroomStrategyId"), bucket.get("classroomStrategyId")) else \
-                      "reuse(other)" if reuse_val and sname != ("createStrategy" or "create_strategy") else \
-                      "config"
-                self.log("info", "[get_strategy] 使用策略 ID: %s" % reuse_val)
-                # 注入 extract 中的所有变量到当前步骤 bucket
-                ex = step.get("extract") or {}
-                if isinstance(ex, dict):
-                    for var in ex:
-                        if var not in bucket or bucket[var] is None:
-                            bucket[var] = reuse_val
-                else:
-                    bucket["strategyId"] = reuse_val
-                # 自动设置 matchArr（按策略名称精确匹配）
-                body = body or {}
-                match = body.get("matchArr") if isinstance(body.get("matchArr"), list) else None
-                if match:
-                    for item in match:
-                        if isinstance(item, dict) and item.get("fieldName") == "classroomStrategyName":
-                            name_param = ctx["params"].get("strategy_name_vdi") or ctx["params"].get("strategy_name_tci") or ctx["params"].get("classroom_strategy_name")
-                            if name_param:
-                                val = name_param[0] if isinstance(name_param, list) else name_param
-                                item["valueArr"] = [val]
-                                self.log("info", "[get_strategy] matchArr 注入 classroomStrategyName=%s" % val)
-                # 返回模拟响应（避免发 API 请求）
-                return {"status": "SUCCESS", "content": {"itemArr": [{"classroomStrategyId": reuse_val}]}}
-
-        # 特殊处理：space/strategygroup/vdi/list 步骤优先复用已有资源，其次从配置读取
-        # （VDI 课程策略，学生镜像分配需要，非教室策略）
-        if "strategygroup/vdi/list" in path or "strategygroup/tci/list" in path:
-            sname = step.get("step_name") or step.get("name") or "get_vdi_strategy"
-            bucket = ctx.setdefault("steps", {}).setdefault(sname, {})
-            # 检查当前 bucket 是否已有
-            reuse_val = None
-            for var in ("vdiStrategyId", "deskStrategyId", "tciStrategyId"):
-                if var in bucket and bucket[var] is not None:
-                    reuse_val = bucket[var]
-                    self.log("info", "[vdi/tci strategy] 当前 bucket 已有 %s=%s" % (var, reuse_val))
-                    break
-            # 检查同 plan 里课程策略步骤（仅查 strategygroup 路径的步骤，不混用教室策略）
-            if not reuse_val:
-                for other_sname, other_bucket in ctx.get("steps", {}).items():
-                    if other_sname == sname:
-                        continue
-                    # 严格排除教室策略步骤产出的字段：
-                    # - classroomStrategyId（教室策略）
-                    # - strategyId（可能是教室策略，也可能是通用）
-                    # 只匹配课程策略专用字段名
-                    for var in ("vdiStrategyId", "deskStrategyId", "tciStrategyId"):
-                        if var in other_bucket and other_bucket[var] is not None:
-                            reuse_val = other_bucket[var]
-                            self.log("info", "[vdi/tci strategy] 从步骤 %s 的 %s=%s 复用" % (other_sname, var, reuse_val))
-                            break
-                    if reuse_val:
-                        break
-            # fallback 到配置（全局策略配置里有 strategy_id_arr 但可能需要区分 VDI/TCI）
-            if not reuse_val:
-                sid_arr = ctx["params"].get("strategy_id_arr")
-                if sid_arr:
-                    reuse_val = sid_arr[0] if isinstance(sid_arr, list) else sid_arr
-                    self.log("warning", "[vdi/tci strategy] 从 strategy_id_arr fallback 课程策略 ID: %s" % reuse_val)
-
-            if reuse_val:
-                self.log("info", "[vdi/tci strategy] 使用课程策略 ID: %s" % reuse_val)
-                ex = step.get("extract") or {}
-                if isinstance(ex, dict):
-                    for var in ex:
-                        if var not in bucket or bucket[var] is None:
-                            bucket[var] = reuse_val
-                else:
-                    bucket["vdiStrategyId"] = reuse_val
-                # 返回模拟响应
-                return {"status": "SUCCESS", "content": {"itemArr": [{"id": reuse_val}]}}
-
-            # 课程策略不存在，正常调 API 查询
-            self.log("info", "[vdi/tci strategy] 未找到已有策略 ID，正常调用 API 查询")
-
         # ---------- 后续正常请求执行 ----------
-        # （以上特殊处理 return 后，这里继续通用执行逻辑）
+        # （策略 ID 一律走真实查询：strategy/list、strategygroup/vdi|tci/list
+        #   的伪造响应钩子已移除——[None] 批量包装/错名注入等假数据根源）
 
         # 特殊处理：若 /rcc/classroom/image/ 路径降级为空结果，跳过 image/create 步骤
         # （CBB 无可用资源时，image/create 会因 plusImageId=null 报错，直接跳过更合理）
@@ -799,6 +694,8 @@ class Executor:
             return None
         sname = step.get("step_name") or step.get("name") or "default"
         bucket = ctx.setdefault("steps", {}).setdefault(sname, {})
+        # 复用命中标记：_cleanup 跳过本桶（共享/环境已有资源不得被 finally 清理删除）
+        bucket["_reused"] = True
         for var, v in vals.items():
             if v is not None:
                 bucket[var] = v
@@ -1375,6 +1272,10 @@ class Executor:
         """finally 清理已创建资源（从 ctx.steps 各 step 产出提取 *Id）"""
         created = []
         for sname, outs in (ctx.get("steps") or {}).items():
+            # 复用命中的步骤（_reused）不清理：资源为环境已有/共享，删除会污染后续用例
+            if outs.get("_reused"):
+                self.log("info", "[cleanup] 跳过复用资源 %s（_reused）" % sname)
+                continue
             for k, v in outs.items():
                 if k.endswith("Id") and k != "taskId" and isinstance(v, str) and v:
                     created.append((k, v))
