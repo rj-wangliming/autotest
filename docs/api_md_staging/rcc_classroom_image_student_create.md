@@ -23,6 +23,31 @@ setup:
   idempotent: recreate
   delete_api: /rcc/classroom/delete
   delete_param: classroomId
+- name: createStrategy
+  api: POST /rcc/classroom/strategy/create
+  extract:
+    classroomStrategyId: $.content.itemArr[0].classroomStrategyId
+  purpose: 创建教室策略（若已存在同名则幂等通过）
+  request:
+    body:
+      classroomStrategyName: ${param.classroom_strategy_name}
+      linkShutdown: false
+      startPolicy: START_ONLINE
+      defaultEnterImageSwitch: false
+      defaultDisplayDeskType: CLASSROOM_MODE
+      reservedStoragePolicy: SYSTEM_DEFAULT
+  idempotent: reuse
+  reuse_query:
+    api: POST /rcc/classroom/strategy/list
+    body:
+      matchArr:
+      - type: EXACT
+        fieldName: classroomStrategyName
+        valueArr:
+        - ${param.classroom_strategy_name}
+        matchRule: EQ
+    extract:
+      classroomStrategyId: $.content.itemArr[0].classroomStrategyId
 - name: query_classroom
   api: POST /rcc/classroom/select
   extract:
@@ -31,19 +56,34 @@ setup:
   request:
     body:
       searchKeyword: ${param.classroom_name}
-- name: get_strategy
-  api: POST /rcc/classroom/strategy/list
-  extract:
-    strategyId: $.content.itemArr[0].classroomStrategyId
-  purpose: 按策略名精确过滤（matchArr.fieldName=classroomStrategyName）
-  request:
+# VDI 课程策略「不存在则创建」（幂等复用）：
+# 命中同名 → reuse_query.extract 直接产出 vdiStrategyId，跳过创建；
+# 未命中 → 真实创建（body 来自 space_strategygroup_vdi_create 文档 front-matter）
+# 并从创建响应 $.content.id 提取 vdiStrategyId
+- name: create_vdi_strategy
+  api: POST /space/strategygroup/vdi/create
+  purpose: VDI 课程策略不存在则自动创建（幂等复用：存在同名直接复用）；产出 vdiStrategyId 供学生镜像分配
+  idempotent: reuse
+  reuse_query:
+    api: POST /space/strategygroup/vdi/list
     body:
+      page: 0
+      limit: 20
       matchArr:
       - type: EXACT
-        fieldName: classroomStrategyName
+        fieldName: strategyName
         valueArr:
-        - ${param.classroom_strategy_name}
+        - ${param.strategy_name_vdi}
         matchRule: EQ
+      exactMatchArr:
+      - type: EXACT
+        fieldName: strategyType
+        valueArr:
+        - VDI
+    extract:
+      vdiStrategyId: $.content.itemArr[0].id
+  extract:
+    vdiStrategyId: $.content.id
 - name: get_image
   api: POST /rcc/classroom/image/assignImage/yetAssign/list
   extract:
@@ -121,8 +161,8 @@ request:
       type: UUID
       required: true
       constraint: '@NotNull'
-      description: 云桌面策略ID；ID 来自前置步骤 setup 产出（${prev.*}）
-      value: ${prev.get_strategy.output.strategyId}
+      description: 课程策略ID（VDI deskStrategy，非教室策略 classroomStrategy）；必须来自前置步骤 create_vdi_strategy 产出（存在复用/不存在创建，两路径均产出）
+      value: ${prev.create_vdi_strategy.output.vdiStrategyId}  # LOCK
     networkId:
       type: UUID
       required: true
@@ -178,7 +218,9 @@ upstream:
 - api: POST /rcc/classroom/image/assignImage/yetAssign/list
   purpose: 待分配镜像模板ID（推断字段路径：ImageDetailDTO.cbbImageTemplateDetailDTO.id）
 - api: POST /rcc/classroom/strategy/list
-  purpose: 教室策略ID；strategy/create 响应不含ID，需经 strategy/list 查询 ViewClassroomStrategyDTO.class
+  purpose: "教室策略ID；由 createStrategy setup 步骤提供（idempotent: reuse）"
+- api: POST /space/strategygroup/vdi/list
+  purpose: VDI 课程策略ID（学生镜像分配用，需为课程策略而非教室策略）
 - api: POST /rcc/classroom/image/getAssignedClusters
   purpose: 计算集群ID；创建计算集群接口不在本清单，实际从 getAssignedClusters 选取（推断）
 - api: POST /rcc/classroom/image/getAssignedClusterAndNetwork
@@ -332,7 +374,7 @@ graph LR
 | storagePoolIdList | List<UUID> | 是 | @NotEmpty 非空 | 存储池ID集合 |
 | clusterId | UUID | 是 | @NotNull | 计算集群ID |
 | platformId | UUID | 是 | @NotNull | 平台ID |
-| strategyId | UUID | 是 | @NotNull | 云桌面策略ID |
+| strategyId | UUID | 是 | @NotNull | 课程策略ID（VDI deskStrategy，非教室策略 classroomStrategy） |
 | networkId | UUID | 是 | @NotNull | 网络策略ID |
 | desktopStartIp | String | 否 | @Nullable（首次新增时必填） | 网络策略开始IP |
 | vdiDiskStorageId | UUID | 否 | @Nullable | vdi数据盘存储池 |

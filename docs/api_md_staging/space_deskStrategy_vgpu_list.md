@@ -27,6 +27,11 @@ setup:
         - clusterName
         value: ${param.cluster_name}
         matchRule: LIKE
+- name: query_vgpu_options
+  api: POST /space/deskStrategy/vgpu/list
+  extract:
+    vgpuType: $.content.itemArr[0].vgpuType
+  purpose: 取第一条（无名称过滤）
 request:
   dto: GetVgpuListWebRequest
   body:

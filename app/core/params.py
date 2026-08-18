@@ -138,6 +138,27 @@ def _lookup(kind, name, ctx, idx=None):
     return None
 
 
+def _all_prev(ctx):
+    """返回 ctx 中所有步骤产出的扁平化变量名集合（从 ctx["steps"] 中查找）"""
+    all_keys = set()
+    for sname, bucket in (ctx.get("steps") or {}).items():
+        for k in bucket:
+            all_keys.add(k)
+    return all_keys
+
+
+def _prev_val(ctx, var):
+    """按变量名从步骤产出取值（经 _lookup 语义解包）：
+    批量展开的步骤产出存为 [batch_index]=值 的外层列表，直接读桶会拿到 [[...]] 嵌套；
+    走 _lookup（与 ${prev.<step>.output.<var>} 引用同路径）才能按当前批量索引解包。"""
+    for sname, bucket in (ctx.get("steps") or {}).items():
+        if var in bucket and bucket[var] is not None:
+            v = _lookup("prev", "%s.output.%s" % (sname, var), ctx)
+            if v not in (None, ""):
+                return v
+    return None
+
+
 def resolve_value(val, ctx):
     """解析 ${param.x} / ${prev.y} / ${context.z} / 固定值
     整值引用返回原始类型（数组/数字/布尔）；支持 ${param.x[N]} 索引；
@@ -152,12 +173,21 @@ def resolve_value(val, ctx):
             if raw == "":
                 return None
             return raw
-        # 字符串内插值 → str 替换
+        # 字符串内插值 → 替换为值的文本形式：
+        # list/dict 用 json.dumps（str() 的单引号 repr 嵌入 JSON 字符串模板会语法错误，
+        # 且布尔 True 应为 true）；其余保持 str
+        import json as _json
+
         def repl(mm):
             idx = int(mm.group(3)) if mm.group(3) else None
             raw = _lookup(mm.group(1), mm.group(2), ctx, idx)
-            return "" if raw is None else str(raw)
-        result = re.sub(r"\$\{(param|prev|context)\.([\w.]+)(?:\[\d+\])?\}", repl, val)
+            if raw is None:
+                return ""
+            if isinstance(raw, (dict, list, bool)):
+                return _json.dumps(raw, ensure_ascii=False)
+            return str(raw)
+        # 注意：可选索引须为捕获组（(\d+)），否则 repl 的 group(3) 会 IndexError
+        result = re.sub(r"\$\{(param|prev|context)\.([\w.]+)(?:\[(\d+)\])?\}", repl, val)
         # 如果结果是空字符串 → 返回 None
         if result == "":
             return None
@@ -202,6 +232,53 @@ def resolve_body(body, ctx):
             if v.get("required"):
                 _type = v.get("type", "")
                 _constraint = v.get("constraint", "") or ""
+                # platformStrategyGroup 特殊处理：仅 VDI 策略创建接口拼接 usbTypeIdArr 形成完整 JSON
+                # 不处理 TCI（VOI）策略，TCI 的 voi 节点拼接需单独逻辑
+                if _type == "PlatformStrategyGroup" and "usbTypeIdArr" in _all_prev(ctx):
+                    import json as _json
+                    # 从步骤产出查 usbTypeIdArr（经 _lookup 解包批量索引，避免 [[...]] 双重嵌套），
+                    # 空时兜底空数组
+                    _usb_ids = _prev_val(ctx, "usbTypeIdArr")
+                    # 兜底 vgpuType：从 query_vgpu_options 取，无值则用 QXL
+                    _vgpu_type = _prev_val(ctx, "vgpuType") or "QXL"
+                    vdi_payload = {
+                        "enablePeripheral": True,
+                        "usbTypeIdArr": _usb_ids if _usb_ids else [],
+                        "openUsbReadOnly": False,
+                        "enableClipboard": True,
+                        "clipBoardSupportTypeArr": [
+                            {"type": "FILE", "mode": "NO_LIMIT"},
+                            {"type": "TEXT", "mode": "NO_LIMIT", "hostToVmCharLimit": 0, "vmToHostCharLimit": 0}
+                        ],
+                        "diskMappingType": "CLOSED",
+                        "netDiskMappingType": "CLOSED",
+                        "cdRomMappingType": "CLOSED",
+                        "usbStorageDeviceMappingMode": "CLOSED",
+                        "forbidCatchScreen": False,
+                        "powerPlan": "SLEEP",
+                        "powerPlanTime": 60,
+                        "estIdleOverTime": 1,
+                        "enableWatermark": False,
+                        "vgpuType": _vgpu_type,
+                        "agreementAgencyLimitMode": "NO_LIMIT",
+                        "enableWebClient": True,
+                        "agreementInfo": {
+                            "wanEstConfig": {
+                                "enableCustomTemplate": False, "framerate": 30, "bitrate": 10000,
+                                "quality": 0, "reencode": 0, "transport": 1, "enableSsl": False,
+                                "snd_quality": 1, "enable_web_advance_setting": False, "fullfps": False, "templateId": 2
+                            },
+                            "lanEstConfig": {
+                                "enableCustomTemplate": False, "framerate": 30, "bitrate": 16000,
+                                "quality": 0, "reencode": 1, "transport": 1, "enableSsl": False,
+                                "snd_quality": 1, "enable_web_advance_setting": False, "fullfps": False, "templateId": 1
+                            }
+                        },
+                        "estProtocolType": "EST",
+                        "agreementAgencyInfo": {"agencyIpArr": []}
+                    }
+                    out[k] = {"strategyGroupFacadeStr": _json.dumps({"vdi": vdi_payload})}
+                    continue
                 # 优先从 constraint 中提取默认值（如 "@Range(1-1000) 默认20" → 20）
                 import re as _re
                 _dm = _re.search(r"默认(\d+)", _constraint)
@@ -231,6 +308,7 @@ def resolve_body(body, ctx):
                 continue
         else:
             out[k] = resolve_value(v, ctx)
+
     # 最终清理：递归移除所有 None 值
     return _clean_none(out)
 
@@ -257,13 +335,18 @@ def _clean_none(obj):
 
 def gen_config_value(field, spec, ctx):
     """配置生成规则表：cpu/memory/systemSize 按约束生成"""
+    def _p(key, default):
+        """参数优先、空值兜底默认：key 缺失或值为 None/空串都取 default"""
+        v = ctx.get("params", {}).get(key)
+        return default if v in (None, "") else v
+
     c = str(spec.get("constraint", ""))
     if field == "cpu":
-        return ctx["params"].get("cpu", 4)
+        return _p("cpu", 4)
     if field == "memory":
-        return ctx["params"].get("memory", 8192)
+        return _p("memory", 8192)
     if field == "systemSize":
-        return ctx["params"].get("system_size", 80)
+        return _p("system_size", 80)
     if field == "platformStrategyGroup":
         # 外设/协议等嵌套：返回最小结构
         return {"strategyGroupFacadeStr": "{}"}

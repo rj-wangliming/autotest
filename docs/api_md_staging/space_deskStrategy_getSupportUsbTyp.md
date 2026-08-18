@@ -22,7 +22,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 云桌面类型，决定返回的 USB 设备类型集合
-      value: ${param.cloud_desk_type}
+      value: ${param.student_mode_arr[0]}
 response:
   wrapper:
     status: String
@@ -71,8 +71,7 @@ idempotency:
   level: non_idempotent
   note: 只读查询，无副作用
 params:
-  required:
-  - name: cloud_desk_type
+  optional:
 ---
 # POST /space/deskStrategy/getSupportUsbTyp
 

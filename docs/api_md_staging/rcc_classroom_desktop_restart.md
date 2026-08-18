@@ -88,7 +88,7 @@ setup:
       storagePoolIdList: ${prev.get_storage_pool.output.storagePoolId}
       clusterId: ${prev.get_cluster.output.clusterId}
       platformId: ${prev.get_cluster.output.platformId}
-      strategyId: ${prev.get_strategy.output.strategyId}
+      strategyId: ${prev.create_vdi_strategy.output.vdiStrategyId}
       networkId: ${prev.get_network.output.networkId}
       desktopStartIp: ${param.student_start_ip}
       vdiDiskStorageId: ${prev.get_vdi_disk_storage.output.vdiDiskStorageId}

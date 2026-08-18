@@ -57,11 +57,12 @@ class LlmClient:
             raise RuntimeError("LLM 返回无 choices: %s" % json.dumps(data, ensure_ascii=False)[:300])
         return choices[0].get("message", {}).get("content", "")
 
-    def parse_use_case(self, sections, api_catalog, param_names=None):
+    def parse_use_case(self, sections, api_catalog, param_names=None, rules_text=None):
         """结构化用例（前置/操作/预期，前置可空）→ 接口意图序列
 
         sections: {"前置":[...], "操作":[...], "预期":[...]}
         api_catalog: [{url, name}, ...] 接口清单（来自 index）
+        rules_text: 可选，全局规则摘要文本（如 auto_provision），注入 system prompt
         返回: {"steps":[{"section":"pre|action","api":url,"step_name":str,"reason":str}],
                "assertions":[str]}
         """
@@ -69,10 +70,10 @@ class LlmClient:
             "你是 RCC-Space 接口自动化测试的用例编排器。"
             "用户用例是业务/UI 操作描述（如\"点击XX按钮\"\"勾选XX\"\"列表中选择多个XX并执行XX\"），你要映射到后端 API。"
             "给定接口清单（url + 中文名 + body 字段），把【前置】和【执行/操作】的每个步骤映射到一个接口 url，必须从清单选取，不得编造。"
+            "【强制】用户用例文本中的每一行【前置】和【操作】描述都是独立步骤，必须为每一行映射一个接口 URL，不得省略任何行。如果某行描述涉及创建或获取资源，必须映射到创建(create/batchCreate)或查询(list/select/getInfo/detail)接口。"
             "用例文本若明确含量化条件（时长/数量/规格等，如\"保持开机30分钟\"\"创建3台\"），把该值作为固定值写入对应字段的 param_map；其余参数从全局参数清单选取。对每个步骤的必填 body 字段，用 param_map 声明来源："
             "前置步骤产出用 ${prev.<step_name>.output.<field>}；全局参数用 ${param.<参数名>}；固定值直接写。"
             "若某查询步骤需产出数组（如多个ID供后续批量操作），用 extract_override 声明 JSONPath 覆盖默认产出。extract_override 的 JSONPath 必须从清单「产出」列选取，不得编造清单外路径。"
-            "若某步骤是纯环境状态描述且无需调接口即可满足，可省略；若需查询确认，映射为查询/list 接口。"
             "为每个步骤起唯一的英文 snake_case 名 step_name。保留出现顺序与所属段（section=pre|action）。"
             "把【预测/预期】转为断言表达式列表（如 $.status==SUCCESS）。"
             "只输出 JSON，不要 markdown 代码块，不要解释。"
@@ -82,6 +83,8 @@ class LlmClient:
             "\"extract_override\":{\"产出名\":\"$.jsonpath\"}}],"
             "\"assertions\":[\"断言\"]}。"
         )
+        if rules_text:
+            system += "\n\n【全局规则】\n" + rules_text + "\n"
         system += (
             "全局参数清单（${param.<参数名>} 只能从清单选取，不得编造清单外名字）："
             + ("、".join(param_names) if param_names else "（空）") + "。"

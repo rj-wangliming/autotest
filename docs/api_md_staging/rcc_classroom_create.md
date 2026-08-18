@@ -14,6 +14,31 @@ setup:
 - name: login
   api: POST /rco/admin/loginAdmin
   purpose: 管理员登录（框架内置，引擎自动处理）
+- name: createStrategy
+  api: POST /rcc/classroom/strategy/create
+  extract:
+    classroomStrategyId: $.content.itemArr[0].classroomStrategyId
+  purpose: 创建教室策略（若已存在同名则幂等通过）
+  request:
+    body:
+      classroomStrategyName: ${param.classroom_strategy_name}
+      linkShutdown: false
+      startPolicy: START_ONLINE
+      defaultEnterImageSwitch: false
+      defaultDisplayDeskType: CLASSROOM_MODE
+      reservedStoragePolicy: SYSTEM_DEFAULT
+  idempotent: reuse
+  reuse_query:
+    api: POST /rcc/classroom/strategy/list
+    body:
+      matchArr:
+      - type: EXACT
+        fieldName: classroomStrategyName
+        valueArr:
+        - ${param.classroom_strategy_name}
+        matchRule: EQ
+    extract:
+      classroomStrategyId: $.content.itemArr[0].classroomStrategyId
 - name: get_strategy
   api: POST /rcc/classroom/strategy/list
   extract:

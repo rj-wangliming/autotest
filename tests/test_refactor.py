@@ -173,6 +173,74 @@ def test_poll_404_warns_not_silent():
     assert ok is True, "默认模式 404 应按通过处理"
     codes = [w["code"] for w in ctx.get("warnings", [])]
     assert "poll_api_missing" in codes, "404 跳过应记录 warning: %s" % codes
+    # 请求体必须带公共轮询接口必填的 msgType
+    bodies = [c[2] for c in ex.calls if c[1] == "/common_get_msgct_detail_info"]
+    assert bodies and all(b.get("msgType") == "BATCH_MSG" for b in bodies), \
+        "轮询请求体应含 msgType=BATCH_MSG: %s" % bodies
+
+
+def test_poll_validation_error_not_infinite():
+    """计数器修复：200+content null（如缺 msgType 的校验错误）连续 3 次即止，
+    不再每轮被清零导致死循环到超时"""
+    ex = FakeExecutor({"/rco/msgct/msg/detail": {
+        "status": "ERROR", "content": None,
+        "message": "字段msgType不能为空", "msgKey": "sk_validation_NotNull"}})
+    ctx = {"params": {}, "steps": {}, "warnings": [], "_last_data": {"content": {"taskId": "t-1"}}}
+    import time as _t
+    t0 = _t.time()
+    ok = ex._poll({"api": "/rco/msgct/msg/detail", "interval_ms": 1, "timeout_ms": 60000}, ctx)
+    assert ok is True, "3 次无效响应应走 _unverified 通过"
+    assert _t.time() - t0 < 10, "不应轮询到超时（计数器死循环回归）"
+    n = len([c for c in ex.calls if c[1] == "/rco/msgct/msg/detail"])
+    assert n == 3, "应恰好轮询 3 次即止, 实际 %d" % n
+    codes = [w["code"] for w in ctx.get("warnings", [])]
+    assert "poll_api_missing" in codes, "应记录 poll_api_missing: %s" % codes
+
+
+def test_poll_params_template_resolved():
+    """文档 polling.params 模板：${content.lessonTaskId} 引用触发步骤响应"""
+    ex = FakeExecutor({"/rco/msgct/msg/detail": {"status": "SUCCESS",
+                                                 "content": {"taskStatus": "SUCCESS"}}})
+    ctx = {"params": {}, "steps": {}, "warnings": [],
+           "_last_data": {"content": {"lessonTaskId": "lt-9"}}}
+    ok = ex._poll({"api": "/rco/msgct/msg/detail", "interval_ms": 1,
+                   "params": {"msgrelationid": "${content.lessonTaskId}"}}, ctx)
+    assert ok is True
+    sent = ex.calls[0][2]
+    assert sent.get("msgrelationid") == "lt-9", "模板引用应解析为 lessonTaskId: %s" % sent
+    assert sent.get("msgType") == "BATCH_MSG", "模板缺 msgType 时应补默认值: %s" % sent
+
+
+def test_poll_failure_states_key():
+    """terminal_states.failure（文档键，兼容旧 fail 键）：任务 FAILURE → 抛断言"""
+    ex = FakeExecutor({"/rco/msgct/msg/detail": {"status": "SUCCESS",
+                                                 "content": {"taskStatus": "FAILURE"}}})
+    ctx = {"params": {}, "steps": {}, "warnings": [], "_last_data": {"content": {"taskId": "t-1"}}}
+    try:
+        ex._poll({"api": "/rco/msgct/msg/detail", "interval_ms": 1,
+                  "terminal_states": {"success": ["SUCCESS"], "failure": ["FAILURE"]}}, ctx)
+        raise AssertionError("任务 FAILURE 应抛 AssertionError")
+    except AssertionError as e:
+        assert "轮询任务失败" in str(e), "失败信息应含任务状态: %s" % e
+
+
+def test_poll_processing_then_success():
+    """正常路径：PROCESSING（有效响应重置计数）→ SUCCESS 返回 True"""
+    seq = [{"status": "SUCCESS", "content": {"taskStatus": "PROCESSING"}},
+           {"status": "SUCCESS", "content": {"taskStatus": "PROCESSING"}},
+           {"status": "SUCCESS", "content": {"taskStatus": "SUCCESS"}}]
+
+    class SeqExecutor(FakeExecutor):
+        def http_request(self, method, path, body=None, ctx=None):
+            self.calls.append((method, path, body))
+            return (200, seq[min(len(self.calls) - 1, len(seq) - 1)])
+
+    ex = SeqExecutor()
+    ctx = {"params": {}, "steps": {}, "warnings": [], "_last_data": {"content": {"taskId": "t-1"}}}
+    ok = ex._poll({"api": "/rco/msgct/msg/detail", "interval_ms": 1}, ctx)
+    assert ok is True
+    assert len(ex.calls) == 3 and not ctx.get("warnings"), \
+        "PROCESSING 不应计入无效响应: calls=%d warnings=%s" % (len(ex.calls), ctx.get("warnings"))
 
 
 def test_poll_404_strict_fails():
@@ -291,6 +359,10 @@ def main():
         ("fill-exactMatchArr 静态+追加", test_fill_exact_match_arr_static_and_append),
         ("fill-yetAssign 文档全链路", test_fill_doc_driven_from_yetassign_doc),
         ("假绿-poll 404 记 warning", test_poll_404_warns_not_silent),
+        ("假绿-poll 校验错误不 死循环", test_poll_validation_error_not_infinite),
+        ("假绿-poll params 模板解析", test_poll_params_template_resolved),
+        ("假绿-poll failure 键兼容", test_poll_failure_states_key),
+        ("假绿-poll 正常轮询路径", test_poll_processing_then_success),
         ("假绿-poll 404 strict 失败", test_poll_404_strict_fails),
         ("假绿-删除存在性验证", test_delete_poll_verified),
         ("引用-plan 期全链接", test_prev_refs_linked),

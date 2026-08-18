@@ -22,7 +22,7 @@ request:
       required: true
       constraint: '@NotNull（支持 EST、HEST）'
       description: 协议类型，用于拼接全局参数 key
-      value: ${param.protocol_type}
+      value: EST
 response:
   wrapper:
     status: String
@@ -173,8 +173,7 @@ idempotency:
   level: non_idempotent
   note: 只读查询，无副作用
 params:
-  required:
-  - name: protocol_type
+  optional:
 ---
 # POST /space/deskStrategy/agreement/template/list
 

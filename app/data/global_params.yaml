@@ -22,7 +22,11 @@ teacher_mode: PC                              # 教师机工作模式（PC/VDI/I
 student_mode_arr: [VDI]                       # 学生机类型数组（PC/VDI/IDV/TCI/APP），默认 VDI
 
 # ── 策略（可多个）──
-strategy_name: [a_strategy_01]                         # VDI 策略名
+# strategy_id_arr: 留空则调 API 查询课程策略（space/strategygroup/vdi/list）
+#   已知的课程策略ID 可在此配置：strategy_id_arr: [your-uuid-here]
+strategy_id_arr:                         # 课程策略ID数组（可选；留空则调 API 查询）
+strategy_name_vdi: [a_strategy_vdi_01]   # VDI 课程策略名
+strategy_name_tci: [a_strategy_tci_01]   # TCI 课程策略名
 initial_strategy_name:               # 初始策略名（镜像分配关联）
 
 # ── 镜像（可多个）──
@@ -52,8 +56,9 @@ tci_terminal_ip:                     # TCI 终端 IP
 vdi_terminal_ip:                     # VDI 终端 IP
 idv_terminal_ip:                     # IDV 终端 IP
 
-# ── 集群/空间/外设（可多个）──
-cluster_name:                        # 集群名
+# ── 网络策略（可多选：值填列表，按列表索引依次取对应网络）──
+network_id_arr: [1a054d1c-3ad6-46f6-94b8-657cda80bdaf]       # 网络策略ID数组（可选多个，逗号分隔；留空则不传 networkId 字段）
+network_name_arr: [180]                                       # 网络策略名称（与 network_id_arr 索引对应；优先按名称匹配）
 space_name:                          # 空间名
 usb_type_id_arr:                     # USB 类型 ID 数组
 
