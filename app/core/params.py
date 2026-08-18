@@ -83,9 +83,10 @@ def _note_ref_fallback(ctx, ref, step_name, field):
             "引用 %s 未精确命中，模糊回退到步骤 %s 的产出 %s" % (ref, step_name, field))
 
 
-def _lookup(kind, name, ctx, idx=None):
+def _lookup(kind, name, ctx, idx=None, keep_list=False):
     """取引用原始值（保留类型）；idx 支持 ${param.x[N]} / ${prev.step.output.y[N]} 显式索引；
-    param 值为列表且 ctx 有 _batch_index 时，隐式取当前批量索引（批量展开用）"""
+    param 值为列表且 ctx 有 _batch_index 时，隐式取当前批量索引（批量展开用）；
+    keep_list=True（数组类型字段）时 prev 引用保留完整列表"""
     if kind == "param":
         v = ctx.get("params", {}).get(to_snake(name), None)
         if idx is not None:
@@ -129,8 +130,9 @@ def _lookup(kind, name, ctx, idx=None):
         if isinstance(v, list) and "_batch_index" in ctx:
             i = ctx["_batch_index"]
             return v[i] if i < len(v) else None
-        # 非批量上下文：prev 值为列表时自动取首元素（跨步骤引用场景）
-        if isinstance(v, list):
+        # 非批量上下文：prev 值为列表时自动取首元素（跨步骤引用场景）；
+        # keep_list=True（数组类型字段，如 idArr）时保留完整列表
+        if isinstance(v, list) and not keep_list:
             return v[0] if v else v
         return v
     if kind == "context":
@@ -159,16 +161,17 @@ def _prev_val(ctx, var):
     return None
 
 
-def resolve_value(val, ctx):
+def resolve_value(val, ctx, as_list=False):
     """解析 ${param.x} / ${prev.y} / ${context.z} / 固定值
     整值引用返回原始类型（数组/数字/布尔）；支持 ${param.x[N]} 索引；
-    param 列表在批量上下文（ctx._batch_index）取当前索引"""
+    param 列表在批量上下文（ctx._batch_index）取当前索引；
+    as_list=True（数组类型字段）时 prev 引用保留完整列表而非取首元素"""
     if isinstance(val, str):
         # 整值是单个 ${...}[N]? → 返回原始类型
         m = re.fullmatch(r"\$\{(param|prev|context)\.([\w.]+)(?:\[(\d+)\])?\}", val)
         if m:
             idx = int(m.group(3)) if m.group(3) else None
-            raw = _lookup(m.group(1), m.group(2), ctx, idx)
+            raw = _lookup(m.group(1), m.group(2), ctx, idx, keep_list=as_list)
             # 解析结果为空字符串 → 返回 None（调用方可跳过该字段）
             if raw == "":
                 return None
@@ -209,7 +212,11 @@ def resolve_body(body, ctx):
     out = {}
     for k, v in body.items():
         if isinstance(v, dict) and "value" in v:
-            result = resolve_value(v["value"], ctx)
+            # 数组类型字段（UUID[] / list / array）：prev 引用保留完整列表，
+            # 否则 _lookup 自动取首元素会把 idArr 等压成字符串
+            _ftype = str(v.get("type", ""))
+            _is_arr = "[]" in _ftype or _ftype.lower() in ("list", "array", "arr")
+            result = resolve_value(v["value"], ctx, as_list=_is_arr)
             # 值为 None 或空字符串时表示参数缺失；若为 Boolean 类型则用默认值 True
             if result is None or result == "":
                 field_type = v.get("type", "")

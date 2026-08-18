@@ -603,10 +603,13 @@ class Executor:
                     self.log("warning", "[recreate] 删除失败（%s），降级为复用已有资源 %s" % (delete_data.get("message") or str(delete_data), found_id))
                     sname = step.get("step_name") or step.get("name") or "default"
                     bucket = ctx.setdefault("steps", {}).setdefault(sname, {})
-                    if is_classroom:
-                        bucket["classroomId"] = found_id
-                    else:
+                    # seat 优先：create_seat 的 delete 路径 /rcc/classroom/seat/delete 同时含
+                    # classroom 与 seat 段，若先判 is_classroom 会把座位 id 误写为 classroomId，
+                    # 导致 finally 清理把座位当教室删除
+                    if is_seat:
                         bucket["seatId"] = found_id
+                    elif is_classroom:
+                        bucket["classroomId"] = found_id
                     return "skip"
 
             content = delete_data.get("content") if isinstance(delete_data, dict) else None
@@ -629,10 +632,11 @@ class Executor:
                 self.log("warning", "[recreate] 删除异步失败，降级为复用已有资源 %s" % found_id)
                 sname = step.get("step_name") or step.get("name") or "default"
                 bucket = ctx.setdefault("steps", {}).setdefault(sname, {})
-                if is_classroom:
-                    bucket["classroomId"] = found_id
-                else:
+                # seat 优先（同上：seat 的 delete 路径同时含 classroom 段）
+                if is_seat:
                     bucket["seatId"] = found_id
+                elif is_classroom:
+                    bucket["classroomId"] = found_id
                 return "skip"
 
         return "skip"
@@ -1188,11 +1192,12 @@ class Executor:
         """执行下课（非 CMR 场景用 /rcc/classroom/lesson/end，无需 CMR token）"""
         status, data = self.http_request("POST", "/rcc/classroom/lesson/end",
                                          {"classroomId": classroom_id}, ctx)
-        content = data.get("content") if isinstance(data, dict) else {}
+        content = (data.get("content") or {}) if isinstance(data, dict) else {}
         task_id = content.get("taskId") if isinstance(content, dict) else None
         ctx["_last_data"] = data
         if not task_id:
-            self.log("warning", "[prerequisite-cleanup] 下课接口未返回 taskId，可能需要轮询")
+            self.log("warning", "[prerequisite-cleanup] 下课接口未返回 taskId（%s），可能需要轮询"
+                     % ((data or {}).get("msgKey") or "同步返回"))
         return task_id
 
     def _wait_task_done(self, task_id, ctx, timeout=180, what="异步任务"):
@@ -1242,9 +1247,9 @@ class Executor:
         """轮询等待下课完成（下课为异步批任务：经 msgct/msg/detail 轮询 taskId，
         非 CMR progress；与 lesson/end 文档 polling 声明一致）。
         下课完成后还需等待所有桌面进入关闭态（CLOSE），否则删除教室会失败。"""
-        task_id = (ctx.get("_last_data") or {}).get("content", {}).get("taskId")
+        task_id = ((ctx.get("_last_data") or {}).get("content") or {}).get("taskId")
         if not task_id:
-            self.log("info", "[prerequisite-cleanup] 下课无 taskId（同步返回），跳过轮询")
+            self.log("info", "[prerequisite-cleanup] 下课无 taskId（同步返回/失败），跳过轮询")
             return
         deadline = time.time() + timeout
         while time.time() < deadline:
@@ -1385,6 +1390,7 @@ class Executor:
     def _cleanup(self, ctx):
         """finally 清理已创建资源（从 ctx.steps 各 step 产出提取 *Id）"""
         created = []
+        _seen_rid = set()
         for sname, outs in (ctx.get("steps") or {}).items():
             # 复用命中的步骤（_reused）不清理：资源为环境已有/共享，删除会污染后续用例
             if outs.get("_reused"):
@@ -1394,6 +1400,11 @@ class Executor:
                 if k.endswith("Id") and k != "taskId" and isinstance(v, str) and v:
                     created.append((k, v))
         for name, rid in reversed(created):
+            # 同 rid 去重：多个步骤产出同一 classroomId（create_classroom + query_classroom）时
+            # 只清理一次，避免重复执行清理链
+            if rid in _seen_rid:
+                continue
+            _seen_rid.add(rid)
             # 教室删除须按清理链：下课 → 桌面关机 → 删除座位 → 删除教室
             # （业务规则 classroom_cleanup；桌面不关机/上课中删除会失败）
             if name == "classroomId":
