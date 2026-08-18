@@ -18,22 +18,24 @@ python3 run.py
 
 > ⚠️ 5000 端口被 macOS AirPlay 占用，平台使用 5001。
 
-## 4 个可视化
+## 5 个可视化
 
 | 页面 | 路由 | 功能 |
 |---|---|---|
 | 首页 | `/` | 平台总览 + 接口统计 |
 | 用例输入 | `/use-case` | 结构化模板（【前置】【操作】【预期】）+ 参数配置 + 执行 |
-| 接口列表 | `/apis` | 224 接口检索 + 详情（入参/出参/断言） |
+| 接口列表 | `/apis` | 约 226 接口检索 + 详情（入参/出参/断言） |
 | 执行过程 | `/execution` | 用例执行实时日志 + 步骤结果 |
 | 模型配置 | `/model` | LLM 配置（Provider/API/模型参数）+ AI 边界说明 |
 
-## 架构（对齐方案 4 模块）
+## 架构（核心模块）
 
 ```
-app/core/index.py    语义解析与索引（224 接口 → Map/倒排索引/DAG）
-app/core/engine.py   场景编排 + 脚本合成 + 执行 + 断言裁判
-app/web/app.py       Flask API + 4 可视化路由
+app/core/index.py         语义解析与索引（约 226 接口 → Map/倒排索引/DAG）
+app/core/orchestrator.py  场景编排（规则 + LLM 双通道）
+app/core/executor.py      计划执行（登录/补数/轮询/断言/清理）
+app/core/script_runner.py subprocess 隔离执行
+app/web/app.py            Flask API + 5 可视化路由
 app/templates/       页面模板（use_case/apis/execution/model）
 ```
 
