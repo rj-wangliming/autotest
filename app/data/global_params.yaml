@@ -61,5 +61,6 @@ usb_type_id_arr:                     # USB 类型 ID 数组
 cpu:                                 # CPU 核数
 memory:                              # 内存 MB
 system_size:                         # 系统盘 GB
+vgpu_type: QXL                       # VDI 策略创建时的顶层 vgpuType（避免后端 vgpu_type 非空约束失败）
 expected_cpu:                        # 期望 CPU（一致性断言用）
 expected_memory:                     # 期望内存（一致性断言用）

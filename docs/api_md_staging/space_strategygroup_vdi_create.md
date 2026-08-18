@@ -35,10 +35,10 @@ setup:
   extract:
   - var: vgpuType
     from: response
-    jsonpath: $.content[0].vgpuType
+    jsonpath: $.content.itemArr[0].vgpuType
   - var: vgpuExtraInfo
     from: response
-    jsonpath: $.content[0].vgpuExtraInfo
+    jsonpath: $.content.itemArr[0].vgpuExtraInfo
   purpose: 取第一条（无名称过滤）
 - name: query_agreement_templates
   api: /space/deskStrategy/agreement/template/list
@@ -221,6 +221,7 @@ request:
       type: String
       required: false
       example: QXL
+      value: ${param.vgpu_type}
     vgpuExtraInfo:
       type: Object
       required: false
