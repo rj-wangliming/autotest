@@ -12,11 +12,14 @@ import os
 import re
 import sys
 
+import yaml
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ["API_MD_DIR"] = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "api_md_staging")
 
 from app.core.orchestrator import Orchestrator  # noqa: E402
 from app.core.executor import Executor  # noqa: E402
+from app.core.params import resolve_body  # noqa: E402
 
 PASS = []
 FAIL = []
@@ -162,6 +165,39 @@ def test_fill_doc_driven_from_yetassign_doc():
     em = out.get("exactMatchArr")
     names = [e["name"] for e in em]
     assert names == ["imageRoleType", "cbbImageType", "imageUsage", "clusterId"], "exactMatchArr 注入顺序异常: %s" % names
+
+
+def test_vdi_create_document_parameterizes_strategy_defaults():
+    """VDI 创建策略默认值来自参数，且可被用例覆盖。"""
+    meta = Orchestrator().index.get("/space/strategygroup/vdi/create")
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    with open(os.path.join(root_dir, "app", "data", "global_params.yaml")) as f:
+        params = yaml.safe_load(f)
+    params.update({
+        "strategy_name_vdi": "strategy-defaults",
+        "cpu": 4,
+        "memory": 8192,
+        "system_size": 80,
+        "vgpu_type": "QXL",
+        "need_hide_float_bar": True,
+    })
+    body = resolve_body((meta.get("request") or {}).get("body") or {}, {
+        "params": params,
+        "steps": {
+            "query_usb_types": {"usbTypeIdArr": ["usb-1"]},
+            "query_vgpu_options": {"vgpuType": "QXL"},
+        },
+    })
+    expected = {
+        "needHideFloatBar": True,
+        "enableShowLocalDisk": True,
+        "enableAdaptiveResolution": True,
+        "enableDoubleScreen": False,
+        "enableSoftwareDecode": True,
+        "enableHyperVisorImprove": True,
+    }
+    for field, value in expected.items():
+        assert body.get(field) is value, "%s 未进入创建请求: %s" % (field, body)
 
 
 # ---------- 3. 假绿修复 ----------
@@ -358,6 +394,7 @@ def main():
         ("fill-platformId 回查+缓存", test_fill_platform_id_sources_and_cache),
         ("fill-exactMatchArr 静态+追加", test_fill_exact_match_arr_static_and_append),
         ("fill-yetAssign 文档全链路", test_fill_doc_driven_from_yetassign_doc),
+        ("VDI 创建策略参数化默认值", test_vdi_create_document_parameterizes_strategy_defaults),
         ("假绿-poll 404 记 warning", test_poll_404_warns_not_silent),
         ("假绿-poll 校验错误不 死循环", test_poll_validation_error_not_infinite),
         ("假绿-poll params 模板解析", test_poll_params_template_resolved),

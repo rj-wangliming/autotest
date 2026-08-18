@@ -100,6 +100,7 @@ request:
       type: String
       required: false
       example: RECOVERABLE
+      value: ${param.desktop_type}
     cpu:
       type: Integer
       required: true
@@ -114,14 +115,17 @@ request:
       type: Integer
       required: false
       example: 40
+      value: ${param.system_disk}
     enableNested:
       type: Boolean
       required: false
       example: false
+      value: ${param.enable_nested}
     enableHa:
       type: Boolean
       required: false
       example: false
+      value: ${param.enable_ha}
     enableInternet:
       type: Boolean
       required: true
@@ -131,19 +135,22 @@ request:
       type: Boolean
       required: true
       example: false
-      value: false
+      value: ${param.open_usb_read_only}
     openUsbReadOnly:
       type: Boolean
       required: false
       example: false
+      value: false
     keyboardEmulationType:
       type: String
       required: false
       example: PS2
+      value: ${param.keyboard_emulation_type}
     enablePeripheral:
       type: Boolean
       required: false
       example: true
+      value: ${param.enable_peripheral}
     usbTypeIdArr:
       type: list
       required: false
@@ -153,10 +160,12 @@ request:
       type: Boolean
       required: false
       example: true
+      value: ${param.enable_clipboard}
     pcToAppTransfer:
       type: Boolean
       required: false
       example: true
+      value: ${param.pc_to_app_transfer}
     localToRemoteCopyChar:
       type: dict
       required: false
@@ -169,6 +178,7 @@ request:
       type: Boolean
       required: false
       example: true
+      value: ${param.app_to_pc_transfer}
     remoteToLocalCopyChar:
       type: dict
       required: false
@@ -181,70 +191,87 @@ request:
       type: String
       required: false
       example: CLOSED
+      value: ${param.disk_mapping_type}
     netDiskMappingType:
       type: String
       required: false
       example: CLOSED
+      value: ${param.net_disk_mapping_type}
     cdRomMappingType:
       type: String
       required: false
       example: CLOSED
+      value: ${param.cd_rom_mapping_type}
     usbStorageDeviceMappingMode:
       type: String
       required: false
       example: CLOSED
+      value: ${param.usb_storage_device_mapping_mode}
     forbidCatchScreen:
       type: Boolean
       required: false
       example: false
+      value: ${param.forbid_catch_screen}
     needHideFloatBar:
       type: Boolean
       required: false
       example: false
+      value: ${param.need_hide_float_bar}
     enableShowLocalDisk:
       type: Boolean
       required: false
       example: true
+      value: ${param.enable_show_local_disk}
     powerPlan:
       type: String
       required: false
       example: SLEEP
+      value: ${param.power_plan}
     powerPlanTimeSwitch:
       type: Integer
       required: false
       example: 0
+      value: ${param.power_plan_time_switch}
     estIdleOverTime:
       type: Integer
       required: false
       example: 0
+      value: ${param.est_idle_over_time}
     enableAdaptiveResolution:
       type: Boolean
       required: false
       example: true
+      value: ${param.enable_adaptive_resolution}
     enableDoubleScreen:
       type: Boolean
       required: false
       example: false
+      value: ${param.enable_double_screen}
     enableGpu:
       type: Boolean
       required: false
       example: false
+      value: ${param.enable_gpu}
     enableSoftwareDecode:
       type: Boolean
       required: false
       example: true
+      value: ${param.enable_software_decode}
     agreementAgencyLimitMode:
       type: String
       required: false
       example: NO_LIMIT
+      value: ${param.agreement_agency_limit_mode}
     enableWebClient:
       type: Boolean
       required: false
       example: true
+      value: ${param.enable_web_client}
     estProtocolType:
       type: String
       required: false
       example: EST
+      value: ${param.est_protocol_type}
     vgpuType:
       type: String
       required: false
@@ -299,6 +326,7 @@ request:
       type: Boolean
       required: false
       example: false
+      value: ${param.enable_student_account}
     agreementInfo:
       type: dict
       required: false
@@ -307,14 +335,17 @@ request:
       type: String
       required: false
       example: listen
+      value: ${param.vdi_computer_name}
     personalDisk:
       type: Integer
       required: false
       example: 0
+      value: ${param.personal_disk}
     enableOpenDesktopRedirect:
       type: Boolean
       required: false
       example: false
+      value: ${param.enable_open_desktop_redirect}
     desktopOccupyDriveArr:
       type: list
       required: false
@@ -323,6 +354,7 @@ request:
       type: Boolean
       required: false
       example: true
+      value: ${param.enable_hyper_visor_improve}
     watermarkInfo:
       type: dict
       required: false
@@ -346,6 +378,7 @@ request:
       type: Integer
       required: false
       example: 0
+      value: ${param.power_plan_time}
     business:
       type: String
       required: true

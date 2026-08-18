@@ -67,5 +67,39 @@ cpu:                                 # CPU 核数
 memory:                              # 内存 MB
 system_size:                         # 系统盘 GB
 vgpu_type: QXL                       # VDI 策略创建时的顶层 vgpuType（避免后端 vgpu_type 非空约束失败）
+# ── VDI 策略默认值（space/strategygroup/vdi/create；cases/Web 参数可覆盖）──
+desktop_type: RECOVERABLE
+system_disk: 40
+enable_nested: false
+enable_ha: false
+open_usb_read_only: false
+keyboard_emulation_type: PS2
+enable_peripheral: true
+enable_clipboard: true
+pc_to_app_transfer: true
+app_to_pc_transfer: true
+disk_mapping_type: CLOSED
+net_disk_mapping_type: CLOSED
+cd_rom_mapping_type: CLOSED
+usb_storage_device_mapping_mode: CLOSED
+forbid_catch_screen: false
+need_hide_float_bar: false
+enable_show_local_disk: true
+power_plan: SLEEP
+power_plan_time_switch: 0
+est_idle_over_time: 0
+enable_adaptive_resolution: true
+enable_double_screen: false
+enable_gpu: false
+enable_software_decode: true
+agreement_agency_limit_mode: NO_LIMIT
+enable_web_client: true
+est_protocol_type: EST
+enable_student_account: false
+vdi_computer_name: listen
+personal_disk: 0
+enable_open_desktop_redirect: false
+enable_hyper_visor_improve: true
+power_plan_time: 0
 expected_cpu:                        # 期望 CPU（一致性断言用）
 expected_memory:                     # 期望内存（一致性断言用）
