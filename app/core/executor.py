@@ -298,7 +298,17 @@ class Executor:
         ctx["_last_data"] = data
 
         # extract 产出（多变量）
-        self._extract(step, data, ctx)
+        # skip_if_empty：步骤声明时，响应 itemArr 为空则跳过 extract（不覆盖已有产出桶），
+        # 用于多版本镜像回查等「查询空则回退上一步产出」的场景
+        if step.get("skip_if_empty"):
+            _arr = jsonpath_get(data, "$.content.itemArr")
+            if isinstance(_arr, list) and not _arr:
+                self.log("info", "[skip_if_empty] %s 返回空列表，跳过 extract（保留上一步产出）" % step.get("step_name"))
+                data = {**data, "content": {**data.get("content", {}), "itemArr": _arr}}
+            else:
+                self._extract(step, data, ctx)
+        else:
+            self._extract(step, data, ctx)
 
         # 特殊处理：strategygroup/vdi/list 或 strategygroup/tci/list 返回空数组时
         # → 尝试无 name 过滤查询第一条 VDI/TCI 策略（避免课程策略为 null 导致后续失败）
@@ -713,6 +723,9 @@ class Executor:
         for var, jp in ex.items():
             if isinstance(jp, dict):
                 val = self._extract_pick(data, jp)
+                # fallback_from：pick 提取为空时回退到指定产出引用（如多版本镜像回查为空 → 模板 id）
+                if val is None and jp.get("fallback_from"):
+                    val = resolve_value("${%s}" % jp["fallback_from"], ctx)
             elif isinstance(jp, str) and jp.startswith("$"):
                 val = jsonpath_get(data, jp)
             else:
@@ -814,8 +827,9 @@ class Executor:
             if st == "PARTIAL_SUCCESS" and not poll.get("allow_partial_success"):
                 raise AssertionError("轮询任务部分成功，按失败处理: correlationId=%s" % correlation_id)
             if st in fail_states:
-                raise AssertionError("轮询任务失败: correlationId=%s (taskStatus=%s)"
-                                     % (correlation_id, st))
+                _desc = jsonpath_get(data, "$.content.describe") or jsonpath_get(data, "$.content.message") or ""
+                raise AssertionError("轮询任务失败: correlationId=%s (taskStatus=%s)%s"
+                                     % (correlation_id, st, (" | %s" % _desc) if _desc else ""))
             if poll.get("success_when"):
                 if self._poll_conditions_met(data, poll["success_when"]):
                     self.log("info", "[poll] 查询验证成功")

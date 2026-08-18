@@ -41,7 +41,7 @@ request:
       required: true
       constraint: '@NotNull，镜像ID'
       description: 上课使用的镜像
-      value: ${prev.get_image.output.plusImageId}
+      value: ${prev.get_image_version.output.plusImageId}
     macArr:
       type: String[]
       required: false

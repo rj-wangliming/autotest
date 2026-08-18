@@ -47,6 +47,16 @@ setup:
 - name: get_image
   api: POST /rcc/classroom/image/assignImage/yetAssign/list
   extract:
+    templateId:
+      from: $.content.itemArr
+      pick: max
+      sort_key: cbbImageTemplateDetailDTO.name
+      field: cbbImageTemplateDetailDTO.id
+    enableMultipleVersion:
+      from: $.content.itemArr
+      pick: max
+      sort_key: cbbImageTemplateDetailDTO.name
+      field: cbbImageTemplateDetailDTO.enableMultipleVersion
     plusImageId:
       from: $.content.itemArr
       pick: max
@@ -62,6 +72,34 @@ setup:
         valueArr:
         - ${param.teacher_image_name}
         matchRule: EQ
+- name: get_image_version
+  api: POST /rcc/classroom/image/assignImage/yetAssign/list
+  purpose: 多版本镜像（enableMultipleVersion=true）时按 rootImageId 查 VERSION 取最新版本 id（对齐 pytest）；非多版本返回空时回退模板 id
+  request:
+    body:
+      exactMatchArr:
+      - name: imageRoleType
+        valueArr:
+        - VERSION
+      - name: cbbImageType
+        valueArr:
+        - VDI
+      - name: imageUsage
+        valueArr:
+        - DESK
+      - name: rootImageId
+        valueArr:
+        - ${prev.get_image.output.templateId}
+      - name: clusterId
+        valueArr:
+        - ${prev.list_cluster.output.clusterId}
+  extract:
+    plusImageId:
+      from: $.content.itemArr
+      pick: max
+      sort_key: cbbImageTemplateDetailDTO.name
+      field: cbbImageTemplateDetailDTO.id
+      fallback_from: prev.get_image.output.plusImageId
 - name: get_cluster
   api: POST /space/cluster/obtainComputeClusterList
   extract:
@@ -92,7 +130,7 @@ request:
       required: true
       constraint: '@NotNull'
       description: 分配的镜像模板ID；ID 来自前置步骤 setup 产出（${prev.*}）
-      value: ${prev.get_image.output.plusImageId}
+      value: ${prev.get_image_version.output.plusImageId}
     enableHide:
       type: Boolean
       required: true

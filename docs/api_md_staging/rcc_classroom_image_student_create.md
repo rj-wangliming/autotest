@@ -112,12 +112,22 @@ setup:
 - name: get_image
   api: POST /rcc/classroom/image/assignImage/yetAssign/list
   extract:
+    templateId:
+      from: $.content.itemArr
+      pick: max
+      sort_key: cbbImageTemplateDetailDTO.name
+      field: cbbImageTemplateDetailDTO.id
+    enableMultipleVersion:
+      from: $.content.itemArr
+      pick: max
+      sort_key: cbbImageTemplateDetailDTO.name
+      field: cbbImageTemplateDetailDTO.enableMultipleVersion
     plusImageId:
       from: $.content.itemArr
       pick: max
       sort_key: cbbImageTemplateDetailDTO.name
       field: cbbImageTemplateDetailDTO.id
-  purpose: 按镜像名精确过滤（searchKeyword + matchArr.fieldName=imageName）；同名多版本取模板名最大（尾部时间戳最新）的可分配镜像模板
+  purpose: 按镜像名精确过滤（searchKeyword + matchArr.fieldName=imageName）获取可分配镜像模板；同名多版本取模板名最大（尾部时间戳最新）
   request:
     body:
       searchKeyword: ${param.student_image_name}
@@ -127,6 +137,34 @@ setup:
         valueArr:
         - ${param.image_name}
         matchRule: EQ
+- name: get_image_version
+  api: POST /rcc/classroom/image/assignImage/yetAssign/list
+  purpose: 多版本镜像（enableMultipleVersion=true）时按 rootImageId 查 VERSION 取最新版本 id（对齐 pytest common_get_available_image_version）；非多版本返回空时回退模板 id（fallback_from）
+  request:
+    body:
+      exactMatchArr:
+      - name: imageRoleType
+        valueArr:
+        - VERSION
+      - name: cbbImageType
+        valueArr:
+        - VDI
+      - name: imageUsage
+        valueArr:
+        - DESK
+      - name: rootImageId
+        valueArr:
+        - ${prev.get_image.output.templateId}
+      - name: clusterId
+        valueArr:
+        - ${prev.list_cluster.output.clusterId}
+  extract:
+    plusImageId:
+      from: $.content.itemArr
+      pick: max
+      sort_key: cbbImageTemplateDetailDTO.name
+      field: cbbImageTemplateDetailDTO.id
+      fallback_from: prev.get_image_version.output.plusImageId
 - name: get_cluster
   api: POST /space/cluster/obtainComputeClusterList
   extract:
@@ -175,8 +213,8 @@ request:
       type: UUID
       required: true
       constraint: '@NotNull'
-      description: 分配的镜像模板ID；ID 来自前置步骤 setup 产出（${prev.*}）
-      value: ${prev.get_image.output.plusImageId}
+      description: 分配的镜像ID；多版本取 VERSION 最新版本 id，非多版本回退模板 id（get_image_version 经 fallback_from 收敛两路径）
+      value: ${prev.get_image_version.output.plusImageId}
     enableHide:
       type: Boolean
       required: true

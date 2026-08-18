@@ -121,7 +121,7 @@ setup:
       crId:
         value: ${prev.query_classroom.output.classroomId}
       plusImageId:
-        value: ${prev.get_image.output.plusImageId}
+        value: ${prev.get_image_version.output.plusImageId}
       enableHide:
         value: false
       storagePoolIdList:
@@ -163,7 +163,7 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: 目标镜像模板ID
-      value: ${prev.get_image.output.plusImageId}
+      value: ${prev.get_image_version.output.plusImageId}
     desktopIdList:
       type: List<UUID>
       required: true

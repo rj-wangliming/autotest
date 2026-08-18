@@ -95,7 +95,7 @@ setup:
       crId:
         value: ${prev.select_classroom_id.output.classroomId}
       plusImageId:
-        value: ${prev.get_image.output.plusImageId}
+        value: ${prev.get_image_version.output.plusImageId}
       enableHide:
         value: false
       storagePoolIdList:

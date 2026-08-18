@@ -83,7 +83,7 @@ setup:
   request:
     body:
       crId: ${prev.query_classroom.output.classroomId}
-      plusImageId: ${prev.get_image.output.plusImageId}
+      plusImageId: ${prev.get_image_version.output.plusImageId}
       enableHide: false
       storagePoolIdList: ${prev.get_storage_pool.output.storagePoolId}
       clusterId: ${prev.get_cluster.output.clusterId}

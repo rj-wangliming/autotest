@@ -692,24 +692,35 @@ class Orchestrator:
         return re.sub(r"[^a-zA-Z0-9]", "_", seg).lower() or "step"
 
     def _expand_setup(self, api, steps, seen, _stack=None):
-        """递归展开接口 setup 声明的前置依赖（拓扑序）；login/环/已见跳过"""
+        """递归展开接口 setup 声明的前置依赖（拓扑序）；login/环/已见跳过。
+        去重规则：
+        - seen（api 级）：跨 meta 递归展开时同 api 步骤去重（如 restart 与 student 的 create_seat）
+        - 本 meta 内同 api 多步骤放行（如 get_image 与 get_image_version 均为 yetAssign/list）"""
         _stack = _stack if _stack is not None else set()
         if api in _stack:
             return                                    # 环依赖：跳过防无限递归
         _stack.add(api)
         meta = self.index.get(api) or {}
+        local_apis = set()        # 本 meta 内已 append 的 api
+        local_keys = set()        # 本 meta 内已 append 的 api#步骤名
         for item in (meta.get("setup") or []):
             raw = item.get("api", "")
             dep = raw.split(" ", 1)[-1] if " " in raw else raw
             # dep in _stack：自引用 setup 项（被测接口声明自身以携带幂等信息），
             # 不作为独立步骤注入，避免消费方流程被依赖文档的自我声明覆盖
             if ("loginAdmin" in dep or not self.index.get(dep)
-                    or dep in seen or dep in _stack):
+                    or dep in _stack):
                 continue
             self._expand_setup(dep, steps, seen, _stack)   # 先展开依赖的依赖
-            if dep not in seen:                            # 递归内可能已加入
-                steps.append(self._build_setup_step(item, dep))
-                seen.add(dep)
+            key = dep + "#" + (item.get("name") or "")
+            if key in local_keys:
+                continue                                   # 本 meta 内同步骤已 append
+            if dep in seen and dep not in local_apis:
+                continue                                   # 其他 meta 已展开该 api → 去重
+            steps.append(self._build_setup_step(item, dep))
+            local_keys.add(key)
+            local_apis.add(dep)
+            seen.add(dep)
         _stack.discard(api)
 
     def _build_setup_step(self, item, dep_api):
