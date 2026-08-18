@@ -448,6 +448,7 @@ polling:
     id: ${content.id}
   interval_ms: 2000
   timeout_ms: 120000
+  optional_when_no_correlation: true
   terminal_states:
     success:
     - SUCCESS

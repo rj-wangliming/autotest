@@ -88,7 +88,7 @@ setup:
       storagePoolIdList: ${prev.get_storage_pool.output.storagePoolId}
       clusterId: ${prev.get_cluster.output.clusterId}
       platformId: ${prev.get_cluster.output.platformId}
-      strategyId: ${prev.create_vdi_strategy.output.vdiStrategyId}
+      strategyId: ${prev.get_vdi_strategy.output.vdiStrategyId}
       networkId: ${prev.get_network.output.networkId}
       vdiDiskStorageId: ${prev.get_vdi_disk_storage.output.vdiDiskStorageId}
 - name: query_desktop

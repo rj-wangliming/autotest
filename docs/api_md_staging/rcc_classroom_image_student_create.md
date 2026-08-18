@@ -89,6 +89,26 @@ setup:
       vdiStrategyId: $.content.itemArr[0].id
   extract:
     vdiStrategyId: $.content.id
+- name: get_vdi_strategy
+  api: POST /space/strategygroup/vdi/list
+  purpose: 按策略名查询 VDI 课程策略ID（create 为同步创建、响应 content 不含 ID；复用/新建两路径均经此查询取得 ID）
+  request:
+    body:
+      page: 0
+      limit: 20
+      matchArr:
+      - type: EXACT
+        fieldName: strategyName
+        valueArr:
+        - ${param.strategy_name_vdi}
+        matchRule: EQ
+      exactMatchArr:
+      - type: EXACT
+        fieldName: strategyType
+        valueArr:
+        - VDI
+  extract:
+    vdiStrategyId: $.content.itemArr[0].id
 - name: get_image
   api: POST /rcc/classroom/image/assignImage/yetAssign/list
   extract:
@@ -166,8 +186,8 @@ request:
       type: UUID
       required: true
       constraint: '@NotNull'
-      description: 课程策略ID（VDI deskStrategy，非教室策略 classroomStrategy）；必须来自前置步骤 create_vdi_strategy 产出（存在复用/不存在创建，两路径均产出）
-      value: ${prev.create_vdi_strategy.output.vdiStrategyId}  # LOCK
+      description: 课程策略ID（VDI deskStrategy，非教室策略 classroomStrategy）；必须来自前置步骤 get_vdi_strategy 产出（create_vdi_strategy 创建/复用后经查询取得，两路径均产出）
+      value: ${prev.get_vdi_strategy.output.vdiStrategyId}  # LOCK
     networkId:
       type: UUID
       required: true
