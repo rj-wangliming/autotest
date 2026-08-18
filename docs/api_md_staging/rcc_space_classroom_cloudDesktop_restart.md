@@ -189,7 +189,7 @@ prereq_state:
   resource: desktop
   required_state: RUNNING
   achieve_via:
-  - api: POST /rcc/classroom/cmrcef/lesson/start
+  - api: POST /rcc/classroom/lesson/start
     note: 学生桌面无独立开机接口，只能通过上课批量开机
 
 idempotency:

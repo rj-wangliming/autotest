@@ -209,7 +209,7 @@ constraints:
 - level: BIZ
   field: desktop
   rule: 桌面须处于运行中（RUNNING）
-  failure: 唤醒仅对运行中桌面生效；学生桌面无独立开机接口，运行中状态须通过上课（POST /rcc/classroom/cmrcef/lesson/start）间接达成
+  failure: 唤醒仅对运行中桌面生效；学生桌面无独立开机接口，运行中状态须通过上课（POST /rcc/classroom/lesson/start）间接达成
 assertions:
   success:
   - scenario: 课堂桌面存在且可唤醒

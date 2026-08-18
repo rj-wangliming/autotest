@@ -113,7 +113,7 @@ prereq_state:
   forbidden: [STARTING_CLASS, IN_CLASS, ENDING_CLASS]
   api: POST /rcc/classroom/delete
   achieve_via:
-  - api: POST /rcc/classroom/cmrcef/lesson/end
+  - api: POST /rcc/classroom/lesson/end
     note: 教室上课中需先下课(lesson/end)才能删除
 
 idempotency:

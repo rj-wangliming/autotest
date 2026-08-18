@@ -99,7 +99,7 @@ resource_chains:
     note: 学生机课程镜像分配依赖教室+策略+镜像模板+集群+网络+存储池+平台（请求 DTO 外键推导）
   classroom_cleanup:
     order:
-      - POST /rcc/classroom/cmrcef/lesson/end
+      - POST /rcc/classroom/lesson/end
       - POST /rcc/classroom/desktop/powerOff
       - POST /rcc/classroom/seat/delete
       - POST /rcc/classroom/delete
@@ -113,21 +113,21 @@ state_prereq:
     required_state: RUNNING
     source: 业务语义（本工程源码无显式状态校验，状态由底层平台处理；开机途径由 gen_business_rules.py 推导）
     achieve_via:
-      - api: POST /rcc/classroom/cmrcef/lesson/start
+      - api: POST /rcc/classroom/lesson/start
         note: 学生桌面无独立开机接口，只能通过上课批量开机
   - resource: desktop
     action: shutdown
     required_state: RUNNING
     source: 业务语义（本工程源码无显式状态校验，状态由底层平台处理；开机途径由 gen_business_rules.py 推导）
     achieve_via:
-      - api: POST /rcc/classroom/cmrcef/lesson/start
+      - api: POST /rcc/classroom/lesson/start
         note: 学生桌面无独立开机接口，只能通过上课批量开机
   - resource: desktop
     action: poweroff
     required_state: RUNNING
     source: 业务语义（本工程源码无显式状态校验，状态由底层平台处理；开机途径由 gen_business_rules.py 推导）
     achieve_via:
-      - api: POST /rcc/classroom/cmrcef/lesson/start
+      - api: POST /rcc/classroom/lesson/start
         note: 学生桌面无独立开机接口，只能通过上课批量开机
   - resource: desktop
     action: forcewakeup
@@ -141,7 +141,7 @@ state_prereq:
     required_state: RUNNING
     source: 业务语义（本工程源码无显式状态校验，状态由底层平台处理；开机途径由 gen_business_rules.py 推导）
     achieve_via:
-      - api: POST /rcc/classroom/cmrcef/lesson/start
+      - api: POST /rcc/classroom/lesson/start
         note: 学生桌面无独立开机接口，只能通过上课批量开机
   - resource: desktop
     action: start
@@ -184,7 +184,7 @@ state_prereq:
     source: 源码推导（ClassroomServiceImpl.checkClassroomCanDelete：非上课中才可删除；NONE_CLASS/ERROR 允许，上课状态禁止）
     chain: false
     achieve_via:
-      - api: POST /rcc/classroom/cmrcef/lesson/end
+      - api: POST /rcc/classroom/lesson/end
         note: 教室上课中需先下课(lesson/end)才能删除
   - resource: teacher
     action: start
@@ -272,7 +272,7 @@ case_prereq:
     resource: desktop
     required_state: RUNNING
     achieve_via:
-      - api: POST /rcc/classroom/cmrcef/lesson/start
+      - api: POST /rcc/classroom/lesson/start
         note: 前置要求桌面运行中；若已分配镜像但处于关机，先上课开机
   - keyword: 已分配
     resource: desktop
@@ -316,17 +316,17 @@ param_ref_rules:
 ### 桌面生命周期状态机
 ```
 教室创建 → 座位创建 → 分配镜像 → 桌面存在(关机 OFF)
-                                    ↓ 上课(cmrcef/lesson/start)
+                                    ↓ 上课(lesson/start)
                                  桌面运行中(RUNNING) → 重启/关机/唤醒/取消报障
 ```
-- 学生桌面**无独立开机接口**，只能通过上课（`cmrcef/lesson/start`）批量开机
+- 学生桌面**无独立开机接口**，只能通过上课（`lesson/start`）批量开机
 - 教师桌面可经 `teacher/terminal/wake` 唤醒
 
 ### 操作前置状态
 | 操作 | 前置状态 | 达成途径 |
 |---|---|---|
-| desktop/restart、shutdown、powerOff、forceWakeUp、restoreVDIImage | 桌面 RUNNING | 上课 cmrcef/lesson/start |
-| desktop/tci/restart、tci/shutdown | 桌面 RUNNING | 上课 cmrcef/lesson/start |
+| desktop/restart、shutdown、powerOff、forceWakeUp、restoreVDIImage | 桌面 RUNNING | 上课 lesson/start |
+| desktop/tci/restart、tci/shutdown | 桌面 RUNNING | 上课 lesson/start |
 
 ### 维护约定
 - 新增资源类型/操作前置状态时，在 front-matter 对应节追加即可，**无需修改编排器代码**

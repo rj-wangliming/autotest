@@ -103,14 +103,14 @@ def test_chain_complete():
     apis = [s["api"] for s in plan["steps"]]
     # 分配镜像已补
     assert "/rcc/classroom/image/student/create" in apis, "缺分配镜像: %s" % apis
-    # 上课开机已补
-    assert "/rcc/classroom/cmrcef/lesson/start" in apis, "缺上课开机: %s" % apis
+    # 上课开机已补（非 CMR 场景用 /rcc/classroom/lesson/start）
+    assert "/rcc/classroom/lesson/start" in apis, "缺上课开机: %s" % apis
     # 顺序:教室 → 座位 → 镜像 → 上课 → 重启
     order = {u: i for i, u in enumerate(apis)}
     assert order["/rcc/classroom/create"] < order["/rcc/classroom/seat/batchCreate"], "教室应在座位前"
     assert order["/rcc/classroom/seat/batchCreate"] < order["/rcc/classroom/image/student/create"], "座位应在镜像前"
-    assert order["/rcc/classroom/image/student/create"] < order["/rcc/classroom/cmrcef/lesson/start"], "镜像应在课前"
-    assert order["/rcc/classroom/cmrcef/lesson/start"] < order["/rcc/space/classroom/cloudDesktop/restart"], "上课应在重启前"
+    assert order["/rcc/classroom/image/student/create"] < order["/rcc/classroom/lesson/start"], "镜像应在课前"
+    assert order["/rcc/classroom/lesson/start"] < order["/rcc/space/classroom/cloudDesktop/restart"], "上课应在重启前"
 
 
 def test_refs_resolvable():
