@@ -366,7 +366,11 @@ class Executor:
                 cr_bucket = (ctx.get("steps") or {}).get("query_classroom") or {}
                 classroom_id = cr_bucket.get("classroomId")
                 if classroom_id:
-                    self._wait_desktops_state(classroom_id, "RUNNING", ctx, timeout=180)
+                    # 超时未达不再静默放行：记 warning 进 result.warnings（后续操作可能在
+                    # 关机态执行失败，届时可由此追溯到本次未等待成功）
+                    if not self._wait_desktops_state(classroom_id, "RUNNING", ctx, timeout=180):
+                        self._warn(ctx, "desktop_state_timeout",
+                                   "上课/重启后桌面未全部 RUNNING（classroomId=%s），继续执行" % classroom_id)
                 else:
                     self.log("warning", "[%s] 无 query_classroom.classroomId，跳过运行中状态确认"
                              % ("lesson" if "lesson" in path else "restart"))
@@ -1227,23 +1231,32 @@ class Executor:
         return False
 
     def _wait_desktops_state(self, classroom_id, target_state, ctx, timeout=120):
-        """轮询等待教室下所有桌面进入目标状态（如 CLOSE 关闭、RUNNING 运行中）"""
+        """轮询等待教室下所有学生桌面进入目标状态（如 CLOSE 关闭、RUNNING 运行中）。
+
+        过滤说明：desktop/list 的 exactMatchArr/matchArr 均不可靠（classroomId 无检索
+        注解被后端无视，matchArr 的 FUZZY 格式会触发 matchRule 校验失败），故服务端
+        只按分页拉取，classroomId/角色过滤全部在客户端做。limit 拉满防分页漏判。
+        """
         deadline = time.time() + timeout
         while time.time() < deadline:
             status, data = self.http_request(
-                "POST", "/rcc/classroom/desktop/list",
-                {"exactMatchArr": [{"name": "classroomId", "valueArr": [classroom_id]}]}, ctx)
-            content = data.get("content") if isinstance(data, dict) else {}
+                "POST", "/rcc/classroom/desktop/list", {"page": 0, "limit": 1000}, ctx)
+            content = (data.get("content") if isinstance(data, dict) else None) or {}
             items = content.get("itemArr") or content.get("items") or []
             if isinstance(items, dict):
                 items = items.get("itemArr") or items.get("items") or []
+            # 客户端二次过滤：只认目标教室的学生桌面（服务端 classroomId 过滤不可靠；
+            # 教师机为 PC 模式无 RUNNING 语义，混入会永不满足）
+            items = [d for d in items
+                     if str(d.get("classroomId") or "") == str(classroom_id)
+                     and d.get("desktopRole") != "TEACHER"]
             states = [(d.get("desktopId") or d.get("id"), d.get("desktopState")) for d in items]
             if states and all(st == target_state for _, st in states):
-                self.log("info", "[cleanup] 桌面全部 %s: %s" % (target_state, states))
+                self.log("info", "[wait-state] 桌面全部 %s: %s" % (target_state, states))
                 return True
-            self.log("info", "[cleanup] 桌面状态未达 %s: %s" % (target_state, states or "无桌面"))
+            self.log("info", "[wait-state] 桌面状态未达 %s: %s" % (target_state, states or "无桌面"))
             time.sleep(3)
-        self.log("warning", "[cleanup] 等待桌面 %s 超时" % target_state)
+        self.log("warning", "[wait-state] 等待桌面 %s 超时（%ss）" % (target_state, timeout))
         return False
 
     def _wait_lesson_end(self, classroom_id, ctx, timeout=120):
@@ -1276,13 +1289,19 @@ class Executor:
         self._wait_desktops_state(classroom_id, "CLOSE", ctx, timeout=timeout)
 
     def _delete_classroom_desktops(self, classroom_id, ctx):
-        """删除教室下的所有桌面（规则：桌面必须先关机再删除）"""
+        """删除教室下的所有桌面（规则：桌面必须先关机再删除）。
+
+        查询不带 exactMatchArr（classroomId 无检索注解会被后端无视，曾导致把
+        其他教室的桌面误关机/误删除），改为分页拉取后客户端按 classroomId 过滤。
+        """
         status, data = self.http_request("POST", "/rcc/classroom/desktop/list",
-                                         {"exactMatchArr": [{"name": "classroomId", "valueArr": [classroom_id]}]}, ctx)
-        content = data.get("content") if isinstance(data, dict) else {}
+                                         {"page": 0, "limit": 1000}, ctx)
+        content = (data.get("content") if isinstance(data, dict) else None) or {}
         items = content.get("itemArr") or content.get("items") or []
         if isinstance(items, dict):
             items = items.get("itemArr") or items.get("items") or []
+        items = [d for d in items
+                 if str(d.get("classroomId") or "") == str(classroom_id)]
 
         desktop_ids = []
         for desktop in items:

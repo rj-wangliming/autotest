@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""RCC-Space 无封装测试平台核心模块
+"""RCC-Space autotest 核心模块
 - jsonpath: JSONPath 提取
 - params: 参数解析/配置生成
 - executor: 进程内执行（兼容）

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""无封装测试平台 - CI/CD 一条龙 CLI
+"""autotest - CI/CD 一条龙 CLI
 
 用法:
   python3 run_case.py <用例文件> [--params 全局参数.yaml] [--base-url URL]
@@ -159,7 +159,7 @@ def run_one(case_path, args):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="无封装测试平台 CI 一条龙")
+    ap = argparse.ArgumentParser(description="autotest CI 一条龙")
     ap.add_argument("case", help="用例文件 (.yaml/.yml/.txt/.md)")
     ap.add_argument("--params", default="app/data/global_params.yaml", help="全局参数文件")
     ap.add_argument("--base-url", default=None, help="目标环境（优先级：--base-url > BASE_URL 环境变量 > yaml base_url > 默认）")

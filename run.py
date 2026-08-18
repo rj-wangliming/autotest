@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""无封装测试平台启动入口"""
+"""autotest 启动入口"""
 import logging
 import os
 import sys
@@ -16,5 +16,5 @@ logger = logging.getLogger("autotest")
 if __name__ == "__main__":
     n = len(index.load())
     logger.info("✅ 已加载 %d 个接口文档", n)
-    logger.info("🌐 无封装测试平台: http://127.0.0.1:5001")
+    logger.info("🌐 autotest: http://127.0.0.1:5001")
     app.run(host="127.0.0.1", port=5001, debug=False)

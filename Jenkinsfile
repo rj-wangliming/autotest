@@ -1,4 +1,4 @@
-// Jenkins Pipeline - 无封装测试平台对接
+// Jenkins Pipeline - autotest 对接
 // 前置: Jenkins 装 "JUnit Plugin"（默认随附）。LLM key 用 "Managed Credentials" 存为 rcc-llm-key
 pipeline {
     agent any

@@ -19,7 +19,7 @@ from run_case import run_one, to_junit_xml, load_yaml_or_json, load_llm_config
 
 
 def main():
-    ap = argparse.ArgumentParser(description="无封装测试平台 CI 批量")
+    ap = argparse.ArgumentParser(description="autotest CI 批量")
     ap.add_argument("case_dir", help="用例目录")
     ap.add_argument("--params", default="app/data/global_params.yaml", help="全局参数文件")
     ap.add_argument("--base-url", default=None, help="目标环境（优先级：--base-url > BASE_URL 环境变量 > yaml base_url > 默认）")

@@ -1,2 +1,2 @@
 // 公共 JS（占位，后续扩展）
-console.log("无封装测试平台已加载");
+console.log("autotest已加载");
