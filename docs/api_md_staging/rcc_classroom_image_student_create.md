@@ -178,8 +178,7 @@ request:
       type: String
       required: false
       constraint: '@Nullable'
-      description: 桌面网络起始IP；可选，首次分配可不传，后端在分配事务内自动计算空闲起始IP
-      value: ${param.desktop_start_ip}
+      description: 桌面网络起始IP；可选，首次分配不传，后端在分配事务内自动计算空闲起始IP（StudentAfterAssignAdapter.buildStudentDesktopStartIp；绑定由首次分配建立，前置调用 deliverIPForVDISeat 会因绑定不存在报 NO_FIND_CLUSTER）
     vdiDiskStorageId:
       type: UUID
       required: false

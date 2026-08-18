@@ -497,11 +497,10 @@ def test_student_image_platform_ref_resolves():
     ctx = {"params": {}, "steps": {match.group(1): {"platformId": "platform-1"}}}
     resolved = resolve_body(action["body"], ctx)
     assert resolved.get("platformId") == "platform-1", resolved
-    desktop_ref = action["body"]["desktopStartIp"]["value"]
-    assert desktop_ref == "${param.desktop_start_ip}", desktop_ref
-    ctx["params"] = {"desktop_start_ip": "10.51.180.2"}
-    resolved = resolve_body(action["body"], ctx)
-    assert resolved.get("desktopStartIp") == "10.51.180.2", resolved
+    # desktopStartIp 不传（无 value 声明）：首次分配由服务端在绑定建立后自动分配
+    # （StudentAfterAssignAdapter.buildStudentDesktopStartIp；前置 deliverIP 会因绑定不存在失败）
+    assert "desktopStartIp" not in action["body"], action["body"].get("desktopStartIp")
+    assert "desktopStartIp" not in resolved, resolved
 
 
 def test_restart_setup_no_deliver_ip_injection():
@@ -555,7 +554,8 @@ def test_case_added_student_create_no_deliver_ip():
         "case 补步骤不得再注入 deliverIPForVDISeat 前置（教室未绑定集群）"
     consumer = next(s for s in plan["steps"]
                     if s.get("api") == "/rcc/classroom/image/student/create")
-    assert consumer["body"]["desktopStartIp"]["value"] == "${param.desktop_start_ip}"
+    # desktopStartIp 不传：服务端首次分配自动计算起始 IP（幽灵参数引用已随 field_prereq 方案移除）
+    assert "desktopStartIp" not in consumer["body"], consumer["body"].get("desktopStartIp")
     required_refs = ("plusImageId", "storagePoolIdList", "clusterId",
                      "platformId", "strategyId", "networkId")
     for field in required_refs:
