@@ -147,6 +147,18 @@ def _all_prev(ctx):
     return all_keys
 
 
+def _prev_val(ctx, var):
+    """按变量名从步骤产出取值（经 _lookup 语义解包）：
+    批量展开的步骤产出存为 [batch_index]=值 的外层列表，直接读桶会拿到 [[...]] 嵌套；
+    走 _lookup（与 ${prev.<step>.output.<var>} 引用同路径）才能按当前批量索引解包。"""
+    for sname, bucket in (ctx.get("steps") or {}).items():
+        if var in bucket and bucket[var] is not None:
+            v = _lookup("prev", "%s.output.%s" % (sname, var), ctx)
+            if v not in (None, ""):
+                return v
+    return None
+
+
 def resolve_value(val, ctx):
     """解析 ${param.x} / ${prev.y} / ${context.z} / 固定值
     整值引用返回原始类型（数组/数字/布尔）；支持 ${param.x[N]} 索引；
@@ -161,12 +173,21 @@ def resolve_value(val, ctx):
             if raw == "":
                 return None
             return raw
-        # 字符串内插值 → str 替换
+        # 字符串内插值 → 替换为值的文本形式：
+        # list/dict 用 json.dumps（str() 的单引号 repr 嵌入 JSON 字符串模板会语法错误，
+        # 且布尔 True 应为 true）；其余保持 str
+        import json as _json
+
         def repl(mm):
             idx = int(mm.group(3)) if mm.group(3) else None
             raw = _lookup(mm.group(1), mm.group(2), ctx, idx)
-            return "" if raw is None else str(raw)
-        result = re.sub(r"\$\{(param|prev|context)\.([\w.]+)(?:\[\d+\])?\}", repl, val)
+            if raw is None:
+                return ""
+            if isinstance(raw, (dict, list, bool)):
+                return _json.dumps(raw, ensure_ascii=False)
+            return str(raw)
+        # 注意：可选索引须为捕获组（(\d+)），否则 repl 的 group(3) 会 IndexError
+        result = re.sub(r"\$\{(param|prev|context)\.([\w.]+)(?:\[(\d+)\])?\}", repl, val)
         # 如果结果是空字符串 → 返回 None
         if result == "":
             return None
@@ -215,18 +236,11 @@ def resolve_body(body, ctx):
                 # 不处理 TCI（VOI）策略，TCI 的 voi 节点拼接需单独逻辑
                 if _type == "PlatformStrategyGroup" and "usbTypeIdArr" in _all_prev(ctx):
                     import json as _json
-                    # 从 ctx["steps"] 查找 usbTypeIdArr，空时兜底空数组
-                    _usb_ids = None
-                    for sname, bucket in (ctx.get("steps") or {}).items():
-                        if "usbTypeIdArr" in bucket:
-                            _usb_ids = bucket["usbTypeIdArr"]
-                            break
+                    # 从步骤产出查 usbTypeIdArr（经 _lookup 解包批量索引，避免 [[...]] 双重嵌套），
+                    # 空时兜底空数组
+                    _usb_ids = _prev_val(ctx, "usbTypeIdArr")
                     # 兜底 vgpuType：从 query_vgpu_options 取，无值则用 QXL
-                    _vgpu_type = "QXL"
-                    for sname, bucket in (ctx.get("steps") or {}).items():
-                        if "vgpuType" in bucket and bucket["vgpuType"]:
-                            _vgpu_type = bucket["vgpuType"]
-                            break
+                    _vgpu_type = _prev_val(ctx, "vgpuType") or "QXL"
                     vdi_payload = {
                         "enablePeripheral": True,
                         "usbTypeIdArr": _usb_ids if _usb_ids else [],
