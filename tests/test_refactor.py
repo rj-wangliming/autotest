@@ -455,13 +455,14 @@ def test_prev_ref_rewrite_warned():
     for w in rewritten:
         assert w["to"].split(".output.")[0] in step_names, \
             "改写目标不存在: %s" % w["to"]
-    # 改写后正文中不再引用旧步骤名
-    for st in plan["steps"]:
+    # 改写发生的步骤中不再引用旧步骤名；后续同名生产者的合法引用不受影响
+    steps_by_name = {s.get("step_name"): s for s in plan["steps"]}
+    for w in rewritten:
+        st = steps_by_name[w["step"]]
         for v in (st.get("body") or {}).values():
             if isinstance(v, dict) and isinstance(v.get("value"), str):
-                for w in rewritten:
-                    assert ("${prev.%s.output" % w["ref"].split(".output.")[0]) not in v["value"], \
-                        "旧引用未改写干净: %s" % v["value"]
+                assert ("${prev.%s.output" % w["ref"].split(".output.")[0]) not in v["value"], \
+                    "旧引用未改写干净: %s" % v["value"]
 
 
 def test_explicit_ref_keeps_its_producer():
@@ -496,18 +497,163 @@ def test_student_image_platform_ref_resolves():
     ctx = {"params": {}, "steps": {match.group(1): {"platformId": "platform-1"}}}
     resolved = resolve_body(action["body"], ctx)
     assert resolved.get("platformId") == "platform-1", resolved
-    assert "desktopStartIp" not in resolved, \
-        "桌面IP应由服务端网络策略分配，不得复用 student_start_ip: %s" % resolved
+    desktop_ref = action["body"]["desktopStartIp"]["value"]
+    assert desktop_ref == "${prev.get_free_vdi_ip.output.desktopStartIp}", desktop_ref
+    ctx["steps"]["get_free_vdi_ip"] = {"desktopStartIp": "10.51.180.2"}
+    resolved = resolve_body(action["body"], ctx)
+    assert resolved.get("desktopStartIp") == "10.51.180.2", resolved
 
 
-def test_restart_setup_does_not_override_desktop_ip():
+def test_restart_setup_uses_dynamic_desktop_ip():
     o = Orchestrator()
     meta = o.index.get("/rcc/classroom/desktop/restart")
     assign = next(item for item in meta.get("setup", [])
                   if item.get("api") == "POST /rcc/classroom/image/student/create")
     body = ((assign.get("request") or {}).get("body") or {})
     assert "desktopStartIp" not in body, \
-        "重启造数不应把终端 student_start_ip 注入桌面IP: %s" % body
+        "重启覆盖项不应从终端参数注入桌面IP: %s" % body
+    plan = _run_channel_b(o, {"steps": [
+        {"api": "/rcc/classroom/desktop/restart", "step_name": "restart", "section": "action"},
+    ]})
+    free_ip = next(s for s in plan["steps"]
+                   if s.get("api") == "/rcc/classroom/network/deliverIPForVDISeat")
+    assign = next(s for s in plan["steps"]
+                  if s.get("api") == "/rcc/classroom/image/student/create")
+    assert free_ip["extract"]["desktopStartIp"] == "$.content.vdiStartIP"
+    assert assign["body"]["desktopStartIp"]["value"] == \
+        "${prev.get_free_vdi_ip.output.desktopStartIp}"
+
+
+def test_field_prereq_repairs_trimmed_plan():
+    o = Orchestrator()
+    consumer = o._build_step("/rcc/classroom/image/student/create", "分配学生镜像")
+    consumer["step_name"] = "assign_student_image"
+    consumer["body"].pop("desktopStartIp", None)
+    plan = o.validate_plan({
+        "id": "field-prereq",
+        "steps": [consumer],
+        "assertions": [],
+        "sections": {"前置": [], "操作": [], "预期": []},
+    })
+    apis = [s.get("api") for s in plan["steps"]]
+    assert "/rcc/classroom/network/deliverIPForVDISeat" in apis
+    repaired = next(s for s in plan["steps"]
+                    if s.get("api") == "/rcc/classroom/image/student/create")
+    producer = next(s for s in plan["steps"]
+                    if s.get("api") == "/rcc/classroom/network/deliverIPForVDISeat")
+    assert producer["body"]["number"]["value"] == "${param.seat_num}"
+    assert repaired["body"]["desktopStartIp"]["value"] == \
+        "${prev.get_free_vdi_ip.output.desktopStartIp}"
+
+
+def test_field_prereq_applies_to_case_added_consumer():
+    o = Orchestrator()
+    plan = o.validate_plan({
+        "id": "case-field-prereq",
+        "steps": [],
+        "assertions": [],
+        "sections": {"前置": ["桌面已分配镜像"], "操作": [], "预期": []},
+    })
+    apis = [s.get("api") for s in plan["steps"]]
+    assert "/rcc/classroom/image/student/create" in apis
+    assert "/rcc/classroom/network/deliverIPForVDISeat" in apis
+    consumer = next(s for s in plan["steps"]
+                    if s.get("api") == "/rcc/classroom/image/student/create")
+    assert consumer["body"]["desktopStartIp"]["value"] == \
+        "${prev.get_free_vdi_ip.output.desktopStartIp}"
+    required_refs = ("plusImageId", "storagePoolIdList", "clusterId",
+                     "platformId", "strategyId", "networkId", "desktopStartIp")
+    for field in required_refs:
+        value = (consumer["body"].get(field) or {}).get("value")
+        assert value and value.startswith("${prev."), "%s 引用未补齐: %s" % (field, value)
+    unresolved = [w for w in plan.get("warns", []) if w.get("code") == "ref_unresolved"]
+    assert not unresolved, unresolved
+
+
+def test_case_prereq_ignores_later_duplicate_setup_api():
+    o = Orchestrator()
+    plan = o.validate_plan({
+        "id": "case-later-duplicate",
+        "steps": [{
+            "api": "/space/cluster/obtainComputeClusterList",
+            "step_name": "later_cluster",
+            "section": "action",
+        }],
+        "assertions": [],
+        "sections": {"前置": ["桌面已分配镜像"], "操作": [], "预期": []},
+    })
+    consumer_idx = next(i for i, s in enumerate(plan["steps"])
+                        if s.get("api") == "/rcc/classroom/image/student/create")
+    cluster_idx = next(i for i, s in enumerate(plan["steps"][:consumer_idx])
+                       if s.get("api") == "/space/cluster/obtainComputeClusterList")
+    assert cluster_idx < consumer_idx
+    unresolved = [w for w in plan.get("warns", []) if w.get("code") == "ref_unresolved"]
+    assert not unresolved, unresolved
+
+
+def test_case_prereq_ignores_later_achieve_step():
+    o = Orchestrator()
+    plan = o.validate_plan({
+        "id": "case-later-achieve",
+        "steps": [
+            {"api": "/rcc/classroom/desktop/restart",
+             "step_name": "restart", "section": "action"},
+            {"api": "/rcc/classroom/image/student/create",
+             "step_name": "later_assign", "section": "action"},
+        ],
+        "assertions": [],
+        "sections": {"前置": ["桌面已分配镜像"], "操作": [], "预期": []},
+    })
+    restart_idx = next(i for i, s in enumerate(plan["steps"])
+                       if s.get("step_name") == "restart")
+    assert any(s.get("api") == "/rcc/classroom/image/student/create"
+               for s in plan["steps"][:restart_idx])
+
+
+def test_case_prereq_does_not_reuse_empty_setup_step():
+    o = Orchestrator()
+    plan = o.validate_plan({
+        "id": "case-empty-setup",
+        "steps": [{
+            "api": "/space/cluster/obtainComputeClusterList",
+            "step_name": "empty_cluster",
+            "section": "pre",
+            "extract": {},
+        }],
+        "assertions": [],
+        "sections": {"前置": ["桌面已分配镜像"], "操作": [], "预期": []},
+    })
+    cluster_steps = [s for s in plan["steps"]
+                     if s.get("api") == "/space/cluster/obtainComputeClusterList"
+                     and (s.get("extract") or {}).get("clusterId")]
+    assert cluster_steps
+    unresolved = [w for w in plan.get("warns", []) if w.get("code") == "ref_unresolved"]
+    assert not unresolved, unresolved
+
+
+def test_case_prereq_reuses_existing_create_before_query():
+    o = Orchestrator()
+    create = {
+        "api": "/rcc/classroom/create",
+        "step_name": "existing_create",
+        "section": "pre",
+        "body": {},
+        "extract": {},
+    }
+    query = o._build_step("/rcc/classroom/list", "查询教室")
+    query["step_name"] = "query_classroom"
+    query["section"] = "pre"
+    query["extract"] = {"classroomId": "$.content.itemArr[0].classroomId"}
+    plan = o.validate_plan({
+        "id": "case-reuse-create",
+        "steps": [create, query],
+        "assertions": [],
+        "sections": {"前置": ["桌面已分配镜像"], "操作": [], "预期": []},
+    })
+    creates = [s for s in plan["steps"] if s.get("api") == "/rcc/classroom/create"]
+    assert len(creates) == 1
+    unresolved = [w for w in plan.get("warns", []) if w.get("code") == "ref_unresolved"]
+    assert not unresolved, unresolved
 
 
 def main():
@@ -539,7 +685,13 @@ def main():
         ("引用-改写记录 warns", test_prev_ref_rewrite_warned),
         ("引用-显式产出者保持不变", test_explicit_ref_keeps_its_producer),
         ("引用-学生镜像 platformId 可解析", test_student_image_platform_ref_resolves),
-        ("引用-终端IP不注入桌面", test_restart_setup_does_not_override_desktop_ip),
+        ("引用-动态桌面IP", test_restart_setup_uses_dynamic_desktop_ip),
+        ("规则-字段前置依赖修复", test_field_prereq_repairs_trimmed_plan),
+        ("规则-case补步骤字段依赖", test_field_prereq_applies_to_case_added_consumer),
+        ("规则-case忽略后置重复setup", test_case_prereq_ignores_later_duplicate_setup_api),
+        ("规则-case忽略后置达成步骤", test_case_prereq_ignores_later_achieve_step),
+        ("规则-case不复用空setup", test_case_prereq_does_not_reuse_empty_setup_step),
+        ("规则-case复用已有创建", test_case_prereq_reuses_existing_create_before_query),
     ]
     print("=== 四项重构回归测试 ===\n")
     for name, fn in tests:

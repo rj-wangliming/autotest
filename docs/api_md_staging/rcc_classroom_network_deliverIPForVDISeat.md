@@ -14,9 +14,9 @@ setup:
 - name: login
   api: POST /rco/admin/loginAdmin
   purpose: 管理员登录（框架内置，引擎自动处理）
-- name: listClassroom
+- name: query_classroom
   api: POST /rcc/classroom/list
-  purpose: 查询教室ID；按教室名精确过滤分页查询教室（matchArr.fieldName=classroomName），取 classroomId
+  purpose: 按教室名查询教室ID
   extract:
     classroomId: $.content.itemArr[0].classroomId
   request:
@@ -27,6 +27,33 @@ setup:
         valueArr:
         - ${param.classroom_name}
         matchRule: EQ
+- name: get_cluster
+  api: POST /space/cluster/obtainComputeClusterList
+  purpose: 获取计算集群与平台ID
+  extract:
+    clusterId: $.content.itemArr[0].computerClusterId
+    platformId: $.content.itemArr[0].platformId
+- name: get_network
+  api: POST /space/clouddesktop/deskNetwork/list
+  purpose: 获取桌面网络策略ID
+  extract:
+    networkId: $.content.itemArr[0].id
+- name: get_free_vdi_ip
+  api: POST /rcc/classroom/network/deliverIPForVDISeat
+  purpose: 按教室座位数动态计算可用VDI桌面起始IP
+  extract:
+    desktopStartIp: $.content.vdiStartIP
+    isOverflow: $.content.isOverflow
+    shortOfIp: $.content.shortOfIp
+  assert:
+  - path: $.status
+    op: eq
+    value: SUCCESS
+  - path: $.content.isOverflow
+    op: eq
+    value: false
+  - path: $.content.vdiStartIP
+    op: not_empty
 request:
   dto: IpForVDISeatWebRequest
   body:
@@ -35,7 +62,7 @@ request:
       required: true
       constraint: '@NotNull 非空'
       description: 教室ID
-      value: ${prev.listClassroom.output.classroomId}
+      value: ${prev.query_classroom.output.classroomId}
     number:
       type: Integer
       required: true
@@ -52,16 +79,19 @@ request:
       required: false
       constraint: '@Nullable 可空'
       description: 网络策略ID
+      value: ${prev.get_network.output.networkId}
     clusterId:
       type: UUID
       required: false
       constraint: '@Nullable 可空'
       description: 计算节点ID
+      value: ${prev.get_cluster.output.clusterId}
     platformId:
       type: UUID
       required: false
       constraint: '@Nullable 可空'
       description: 云平台ID
+      value: ${prev.get_cluster.output.platformId}
 response:
   wrapper:
     status: String

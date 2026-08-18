@@ -105,6 +105,18 @@ resource_chains:
       - POST /rcc/classroom/delete
     note: 删除教室的清理链：下课 → 桌面关机 → 删除座位 → 删除教室（desktop/delete 接口当前环境不存在（404），删除教室时座位随教室级联清理）
 
+# 字段前置依赖：动态字段必须由指定接口产出，禁止从无关全局参数或固定值构造。
+# 接口文档 setup 负责正常展开；本规则用于自定义/裁剪计划的确定性兜底。
+field_prereq:
+  - consumer_api: POST /rcc/classroom/image/student/create
+    field: desktopStartIp
+    producer_api: POST /rcc/classroom/network/deliverIPForVDISeat
+    producer_output: desktopStartIp
+    producer_body:
+      number: ${param.seat_num}
+    step_name: get_free_vdi_ip
+    note: 首次分配学生 VDI 镜像前，按教室、座位数、网络、集群和平台动态计算空闲桌面起始IP
+
 # 操作前置状态：资源+动作 模式 -> 目标状态 + 达成途径
 # （模式匹配：URL 同时含 resource 段与 action 段即命中，覆盖所有域的同类操作，无需逐接口列举）
 state_prereq:

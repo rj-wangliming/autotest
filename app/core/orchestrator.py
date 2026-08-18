@@ -39,7 +39,7 @@ class Orchestrator:
                     fm = yaml.safe_load(text.split("---\n", 2)[1])
                     if isinstance(fm, dict):
                         rules = {k: v for k, v in fm.items()
-                                 if k in ("resource_chains", "state_prereq", "case_prereq",
+                                 if k in ("resource_chains", "state_prereq", "case_prereq", "field_prereq",
                                           "semantic_rules", "auto_provision", "param_ref_rules")}
                     break
                 except Exception as e:
@@ -136,6 +136,10 @@ class Orchestrator:
         # 2. 用例前置条件校验（case_prereq）：前置文本命中 keyword → 检查/补达成步骤
         steps = self._ensure_case_prereq(steps, plan, added)
 
+        # 2a. 字段前置依赖必须在所有规则补步骤完成后执行，确保 state/case
+        #     规则新增的消费接口也能获得动态字段生产步骤。
+        steps = self._ensure_field_prereq(steps, added)
+
         # 2b. 禁止状态校验（forbidden）：命中规则的步骤若 plan 已有达成 forbidden 状态的步骤 → 警告
         warns = self._check_forbidden(steps)
 
@@ -158,6 +162,64 @@ class Orchestrator:
         if warns:
             plan["warns"] = warns
         return plan
+
+    def _ensure_field_prereq(self, steps, added):
+        """按 field_prereq 补生产步骤，并把消费字段绑定到生产步骤输出。"""
+        rules = self.rules.get("field_prereq", []) or []
+        if not rules:
+            return steps
+        result = steps[:]
+        for rule in rules:
+            consumer_api = self._norm(rule.get("consumer_api", ""))
+            producer_api = self._norm(rule.get("producer_api", ""))
+            field = rule.get("field")
+            output = rule.get("producer_output")
+            if not all((consumer_api, producer_api, field, output)):
+                continue
+            consumers = [s for s in list(result)
+                         if self._norm(s.get("api", "")) == consumer_api]
+            for consumer in consumers:
+                consumer_idx = result.index(consumer)
+                producer = next((
+                    s for s in reversed(result[:consumer_idx])
+                    if self._norm(s.get("api", "")) == producer_api
+                    and output in (s.get("extract") or {})
+                ), None)
+                if producer is None:
+                    new_steps = []
+                    seen = {self._norm(s.get("api", "")) for s in result[:consumer_idx]
+                            if s.get("api") and (
+                                (s.get("extract") or {}) or
+                                self._is_create(self._norm(s.get("api", "")))
+                            )}
+                    self._expand_setup(producer_api, new_steps, seen)
+                    producer = self._build_step(
+                        producer_api, rule.get("note") or ("生成字段: " + field))
+                    for producer_field, value in (rule.get("producer_body") or {}).items():
+                        spec = (producer.get("body") or {}).get(producer_field)
+                        if isinstance(spec, dict):
+                            producer["body"][producer_field] = dict(spec, value=value)
+                        else:
+                            producer.setdefault("body", {})[producer_field] = {"value": value}
+                    producer["step_name"] = rule.get("step_name") or self._auto_step_name(producer_api)
+                    producer["section"] = "pre"
+                    producer["_auto_by_rules"] = True
+                    new_steps.append(producer)
+                    result[consumer_idx:consumer_idx] = new_steps
+                    for step in new_steps:
+                        name = step.get("step_name")
+                        if name and name not in added:
+                            added.append(name)
+                producer_name = producer.get("step_name") or self._auto_step_name(producer_api)
+                producer["step_name"] = producer_name
+                ref = "${prev.%s.output.%s}" % (producer_name, output)
+                body = consumer.setdefault("body", {})
+                spec = body.get(field)
+                if isinstance(spec, dict):
+                    body[field] = dict(spec, value=ref)
+                else:
+                    body[field] = {"value": ref}
+        return result
 
     def _link_prev_refs(self, steps, warns):
         """plan 期引用链接（确定性，非 AI）：
@@ -252,7 +314,10 @@ class Orchestrator:
                 if not kw or kw not in item:
                     continue
                 achieve_apis = {self._norm(a.get("api", "")) for a in (cp.get("achieve_via") or [])}
-                has = any(self._norm(s.get("api", "")) in achieve_apis for s in steps)
+                action_idx = next((i for i, s in enumerate(steps)
+                                   if s.get("section") == "action"), len(steps))
+                has = any(self._norm(s.get("api", "")) in achieve_apis
+                          for s in steps[:action_idx])
                 if has:
                     continue
                 # 补第一条达成途径，插到首个 action 步骤前（无 action 则追加到末尾）
@@ -260,14 +325,29 @@ class Orchestrator:
                     a_api = self._norm(a.get("api", ""))
                     if not self.index.get(a_api):
                         continue
+                    new_steps = []
+                    seen = {self._norm(s.get("api", ""))
+                            for s in steps[:action_idx]
+                            if s.get("api") and (
+                                (s.get("extract") or {}) or
+                                self._is_create(self._norm(s.get("api", "")))
+                            )}
+                    self._expand_setup(a_api, new_steps, seen)
                     step = self._build_step(a_api, a.get("note", "") or ("达成前置条件: " + cp.get("required_state", "")))
                     step["step_name"] = "rule_case_" + a_api.rstrip("/").rsplit("/", 1)[-1]
                     step["name"] = "规则补前置: " + (a.get("note", "") or cp.get("required_state", ""))[:30]
                     step["section"] = "pre"
                     step["_auto_by_rules"] = True
-                    action_idx = next((i for i, s in enumerate(steps) if s.get("section") == "action"), len(steps))
-                    steps.insert(action_idx, step)
-                    added.append(step["step_name"])
+                    new_steps.append(step)
+                    for setup_step in new_steps[:-1]:
+                        setup_step["_auto_by_rules"] = True
+                        setup_step["name"] = "规则补前置依赖: " + (
+                            setup_step.get("name") or setup_step.get("step_name") or "")[:30]
+                    steps[action_idx:action_idx] = new_steps
+                    for added_step in new_steps:
+                        name = added_step.get("step_name")
+                        if name and name not in added:
+                            added.append(name)
                     break
         return steps
 
@@ -675,6 +755,8 @@ class Orchestrator:
                 "api": dep_api, "method": method, "body": body,
                 "extract": extract, "poll": dep_poll,
                 "section": "pre"}
+        if item.get("assert"):
+            step["assert"] = item["assert"]
         if base_step.get("fill"):
             step["fill"] = base_step["fill"]
         if item.get("idempotent"):
@@ -854,6 +936,12 @@ class Orchestrator:
             if resolved:
                 poll = dict(poll, api=resolved)
         step = {"name": item[:20], "api": api, "body": body, "extract": extract, "poll": poll}
+        for s in meta.get("setup") or []:
+            sraw = s.get("api", "")
+            sdep = sraw.split(" ", 1)[-1] if " " in sraw else sraw
+            if sdep == api and s.get("assert"):
+                step["assert"] = s["assert"]
+                break
         # 文档驱动补数声明（executor._apply_fill 执行期消费：字段缺失时按声明查接口取值）
         if meta.get("fill"):
             step["fill"] = meta.get("fill")

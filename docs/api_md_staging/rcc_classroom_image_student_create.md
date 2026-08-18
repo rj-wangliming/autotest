@@ -49,13 +49,18 @@ setup:
     extract:
       classroomStrategyId: $.content.itemArr[0].classroomStrategyId
 - name: query_classroom
-  api: POST /rcc/classroom/select
+  api: POST /rcc/classroom/list
   extract:
-    classroomId: $.content[0].classroomId
-  purpose: 按名称过滤查询教室（searchKeyword=${param.classroom_name}）
+    classroomId: $.content.itemArr[0].classroomId
+  purpose: 按教室名精确过滤查询教室
   request:
     body:
-      searchKeyword: ${param.classroom_name}
+      matchArr:
+      - type: EXACT
+        fieldName: classroomName
+        valueArr:
+        - ${param.classroom_name}
+        matchRule: EQ
 # VDI 课程策略「不存在则创建」（幂等复用）：
 # 命中同名 → reuse_query.extract 直接产出 vdiStrategyId，跳过创建；
 # 未命中 → 真实创建（body 来自 space_strategygroup_vdi_create 文档 front-matter）
@@ -118,6 +123,29 @@ setup:
   extract:
     networkId: $.content.itemArr[0].id
   purpose: 获取网络ID（镜像分配用）（取第一条，无名称过滤）
+- name: get_free_vdi_ip
+  api: POST /rcc/classroom/network/deliverIPForVDISeat
+  purpose: 按教室、座位数和所选网络策略动态计算空闲桌面起始IP
+  request:
+    body:
+      classroomId: ${prev.query_classroom.output.classroomId}
+      number: ${param.seat_num}
+      networkId: ${prev.get_network.output.networkId}
+      clusterId: ${prev.get_cluster.output.clusterId}
+      platformId: ${prev.get_cluster.output.platformId}
+  extract:
+    desktopStartIp: $.content.vdiStartIP
+    isOverflow: $.content.isOverflow
+    shortOfIp: $.content.shortOfIp
+  assert:
+  - path: $.status
+    op: eq
+    value: SUCCESS
+  - path: $.content.isOverflow
+    op: eq
+    value: false
+  - path: $.content.vdiStartIP
+    op: not_empty
 request:
   dto: AssignNewStudentImageRequest
   body:
@@ -173,7 +201,8 @@ request:
       type: String
       required: false
       constraint: '@Nullable'
-      description: 桌面网络起始IP；自动化不传，由服务端按 networkId 对应网络策略自动分配
+      description: 桌面网络起始IP；由 deliverIPForVDISeat 按当前资源动态计算
+      value: ${prev.get_free_vdi_ip.output.desktopStartIp}
     vdiDiskStorageId:
       type: UUID
       required: false
@@ -373,7 +402,7 @@ graph LR
 | platformId | UUID | 是 | @NotNull | 平台ID |
 | strategyId | UUID | 是 | @NotNull | 课程策略ID（VDI deskStrategy，非教室策略 classroomStrategy） |
 | networkId | UUID | 是 | @NotNull | 网络策略ID |
-| desktopStartIp | String | 否 | @Nullable | 自动化不传；服务端按 networkId 对应网络策略自动分配桌面IP |
+| desktopStartIp | String | 否 | @Nullable | 调用 deliverIPForVDISeat 动态计算，不从全局参数或固定值构造 |
 | vdiDiskStorageId | UUID | 否 | @Nullable | vdi数据盘存储池 |
 | imageReplicationStoragePoolId | UUID | 否 | @Nullable | 同步镜像副本的存储池 |
 
@@ -469,7 +498,7 @@ VDI数据盘存储池ID；需先开启VDI数据盘后才有值（由 field_map �
 | platformId | user_input/from_query | 按业务构造 |
 | strategyId | user_input/from_query | 按业务构造 |
 | networkId | user_input/from_query | 按业务构造 |
-| desktopStartIp | server_assigned | 请求省略，由服务端按 networkId 对应网络策略自动分配 |
+| desktopStartIp | from_query | `${prev.get_free_vdi_ip.output.desktopStartIp}`，按教室、座位数和网络策略动态计算 |
 | vdiDiskStorageId | user_input/from_query | 按业务构造 |
 | imageReplicationStoragePoolId | user_input/from_query | 按业务构造 |
 
