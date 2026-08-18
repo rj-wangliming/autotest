@@ -1256,19 +1256,25 @@ class Orchestrator:
 
     def _apply_param_ref_rules(self, steps, warns):
         """param_ref_rules 确定性消费：扫描所有步骤 body 中引用不存在的 param，
-        命中规则的 target_fields 就按 source_param 改写值。覆盖 setup 步骤和主步骤。"""
+        命中规则的 target_fields 就按 source_param 改写值；支持 source_prev（改写为前置步骤产出）。
+        覆盖 setup 步骤和主步骤。"""
         rules = self.rules.get("param_ref_rules", []) or []
         if not rules:
             return
 
         import re
         for rule in rules:
-            source_param = rule.get("source_param", "")
             target_fields = rule.get("target_fields", []) or []
-            if not source_param or not target_fields:
+            if not target_fields:
                 continue
+            source_param = rule.get("source_param", "")
+            source_prev = rule.get("source_prev", "")
+            target_apis = {self._norm(x) for x in (rule.get("target_interfaces") or [])}
 
             for st in steps:
+                api = self._norm(st.get("api", ""))
+                if target_apis and api not in target_apis:
+                    continue
                 body = st.get("body") or {}
                 for fld in target_fields:
                     if fld not in body:
@@ -1280,16 +1286,23 @@ class Orchestrator:
                     if val is None:
                         continue
                     val_str = str(val)
-                    # 检查 value 是否引用了不存在的 param
+                    # 仅当 value 引用了不存在的 param 时才改写（用例参数未提供即缺失）
                     param_match = re.search(r"\$\{param\.([\w_]+)\}", val_str)
                     if not param_match:
                         continue
                     ref_param = param_match.group(1)
-                    if ref_param == source_param:
+                    if source_param and ref_param == source_param:
                         continue  # 已经是正确的 source_param，跳过
-
-                    # 替换为正确的引用
-                    # 支持带 [0] 索引（如 param.student_mode_arr[0]）
+                    # source_prev：改写为前置步骤产出（如运行中桌面查询的 desktopIdList）
+                    if source_prev:
+                        new_val = re.sub(r"\$\{param\.[\w_]+(?:\[[^\]]*\])?\}",
+                                         "${prev.%s}" % source_prev, val_str)
+                        body[fld] = dict(fld_spec, value=new_val)
+                        warns.append({"code": "param_ref_rewritten", "step": st.get("step_name"),
+                                      "field": fld, "to": "${prev.%s}" % source_prev,
+                                      "hint": "字段引用不存在的 param.%s，按 param_ref_rules 改写为前置产出" % ref_param})
+                        continue
+                    # source_param：改写为正确的 param 引用
                     new_val = re.sub(r"\$\{param\.[\w_]+\}", "${param.%s[0]}" % source_param, val_str)
                     body[fld] = dict(fld_spec, value=new_val)
 

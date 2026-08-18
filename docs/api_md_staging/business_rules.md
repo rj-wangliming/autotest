@@ -298,6 +298,14 @@ param_ref_rules:
       - cloudDeskType  # 云桌面类型枚举，决定查询范围
       - desktopType    # 云桌面类型枚举，桌面查询过滤
     note: 云桌面类型与创建教室的 studentModeArr 同义；若 param 中有 student_mode_arr，cloudDeskType/desktopType = student_mode_arr[0]
+  - name: desktop_id_list_from_running_query
+    description: desktop/restart 等桌面批量操作 idArr 应引用运行中桌面查询（query_running_vdi_desktops）的 desktopIdList，禁止用不存在的 param.id_arr（用例参数未提供会致 body 清空）
+    source_prev: query_running_vdi_desktops.output.desktopIdList
+    target_interfaces:
+      - /rcc/classroom/desktop/restart  # 批量重启选中的 VDI 桌面
+    target_fields:
+      - idArr
+    note: 桌面操作对象来自「前置条件：获取运行中的VDI云桌面」查询产出的 desktopIdList；param 中不存在 id_arr
 ---
 # 业务规则库（Business Rules）
 

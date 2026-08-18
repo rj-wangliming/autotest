@@ -111,7 +111,7 @@ request:
       type: UUID[]
       required: true
       constraint: '@NotEmpty 非空'
-      description: 云桌面ID数组
+      description: 云桌面ID数组（编排场景由 param_ref_rules 改写为运行中桌面查询 desktopIdList）
       value: ${param.id_arr}
 response:
   wrapper:

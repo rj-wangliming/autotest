@@ -1176,25 +1176,36 @@ class Executor:
         self._delete_classroom(classroom_id, classroom_name, ctx)
 
     def _end_lesson(self, classroom_id, ctx):
-        """执行下课（cmrcef/lesson/end）"""
-        status, data = self.http_request("POST", "/rcc/classroom/cmrcef/lesson/end",
+        """执行下课（非 CMR 场景用 /rcc/classroom/lesson/end，无需 CMR token）"""
+        status, data = self.http_request("POST", "/rcc/classroom/lesson/end",
                                          {"classroomId": classroom_id}, ctx)
         content = data.get("content") if isinstance(data, dict) else {}
         task_id = content.get("taskId") if isinstance(content, dict) else None
+        ctx["_last_data"] = data
         if not task_id:
             self.log("warning", "[prerequisite-cleanup] 下课接口未返回 taskId，可能需要轮询")
+        return task_id
 
     def _wait_lesson_end(self, classroom_id, ctx, timeout=120):
-        """轮询等待下课完成"""
-        path = "/rcc/classroom/cmrcef/lesson/progress"
+        """轮询等待下课完成（下课为异步批任务：经 msgct/msg/detail 轮询 taskId，
+        非 CMR progress；与 lesson/end 文档 polling 声明一致）"""
+        task_id = (ctx.get("_last_data") or {}).get("content", {}).get("taskId")
+        if not task_id:
+            self.log("info", "[prerequisite-cleanup] 下课无 taskId（同步返回），跳过轮询")
+            return
         deadline = time.time() + timeout
         while time.time() < deadline:
-            status, data = self.http_request("POST", path, {"classroomId": classroom_id}, ctx)
+            status, data = self.http_request(
+                "POST", "/rco/msgct/msg/detail",
+                {"msgrelationid": task_id, "msgType": "BATCH_MSG"}, ctx)
             content = data.get("content") if isinstance(data, dict) else {}
-            task_status = content.get("taskStatus") if isinstance(content, dict) else None
-            self.log("info", "[prerequisite-cleanup] 下课进度: %s" % task_status)
-            if task_status in ("SUCCESS", "DONE"):
+            msg_state = content.get("msgState") if isinstance(content, dict) else None
+            self.log("info", "[prerequisite-cleanup] 下课进度: %s" % msg_state)
+            if msg_state in ("SUCCESS", "DONE"):
                 self.log("info", "[prerequisite-cleanup] 下课完成")
+                return
+            if msg_state in ("FAILURE", "ERROR", "PARTIAL_SUCCESS"):
+                self.log("warning", "[prerequisite-cleanup] 下课状态 %s，按失败处理" % msg_state)
                 return
             time.sleep(3)
         self.log("warning", "[prerequisite-cleanup] 下课轮询超时")
@@ -1286,6 +1297,24 @@ class Executor:
         except Exception as e:
             self.log("warning", "[prerequisite-cleanup] 教室删除异常: %s" % e)
 
+    def _cleanup_classroom_chain(self, classroom_id, ctx):
+        """按 classroomId 执行完整清理链：下课 → 桌面关机 → 删除座位 → 删除教室
+        （对齐业务规则 classroom_cleanup；桌面不关机/上课中删除会失败）"""
+        self.log("info", "[cleanup] 教室 %s 按清理链删除（下课→关机→座位→教室）" % classroom_id)
+        try:
+            # 1. 下课（若上课中）
+            self._end_lesson(classroom_id, ctx)
+            # 2. 等待下课完成
+            self._wait_lesson_end(classroom_id, ctx, timeout=60)
+            # 3. 桌面关机
+            self._delete_classroom_desktops(classroom_id, ctx)
+            # 4. 删除座位
+            self._delete_classroom_seats(classroom_id, ctx)
+            # 5. 删除教室
+            self._delete_classroom(classroom_id, classroom_id, ctx)
+        except Exception as e:
+            self.log("error", "[cleanup] 教室清理链失败: %s" % e)
+
     def _cleanup(self, ctx):
         """finally 清理已创建资源（从 ctx.steps 各 step 产出提取 *Id）"""
         created = []
@@ -1298,6 +1327,11 @@ class Executor:
                 if k.endswith("Id") and k != "taskId" and isinstance(v, str) and v:
                     created.append((k, v))
         for name, rid in reversed(created):
+            # 教室删除须按清理链：下课 → 桌面关机 → 删除座位 → 删除教室
+            # （业务规则 classroom_cleanup；桌面不关机/上课中删除会失败）
+            if name == "classroomId":
+                self._cleanup_classroom_chain(rid, ctx)
+                continue
             del_path = self.CLEANUP_MAP.get(name)
             if del_path:
                 self.log("info", "[cleanup] 删除 %s=%s" % (name, rid))
