@@ -494,16 +494,18 @@ def test_student_image_platform_ref_resolves():
     assert match, "platformId 应绑定 setup 产出: %s" % raw
     producer = next(s for s in plan["steps"] if s.get("step_name") == match.group(1))
     assert producer.get("extract", {}).get("platformId") == "$.content.itemArr[0].platformId"
-    ctx = {"params": {}, "steps": {match.group(1): {"platformId": "platform-1"}}}
+    ctx = {"params": {}, "steps": {match.group(1): {"platformId": "platform-1"},
+                                   "get_free_vdi_ip": {"desktopStartIp": "10.51.180.2"}}}
     resolved = resolve_body(action["body"], ctx)
     assert resolved.get("platformId") == "platform-1", resolved
-    # desktopStartIp 不传（无 value 声明）：首次分配由服务端在绑定建立后自动分配
-    # （StudentAfterAssignAdapter.buildStudentDesktopStartIp；前置 deliverIP 会因绑定不存在失败）
-    assert "desktopStartIp" not in action["body"], action["body"].get("desktopStartIp")
-    assert "desktopStartIp" not in resolved, resolved
+    # desktopStartIp 由前置 get_free_vdi_ip（deliverIPForVDIClassroom 按网络+座位数计算）产出，
+    # 对齐 pytest common_deliver_ip_for_vdi_classroom；不使用需教室绑定的 deliverIPForVDISeat
+    assert action["body"]["desktopStartIp"]["value"] == "${prev.get_free_vdi_ip.output.desktopStartIp}", \
+        action["body"].get("desktopStartIp")
+    assert resolved.get("desktopStartIp") == "10.51.180.2", resolved
 
 
-def test_restart_setup_no_deliver_ip_injection():
+def test_restart_setup_uses_vdi_classroom_ip():
     o = Orchestrator()
     meta = o.index.get("/rcc/classroom/desktop/restart")
     assign = next(item for item in meta.get("setup", [])
@@ -516,19 +518,20 @@ def test_restart_setup_no_deliver_ip_injection():
     ]})
     apis = [s.get("api") for s in plan["steps"]]
     assert "/rcc/classroom/network/deliverIPForVDISeat" not in apis, \
-        "首次分配前教室未绑定集群，deliverIPForVDISeat 必然失败，不得注入为前置步骤"
+        "deliverIPForVDISeat 需教室先绑定集群，不得注入"
+    assert "/rcc/classroom/network/deliverIPForVDIClassroom" in apis, \
+        "应按 pytest 对齐用 deliverIPForVDIClassroom 计算桌面起始IP"
     assign = next(s for s in plan["steps"]
                   if s.get("api") == "/rcc/classroom/image/student/create")
     dv = (assign["body"].get("desktopStartIp") or {}).get("value", "")
-    assert not dv.startswith("${prev.get_free_vdi_ip."), \
-        "desktopStartIp 不得引用已移除的 get_free_vdi_ip 产出: %s" % dv
+    assert dv == "${prev.get_free_vdi_ip.output.desktopStartIp}", \
+        "desktopStartIp 应引用 get_free_vdi_ip（deliverIPForVDIClassroom）产出: %s" % dv
 
 
 def test_field_prereq_removed_no_deliver_ip_injection():
     o = Orchestrator()
     consumer = o._build_step("/rcc/classroom/image/student/create", "分配学生镜像")
     consumer["step_name"] = "assign_student_image"
-    consumer["body"].pop("desktopStartIp", None)
     plan = o.validate_plan({
         "id": "field-prereq",
         "steps": [consumer],
@@ -537,10 +540,13 @@ def test_field_prereq_removed_no_deliver_ip_injection():
     })
     apis = [s.get("api") for s in plan["steps"]]
     assert "/rcc/classroom/network/deliverIPForVDISeat" not in apis, \
-        "field_prereq 规则已移除（deliverIP 需教室先绑定集群），裁剪计划不得自动注入"
+        "deliverIPForVDISeat 需教室先绑定集群，不得自动注入"
+    # 单步骤（不展开 setup）时规则不得额外注入步骤；desktopStartIp 引用由文档声明提供
+    assert apis == ["/rcc/classroom/image/student/create"], apis
+    assert consumer["body"]["desktopStartIp"]["value"] == "${prev.get_free_vdi_ip.output.desktopStartIp}"
 
 
-def test_case_added_student_create_no_deliver_ip():
+def test_case_added_student_create_uses_vdi_classroom_ip():
     o = Orchestrator()
     plan = o.validate_plan({
         "id": "case-field-prereq",
@@ -551,11 +557,13 @@ def test_case_added_student_create_no_deliver_ip():
     apis = [s.get("api") for s in plan["steps"]]
     assert "/rcc/classroom/image/student/create" in apis
     assert "/rcc/classroom/network/deliverIPForVDISeat" not in apis, \
-        "case 补步骤不得再注入 deliverIPForVDISeat 前置（教室未绑定集群）"
+        "deliverIPForVDISeat 需教室先绑定集群，不得注入"
+    assert "/rcc/classroom/network/deliverIPForVDIClassroom" in apis, \
+        "case 补步骤应含 get_free_vdi_ip（deliverIPForVDIClassroom）"
     consumer = next(s for s in plan["steps"]
                     if s.get("api") == "/rcc/classroom/image/student/create")
-    # desktopStartIp 不传：服务端首次分配自动计算起始 IP（幽灵参数引用已随 field_prereq 方案移除）
-    assert "desktopStartIp" not in consumer["body"], consumer["body"].get("desktopStartIp")
+    assert consumer["body"]["desktopStartIp"]["value"] == "${prev.get_free_vdi_ip.output.desktopStartIp}", \
+        consumer["body"].get("desktopStartIp")
     required_refs = ("plusImageId", "storagePoolIdList", "clusterId",
                      "platformId", "strategyId", "networkId")
     for field in required_refs:
@@ -680,9 +688,9 @@ def main():
         ("引用-改写记录 warns", test_prev_ref_rewrite_warned),
         ("引用-显式产出者保持不变", test_explicit_ref_keeps_its_producer),
         ("引用-学生镜像 platformId 可解析", test_student_image_platform_ref_resolves),
-        ("引用-重启不注入deliverIP", test_restart_setup_no_deliver_ip_injection),
+        ("引用-重启用deliverIPForVDIClassroom", test_restart_setup_uses_vdi_classroom_ip),
         ("规则-field_prereq移除不注入deliverIP", test_field_prereq_removed_no_deliver_ip_injection),
-        ("规则-case补步骤不注入deliverIP", test_case_added_student_create_no_deliver_ip),
+        ("规则-case补步骤用deliverIPForVDIClassroom", test_case_added_student_create_uses_vdi_classroom_ip),
         ("规则-case忽略后置重复setup", test_case_prereq_ignores_later_duplicate_setup_api),
         ("规则-case忽略后置达成步骤", test_case_prereq_ignores_later_achieve_step),
         ("规则-case不复用空setup", test_case_prereq_does_not_reuse_empty_setup_step),
