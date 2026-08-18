@@ -21,7 +21,7 @@ setup:
   extract:
   - var: usbTypeIdArr
     from: response
-    jsonpath: $.content[*].id
+    jsonpath: $.content.itemArr[*].id
   assert:
   - path: $.status
     op: eq
@@ -53,13 +53,40 @@ setup:
     from: response
     jsonpath: $.content[0].templateId
   purpose: 取第一条（无名称过滤）
+# 自引用声明（携带幂等信息，引擎不作为独立步骤注入）：
+# 被 _build_step 继承 → 任何编排路径构建的 create 步骤都具备「存在同名直接复用」语义；
+# 复用命中时经 reuse_query.extract 产出 vdiStrategyId，未命中走真实创建并从响应 extract
+- name: create_vdi_strategy
+  api: POST /space/strategygroup/vdi/create
+  purpose: 被测接口本身（造数：VDI 课程策略不存在则创建）
+  idempotent: reuse
+  reuse_query:
+    api: POST /space/strategygroup/vdi/list
+    body:
+      page: 0
+      limit: 20
+      matchArr:
+      - type: EXACT
+        fieldName: strategyName
+        valueArr:
+        - ${param.strategy_name_vdi}
+        matchRule: EQ
+      exactMatchArr:
+      - type: EXACT
+        fieldName: strategyType
+        valueArr:
+        - VDI
+    extract:
+      vdiStrategyId: $.content.itemArr[0].id
+  extract:
+    vdiStrategyId: $.content.id
 request:
   body:
     name:
       type: String
       required: true
       example: d2
-      value: ${param.strategy_name}
+      value: ${param.strategy_name_vdi}
     strategyType:
       type: String
       required: true
@@ -77,12 +104,12 @@ request:
       type: Integer
       required: true
       example: 2
-      value: ${param.cpu}
+      generated_by: config_generator
     memory:
       type: Integer
       required: true
       example: 2048
-      value: ${param.memory}
+      generated_by: config_generator
     systemDisk:
       type: Integer
       required: false
@@ -99,12 +126,12 @@ request:
       type: Boolean
       required: true
       example: true
-      value: 'true'
+      value: true
     enablePersonalConfig:
       type: Boolean
       required: true
       example: false
-      value: 'false'
+      value: false
     openUsbReadOnly:
       type: Boolean
       required: false
@@ -120,7 +147,8 @@ request:
     usbTypeIdArr:
       type: list
       required: false
-      description: 数组（示例 1 项）
+      description: 数组（示例 10 项，来自 query_usb_types 查询结果）
+      value: ${prev.query_usb_types.output.usbTypeIdArr}
     enableClipboard:
       type: Boolean
       required: false
@@ -307,7 +335,8 @@ request:
       type: Integer
       required: true
       example: 40
-      value: ${param.systemSize}
+      generated_by: config_generator
+      _field: systemSize
     clipBoardSupportTypeArr:
       type: list
       required: false
@@ -325,12 +354,6 @@ request:
       type: PlatformStrategyGroup
       required: true
       description: 平台策略组数据，含 strategyGroupFacadeStr（JSON字符串，内部 vdi 节点见「VDI 策略嵌套参数」节）
-      nested:
-        strategyGroupFacadeStr:
-          type: String(JSON)
-          required: true
-          description: 嵌套VDI策略JSON字符串（vdi 节点 19 字段）
-      generated_by: config_generator
 response:
   wrapper:
     status:

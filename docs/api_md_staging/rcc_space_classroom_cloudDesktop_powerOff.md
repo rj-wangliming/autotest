@@ -106,7 +106,7 @@ setup:
       platformId:
         value: ${prev.get_cluster.output.platformId}
       strategyId:
-        value: ${prev.get_strategy.output.strategyId}
+        value: ${prev.create_vdi_strategy.output.vdiStrategyId}
       networkId:
         value: ${prev.get_network.output.networkId}
   idempotent: recreate

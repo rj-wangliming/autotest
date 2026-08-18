@@ -236,6 +236,134 @@ class Executor:
             ctx["context"] = {"token": ctx["token"]}
             return {"status": "SUCCESS", "content": {"token": ctx["token"]}}
 
+        # 特殊处理：get_network 步骤优先从配置读取 network_id_arr
+        # （global_params.yaml 已配置网络策略 ID 时，无需调 API 查询）
+        if "deskNetwork/list" in path or (step.get("step_name") == "get_network" and "network" in path.lower()):
+            network_id_arr = ctx["params"].get("network_id_arr")
+            if network_id_arr:
+                # 列表取首元素（非批量上下文）
+                nid = network_id_arr[0] if isinstance(network_id_arr, list) else network_id_arr
+                self.log("info", "[get_network] 从配置读取 network_id_arr: %s" % nid)
+                sname = step.get("step_name") or step.get("name") or "get_network"
+                bucket = ctx.setdefault("steps", {}).setdefault(sname, {})
+                bucket["networkId"] = nid
+                # 支持 extract 声明（如果步骤定义了 extract）
+                ex = step.get("extract") or {}
+                if isinstance(ex, dict):
+                    for var in ex:
+                        if var not in bucket:
+                            bucket[var] = nid
+                return {"status": "SUCCESS", "content": {"networkId": nid}}
+
+        # 特殊处理：strategy/list 步骤优先复用已有资源，其次从配置读取
+        # （global_params.yaml 已配置 strategy_id_arr 时，作为 API 查询的 fallback）
+        # 同时按 VDI/TCI 名称参数自动设置 matchArr 的 classroomStrategyName
+        if "strategy/list" in path and "delete" not in path:
+            strategy_id_arr = ctx["params"].get("strategy_id_arr")
+            sname = step.get("step_name") or step.get("name") or "get_strategy"
+            bucket = ctx.setdefault("steps", {}).setdefault(sname, {})
+
+            # 1. 先检查当前步骤 bucket 是否已有（reuse 已填充或重复调用）
+            reuse_val = None
+            for var in ("strategyId", "studentClassroomStrategyId", "classroomStrategyId"):
+                if var in bucket and bucket[var] is not None:
+                    reuse_val = bucket[var]
+                    break
+            # 2. 当前步骤 bucket 没有，检查同 plan 里其他 strategy 步骤的产出（如 createStrategy reuse 写入）
+            if not reuse_val:
+                for other_sname, other_bucket in ctx.get("steps", {}).items():
+                    if other_sname == sname:
+                        continue
+                    for var in ("classroomStrategyId", "strategyId", "studentClassroomStrategyId"):
+                        if var in other_bucket and other_bucket[var] is not None:
+                            reuse_val = other_bucket[var]
+                            break
+                    if reuse_val:
+                        break
+            # 3. reuse 查不到时 fallback 到配置
+            if not reuse_val and strategy_id_arr:
+                reuse_val = strategy_id_arr[0] if isinstance(strategy_id_arr, list) else strategy_id_arr
+
+            if reuse_val:
+                src = "reuse(current)" if reuse_val in (bucket.get("strategyId"), bucket.get("studentClassroomStrategyId"), bucket.get("classroomStrategyId")) else \
+                      "reuse(other)" if reuse_val and sname != ("createStrategy" or "create_strategy") else \
+                      "config"
+                self.log("info", "[get_strategy] 使用策略 ID: %s" % reuse_val)
+                # 注入 extract 中的所有变量到当前步骤 bucket
+                ex = step.get("extract") or {}
+                if isinstance(ex, dict):
+                    for var in ex:
+                        if var not in bucket or bucket[var] is None:
+                            bucket[var] = reuse_val
+                else:
+                    bucket["strategyId"] = reuse_val
+                # 自动设置 matchArr（按策略名称精确匹配）
+                body = body or {}
+                match = body.get("matchArr") if isinstance(body.get("matchArr"), list) else None
+                if match:
+                    for item in match:
+                        if isinstance(item, dict) and item.get("fieldName") == "classroomStrategyName":
+                            name_param = ctx["params"].get("strategy_name_vdi") or ctx["params"].get("strategy_name_tci") or ctx["params"].get("classroom_strategy_name")
+                            if name_param:
+                                val = name_param[0] if isinstance(name_param, list) else name_param
+                                item["valueArr"] = [val]
+                                self.log("info", "[get_strategy] matchArr 注入 classroomStrategyName=%s" % val)
+                # 返回模拟响应（避免发 API 请求）
+                return {"status": "SUCCESS", "content": {"itemArr": [{"classroomStrategyId": reuse_val}]}}
+
+        # 特殊处理：space/strategygroup/vdi/list 步骤优先复用已有资源，其次从配置读取
+        # （VDI 课程策略，学生镜像分配需要，非教室策略）
+        if "strategygroup/vdi/list" in path or "strategygroup/tci/list" in path:
+            sname = step.get("step_name") or step.get("name") or "get_vdi_strategy"
+            bucket = ctx.setdefault("steps", {}).setdefault(sname, {})
+            # 检查当前 bucket 是否已有
+            reuse_val = None
+            for var in ("vdiStrategyId", "deskStrategyId", "tciStrategyId"):
+                if var in bucket and bucket[var] is not None:
+                    reuse_val = bucket[var]
+                    self.log("info", "[vdi/tci strategy] 当前 bucket 已有 %s=%s" % (var, reuse_val))
+                    break
+            # 检查同 plan 里课程策略步骤（仅查 strategygroup 路径的步骤，不混用教室策略）
+            if not reuse_val:
+                for other_sname, other_bucket in ctx.get("steps", {}).items():
+                    if other_sname == sname:
+                        continue
+                    # 严格排除教室策略步骤产出的字段：
+                    # - classroomStrategyId（教室策略）
+                    # - strategyId（可能是教室策略，也可能是通用）
+                    # 只匹配课程策略专用字段名
+                    for var in ("vdiStrategyId", "deskStrategyId", "tciStrategyId"):
+                        if var in other_bucket and other_bucket[var] is not None:
+                            reuse_val = other_bucket[var]
+                            self.log("info", "[vdi/tci strategy] 从步骤 %s 的 %s=%s 复用" % (other_sname, var, reuse_val))
+                            break
+                    if reuse_val:
+                        break
+            # fallback 到配置（全局策略配置里有 strategy_id_arr 但可能需要区分 VDI/TCI）
+            if not reuse_val:
+                sid_arr = ctx["params"].get("strategy_id_arr")
+                if sid_arr:
+                    reuse_val = sid_arr[0] if isinstance(sid_arr, list) else sid_arr
+                    self.log("warning", "[vdi/tci strategy] 从 strategy_id_arr fallback 课程策略 ID: %s" % reuse_val)
+
+            if reuse_val:
+                self.log("info", "[vdi/tci strategy] 使用课程策略 ID: %s" % reuse_val)
+                ex = step.get("extract") or {}
+                if isinstance(ex, dict):
+                    for var in ex:
+                        if var not in bucket or bucket[var] is None:
+                            bucket[var] = reuse_val
+                else:
+                    bucket["vdiStrategyId"] = reuse_val
+                # 返回模拟响应
+                return {"status": "SUCCESS", "content": {"itemArr": [{"id": reuse_val}]}}
+
+            # 课程策略不存在，正常调 API 查询
+            self.log("info", "[vdi/tci strategy] 未找到已有策略 ID，正常调用 API 查询")
+
+        # ---------- 后续正常请求执行 ----------
+        # （以上特殊处理 return 后，这里继续通用执行逻辑）
+
         # 特殊处理：若 /rcc/classroom/image/ 路径降级为空结果，跳过 image/create 步骤
         # （CBB 无可用资源时，image/create 会因 plusImageId=null 报错，直接跳过更合理）
         if ctx.get("_image_empty_list") and re.match(r"^/rcc/classroom/image/(student|teacher)/create$", path):
@@ -276,6 +404,50 @@ class Executor:
 
         # extract 产出（多变量）
         self._extract(step, data, ctx)
+
+        # 特殊处理：strategygroup/vdi/list 或 strategygroup/tci/list 返回空数组时
+        # → 尝试无 name 过滤查询第一条 VDI/TCI 策略（避免课程策略为 null 导致后续失败）
+        if status in (200, 201):
+            itemArr = jsonpath_get(data, "$.content.itemArr")
+            if isinstance(itemArr, list) and not itemArr and (
+                "strategygroup/vdi/list" in path or "strategygroup/tci/list" in path
+            ):
+                sname = step.get("step_name") or step.get("name") or "get_vdi_strategy"
+                bucket = ctx.setdefault("steps", {}).setdefault(sname, {})
+                # 检查是否已有课程策略 ID（避免重复查询）
+                has_strategy = any(
+                    bucket.get(v) is not None
+                    for v in ("vdiStrategyId", "deskStrategyId", "tciStrategyId")
+                )
+                if not has_strategy:
+                    self.log("info", "[vdi/tci strategy] API 返回空，无 name 过滤查询第一条策略")
+                    # 构造无过滤请求
+                    fallback_body = {}
+                    if "vdi/list" in path:
+                        fallback_body = {"page": 0, "limit": 1}
+                    else:
+                        fallback_body = {"page": 0, "limit": 1}
+                    fallback_status, fallback_data = self.http_request(
+                        method, path, fallback_body or None, ctx
+                    )
+                    fallback_itemArr = jsonpath_get(fallback_data, "$.content.itemArr")
+                    if isinstance(fallback_itemArr, list) and fallback_itemArr:
+                        first = fallback_itemArr[0]
+                        sid = first.get("id") or first.get("deskStrategyId") or first.get("classroomStrategyId")
+                        if sid:
+                            # 写入 bucket（映射到正确的变量名）
+                            if "vdi/list" in path:
+                                bucket["vdiStrategyId"] = sid
+                            elif "tci/list" in path:
+                                bucket["tciStrategyId"] = sid
+                            else:
+                                bucket["vdiStrategyId"] = sid
+                            self.log("info", "[vdi/tci strategy] 兜底策略 ID: %s" % sid)
+                            data = {**data, "content": {**data.get("content", {}), "itemArr": [first]}}
+                        else:
+                            self.log("warning", "[vdi/tci strategy] 兜底查询也返回空")
+                    else:
+                        self.log("warning", "[vdi/tci strategy] 兜底查询也返回空")
 
         # polling 异步任务：仅在业务成功时才轮询（ERROR 状态不轮询）
         biz_status = jsonpath_get(data, "$.status") if isinstance(data, dict) else None
@@ -706,7 +878,7 @@ class Executor:
         term = poll.get("terminal_states", {}) or {}
         ok_states = term.get("success", ["SUCCESS"])
         fail_states = term.get("fail") or term.get("failure") or ["FAILURE"]
-        body = self._poll_request_body(poll, task_id, ctx)
+        body = self._poll_request_body(poll, task_id, ctx, path)
         deadline = time.time() + timeout
         # 连续无效响应计数（404 与 无 taskStatus 共用）：
         # 仅在收到「结构有效但未到终态」的响应时清零，否则计数被清零永远到不了 3
@@ -722,7 +894,9 @@ class Executor:
                                             "轮询接口 404: taskId=%s" % task_id)
                 time.sleep(interval)
                 continue
-            st = jsonpath_get(data, "$.content.taskStatus") or jsonpath_get(data, "$.content.status")
+            st = (jsonpath_get(data, "$.content.taskStatus")
+              or jsonpath_get(data, "$.content.status")
+              or jsonpath_get(data, "$.content.msgState"))
             self.log("info", "[poll] taskStatus=%s" % st)
             if st in ok_states:
                 self.log("info", "[poll] 任务成功")
@@ -750,9 +924,10 @@ class Executor:
             time.sleep(interval)
         raise AssertionError("轮询超时: taskId=%s" % task_id)
 
-    def _poll_request_body(self, poll, task_id, ctx):
-        """轮询请求体：文档 polling.params 模板优先，${content.X} 引用触发步骤响应解析；
-        兜底公共轮询接口必填参数（msgrelationid + msgType=BATCH_MSG）"""
+    def _poll_request_body(self, poll, task_id, ctx, path=""):
+        """轮询请求体：文档 polling.params 模板优先，${content.X} 引用触发步骤响应解析。
+        msgct 端点（/rco/msgct/msg/detail，msgrelationid + msgType 两参数必填）补齐默认参数；
+        其他轮询端点（如 /space/strategygroup/vdi/detail 的 {id: ...}）按模板原样发送，不混入 msgct 参数"""
         tmpl = poll.get("params") or poll.get("body") or {}
         body = {}
         if isinstance(tmpl, dict):
@@ -762,10 +937,11 @@ class Executor:
                     if m:
                         v = jsonpath_get(ctx.get("_last_data") or {}, "$.content." + m.group(1))
                 body[k] = v if v not in (None, "") else task_id
-        if not body:
+        if "msgct" in str(path):
+            body.setdefault("msgrelationid", task_id)
+            body.setdefault("msgType", "BATCH_MSG")
+        elif not body:
             body = {"msgrelationid": task_id}
-        body.setdefault("msgrelationid", task_id)
-        body.setdefault("msgType", "BATCH_MSG")
         return body
 
     def _unverified(self, ctx, code, warn_msg, fail_msg):
@@ -1048,7 +1224,7 @@ class Executor:
         self.log("warning", "[prerequisite-cleanup] 下课轮询超时")
 
     def _delete_classroom_desktops(self, classroom_id, ctx):
-        """删除教室下的所有桌面"""
+        """删除教室下的所有桌面（规则：桌面必须先关机再删除）"""
         status, data = self.http_request("POST", "/rcc/classroom/desktop/list",
                                          {"exactMatchArr": [{"name": "classroomId", "valueArr": [classroom_id]}]}, ctx)
         content = data.get("content") if isinstance(data, dict) else {}
@@ -1056,15 +1232,38 @@ class Executor:
         if isinstance(items, dict):
             items = items.get("itemArr") or items.get("items") or []
 
+        desktop_ids = []
         for desktop in items:
             desktop_id = desktop.get("desktopId") or desktop.get("id")
             if desktop_id:
-                self.log("info", "[prerequisite-cleanup] 删除桌面 %s" % desktop_id)
-                try:
-                    self.http_request("POST", "/rcc/classroom/desktop/delete",
-                                     {"id": desktop_id}, ctx)
-                except Exception as e:
-                    self.log("warning", "[prerequisite-cleanup] 桌面删除失败: %s" % e)
+                desktop_ids.append(desktop_id)
+
+        if not desktop_ids:
+            self.log("info", "[prerequisite-cleanup] 无桌面需要删除")
+            return
+
+        # 规则：桌面必须先关机再删除
+        self.log("info", "[prerequisite-cleanup] 先对 %d 台桌面下发关机指令" % len(desktop_ids))
+        for desktop_id in desktop_ids:
+            try:
+                status, data = self.http_request("POST", "/rcc/classroom/desktop/powerOff",
+                                                 {"idArr": [desktop_id]}, ctx)
+                self.log("info", "[prerequisite-cleanup] 桌面 %s 关机: %s" % (desktop_id,
+                    data.get("status")))
+            except Exception as e:
+                self.log("warning", "[prerequisite-cleanup] 桌面 %s 关机异常: %s" % (desktop_id, e))
+
+        self.log("info", "[prerequisite-cleanup] 等待桌面关机完成（10秒）...")
+        time.sleep(10)
+
+        # 删除桌面
+        for desktop_id in desktop_ids:
+            self.log("info", "[prerequisite-cleanup] 删除桌面 %s" % desktop_id)
+            try:
+                self.http_request("POST", "/rcc/classroom/desktop/delete",
+                                 {"id": desktop_id}, ctx)
+            except Exception as e:
+                self.log("warning", "[prerequisite-cleanup] 桌面删除失败: %s" % e)
 
     def _delete_classroom_seats(self, classroom_id, ctx):
         """删除教室下的所有座位"""

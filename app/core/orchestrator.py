@@ -21,6 +21,10 @@ class Orchestrator:
             self.index.load()
         self.rules = self._load_rules()
 
+    def log(self, level, msg):
+        """编排期日志（LOCK 字段处理等 debug 输出；编排无执行器回调，打印 stdout）"""
+        print("[%s] %s" % (level, msg), flush=True)
+
     # ---------- 业务规则库加载（business_rules.md） ----------
     def _load_rules(self):
         """加载业务规则库 front-matter（依赖链/操作前置状态/用例前置条件）"""
@@ -36,7 +40,7 @@ class Orchestrator:
                     if isinstance(fm, dict):
                         rules = {k: v for k, v in fm.items()
                                  if k in ("resource_chains", "state_prereq", "case_prereq",
-                                          "semantic_rules")}
+                                          "semantic_rules", "auto_provision", "param_ref_rules")}
                     break
                 except Exception as e:
                     print(f"[orchestrator] business_rules.md 解析失败: {e}")
@@ -145,6 +149,10 @@ class Orchestrator:
         #    断裂引用在编排期暴露（warns），不再依赖执行期模糊回退静默兜底
         self._link_prev_refs(steps, warns)
 
+        # 5. param_ref_rules 确定性消费：扫描 body 中引用不存在 param 的字段，
+        #    命中规则的 target_fields 就按 source_param 改写，覆盖 setup 步骤
+        self._apply_param_ref_rules(steps, warns)
+
         plan["steps"] = steps
         plan["rule_added"] = added
         if warns:
@@ -157,7 +165,9 @@ class Orchestrator:
         2. ${prev.X.output.Y} 的 X 不在 plan 步骤名中 / 平铺 ${prev.Y} 有产出者
            → 改写为「最近的、产出 Y 的前序步骤」标准三段式，warns 记录改写
         3. 无产出者的三段式引用 → warns 记录 ref_unresolved（执行期将解析为空）
-        改写后执行期 _lookup 精确命中，params 模糊回退仅作最后兜底（会告警）"""
+        改写后执行期 _lookup 精确命中，params 模糊回退仅作最后兜底（会告警）
+
+        _locked 字段：value 含 # LOCK 标记的 body 字段跳过引用改写（由文档 value 严格锁定）"""
         used = set()
         for st in steps:
             if not st.get("step_name"):
@@ -185,8 +195,9 @@ class Orchestrator:
                     producers[var] = sname
                     norm_producers[norm(var)] = sname
 
-    def _rewrite_body_refs(self, obj, names, producers, norm_producers, sname, warns):
-        """递归改写 body 中的 ${prev.*} 引用（见 _link_prev_refs）"""
+    def _rewrite_body_refs(self, obj, names, producers, norm_producers, sname, warns, _skip_key=None):
+        """递归改写 body 中的 ${prev.*} 引用（见 _link_prev_refs）
+        _skip_key: 若不为 None，该 key 对应的 dict 值含 _locked 标记，跳过改写"""
         if isinstance(obj, str):
             def repl(m):
                 ref, idx = m.group(1), m.group(2) or ""
@@ -210,7 +221,12 @@ class Orchestrator:
                 return m.group(0)
             return re.sub(r"\$\{prev\.([\w.]+?)(?:\[(\d+)\])?\}", repl, obj)
         if isinstance(obj, dict):
-            return {k: self._rewrite_body_refs(v, names, producers, norm_producers, sname, warns)
+            # 跳过 _locked 标记的字段（value 含 # LOCK 标记，由文档 value 严格锁定）
+            if obj.get("_locked"):
+                return obj
+            return {k: self._rewrite_body_refs(v, names, producers, norm_producers, sname, warns,
+                                               _skip_key=k) if isinstance(v, dict) and v.get("_locked")
+                    else self._rewrite_body_refs(v, names, producers, norm_producers, sname, warns)
                     for k, v in obj.items()}
         if isinstance(obj, list):
             return [self._rewrite_body_refs(v, names, producers, norm_producers, sname, warns)
@@ -536,7 +552,19 @@ class Orchestrator:
             produce = self._collect_produce(m)
             catalog.append({"url": m["url"], "name": (m.get("name") or "")[:50],
                             "fields": flds, "produce": produce})
-        intent = client.parse_use_case(sections, catalog, sorted((params or {}).keys()))
+
+        # 生成 auto_provision + param_ref_rules 规则摘要（传给 LLM 理解）
+        rules_text = self._build_auto_provision_rules_text()
+        param_ref_text = self._build_param_ref_rules_text()
+        if param_ref_text:
+            rules_text = rules_text + "\n\n" + param_ref_text if rules_text else param_ref_text
+
+        intent = client.parse_use_case(sections, catalog, sorted((params or {}).keys()), rules_text=rules_text)
+
+        # 自动补充策略创建步骤（auto_provision 规则）
+        # 在 LLM 编排后检查：即使用例文本中提到了"获取 VDI/TCI/教室策略"，
+        # LLM 也可能漏编出查询步骤。我们基于用户用例文本 + 全局参数来检测并注入。
+        intent = self._apply_auto_provision(intent, sections, params or {})
 
         steps = []
         seen = set()
@@ -663,12 +691,19 @@ class Orchestrator:
         step["section"] = section
         # extract：默认空（产出由依赖步骤提供）；extract_override 声明该步产出（可数组）
         step["extract"] = dict(extract_override) if extract_override else {}
-        # param_map：LLM 声明的 body 字段来源，补全文档未声明 value 的裸字段
+        # param_map：LLM 声明的 body 字段来源，仅在文档未声明 value 时补充（不覆盖文档已有 value）
+        # _locked 字段：value 含 # LOCK 标记，禁止 param_map 覆盖
         if param_map and isinstance(param_map, dict):
             body = step.get("body") or {}
             for fld, src in param_map.items():
-                if src is not None:
+                if src is not None and fld not in body:
                     body[fld] = {"value": src}      # 保留 LLM 给的类型(${}引用/字面值)，resolve_body 解析
+                elif src is not None and fld in body:
+                    fld_spec = body[fld]
+                    if fld_spec.get("_locked"):
+                        self.log("debug", f"[orchestrator] param_map 跳过 LOCK 字段 {fld}: src={src}")
+                    else:
+                        self.log("debug", f"[orchestrator] param_map 跳过覆盖 {fld}（文档已有 value）: src={src}")
             step["body"] = body
         return step
 
@@ -737,7 +772,16 @@ class Orchestrator:
         for k, v in req_body.items():
             if isinstance(v, dict):
                 if v.get("value") is not None:
-                    body[k] = v  # 有 value 引用
+                    val_str = str(v.get("value", ""))
+                    # 检查 LOCK 标记：value 中包含 # LOCK 时，标记该字段为锁定（不可被 param_map/LLM 覆盖）
+                    is_locked = "# LOCK" in val_str or "#锁定" in val_str
+                    if is_locked:
+                        # 清理注释前缀，保留纯引用
+                        clean_val = val_str.split("#")[0].strip()
+                        body[k] = dict(v, value=clean_val, _locked=True)
+                        self.log("debug", f"[orchestrator] value LOCK 标记 {k}: {clean_val}")
+                    else:
+                        body[k] = v
                 elif v.get("generated_by"):
                     # 生成器标记 + 字段名；预判生成值，None 则跳过（避免请求体带 null）
                     gv = gen_config_value(k, v, {"params": {}})
@@ -756,17 +800,33 @@ class Orchestrator:
             # 兜底：必填字段若未被包含且有 value 声明，强制加入（防止 YAML 解析异常导致丢失）
             if isinstance(v, dict) and v.get("required") and k not in body and v.get("value") is not None:
                 body[k] = v
-        # extract：取接口 setup 中第一个有产出变量的步骤（若无显式 extract 则用其首个）
+        # extract：优先接口【自身】setup 声明的产出（自引用条目描述本接口出参，
+        # 如 strategygroup/vdi/create 的 vdiStrategyId=$.content.id）；
+        # 无自引用产出则取第一个有产出变量的 setup 步骤（历史行为）
         extract = {}
-        for s in meta.get("setup") or []:
+
+        def _ex_of(s):
             ex = s.get("extract")
             if isinstance(ex, dict) and ex:
-                extract = {k: jp for k, jp in ex.items() if isinstance(jp, str) and jp.startswith("$")}
-                break
+                return {k: jp for k, jp in ex.items() if isinstance(jp, str) and jp.startswith("$")}
             if isinstance(ex, list):
+                out = {}
                 for it in ex:
                     if isinstance(it, dict) and it.get("var") and it.get("jsonpath"):
-                        extract[it["var"]] = it["jsonpath"]
+                        out[it["var"]] = it["jsonpath"]
+                return out
+            return {}
+
+        for s in meta.get("setup") or []:
+            sraw = s.get("api", "")
+            sdep = sraw.split(" ", 1)[-1] if " " in sraw else sraw
+            if sdep == api:
+                extract = _ex_of(s)
+                if extract:
+                    break
+        if not extract:
+            for s in meta.get("setup") or []:
+                extract = _ex_of(s)
                 if extract:
                     break
         # polling：接口 polling 配置（api 为节点名时经索引别名解析为真实 url，
@@ -1034,4 +1094,158 @@ class Orchestrator:
         if best_score >= 4:
             return best_url
         return None
+
+    def _build_auto_provision_rules_text(self):
+        """生成 auto_provision 规则摘要文本，供 LLM 编排时理解"""
+        rules = self.rules.get("auto_provision", {})
+        idempotent = rules.get("idempotent_create", []) or []
+        if not idempotent:
+            return ""
+
+        lines = ["【全局规则 — 自动造数（幂等复用）】"]
+        for item in idempotent:
+            rtype = item.get("resource_type", "")
+            pkey = item.get("param_key", "")
+            create_url = "/" + item.get("create_api", "").split(" ", 1)[-1] if " " in item.get("create_api", "") else item.get("create_api", "")
+            note = item.get("note", "")
+            lines.append("- %s：当查询 %s 无结果时，必须先从 param 读取 %s 获取名称，再调 %s 创建策略，然后用查询接口拿到 ID 传给后续步骤。%s" % (rtype, pkey, pkey, create_url, note))
+        lines.append("- 全局参数清单中已有的参数（${param.xxx}）可直接使用，无需从全局参数清单编造新参数名。")
+        lines.append("- 当用例需要获取策略/教室等资源且查询无结果时，遵循「先创建同名策略，再查询得到 ID」的顺序。")
+        return "\n".join(lines)
+
+    def _build_param_ref_rules_text(self):
+        """生成 param_ref_rules 规则摘要文本，供 LLM 编排时理解参数来源继承"""
+        rules = self.rules.get("param_ref_rules", []) or []
+        if not rules:
+            return ""
+
+        lines = ["【全局规则 — 参数引用继承】"]
+        for r in rules:
+            name = r.get("name", "")
+            desc = r.get("description", "")
+            if desc:
+                lines.append("- %s" % desc)
+            sources = r.get("target_interfaces", []) or []
+            targets = r.get("target_fields", []) or []
+            source_param = r.get("source_param", "")
+            if source_param:
+                for src_url in sources:
+                    for tgt_fld in targets:
+                        lines.append("  - %s (%s) → %s = param.%s[0]" % (tgt_fld, src_url, tgt_fld, source_param))
+            note = r.get("note", "")
+            if note:
+                lines.append("- %s" % note)
+        lines.append("- 当 param_map 中有字段需要引用 param 时，必须检查 param_ref_rules 声明的继承关系，优先使用声明的来源参数，不得编造 param 中不存在的参数名。")
+        return "\n".join(lines)
+
+    def _apply_param_ref_rules(self, steps, warns):
+        """param_ref_rules 确定性消费：扫描所有步骤 body 中引用不存在的 param，
+        命中规则的 target_fields 就按 source_param 改写值。覆盖 setup 步骤和主步骤。"""
+        rules = self.rules.get("param_ref_rules", []) or []
+        if not rules:
+            return
+
+        import re
+        for rule in rules:
+            source_param = rule.get("source_param", "")
+            target_fields = rule.get("target_fields", []) or []
+            if not source_param or not target_fields:
+                continue
+
+            for st in steps:
+                body = st.get("body") or {}
+                for fld in target_fields:
+                    if fld not in body:
+                        continue
+                    fld_spec = body[fld]
+                    if not isinstance(fld_spec, dict):
+                        continue
+                    val = fld_spec.get("value")
+                    if val is None:
+                        continue
+                    val_str = str(val)
+                    # 检查 value 是否引用了不存在的 param
+                    param_match = re.search(r"\$\{param\.([\w_]+)\}", val_str)
+                    if not param_match:
+                        continue
+                    ref_param = param_match.group(1)
+                    if ref_param == source_param:
+                        continue  # 已经是正确的 source_param，跳过
+
+                    # 替换为正确的引用
+                    # 支持带 [0] 索引（如 param.student_mode_arr[0]）
+                    new_val = re.sub(r"\$\{param\.[\w_]+\}", "${param.%s[0]}" % source_param, val_str)
+                    body[fld] = dict(fld_spec, value=new_val)
+
+        # 写回步骤 body
+        for st in steps:
+            if st.get("body"):
+                st["body"] = st["body"]
+
+    def _apply_auto_provision(self, intent, sections, params):
+        """auto_provision 规则：智能补充策略创建步骤（编排阶段）
+
+        当 LLM 编排出的步骤中只包含查询（如 get_vdi_strategy）但不包含
+        对应创建步骤时，自动注入「创建 + 查询」链路到编排计划中。
+        规则来源：business_rules.md 中的 auto_provision.idempotent_create
+        """
+        auto_rules = self.rules.get("auto_provision", {}).get("idempotent_create", []) or []
+        if not auto_rules:
+            return intent
+
+        steps_list = intent.get("steps", [])
+        step_apis = [s.get("api", "") for s in steps_list]
+        step_names = [s.get("step_name", "") for s in steps_list]
+
+        for rule in auto_rules:
+            resource_type = rule.get("resource_type", "")
+            query_api = rule.get("query_api", "")
+            create_api = rule.get("create_api", "")
+            param_key = rule.get("param_key", "")
+
+            def _bare(raw):
+                """'POST /x/y' → '/x/y'（intent 步骤 api 为裸路径，index 按裸路径索引；
+                直接前置 '/' 会产生 // 双斜杠导致 has_query 永远不命中）"""
+                raw = str(raw or "")
+                path = raw.split(" ", 1)[-1] if " " in raw else raw
+                return path if path.startswith("/") else "/" + path
+
+            create_url = _bare(create_api)
+            query_url = _bare(query_api)
+
+            # 检查：编排中是否有该查询步骤
+            has_query = any(query_url in api for api in step_apis)
+            if not has_query:
+                continue
+
+            # 检查：编排中是否已有该创建步骤
+            has_create = any(create_url in api for api in step_apis)
+            if has_create:
+                continue
+
+            # 检查：全局参数中是否有同名配置
+            if not params.get(param_key):
+                continue
+
+            # 注入创建步骤到编排计划中（放在查询之前；api 必须为裸路径，
+            # 否则 build_plan_ai 主循环 index.get(api) 查不到会被当「不在索引」丢弃）
+            create_step = {
+                "section": "pre",
+                "api": create_url,
+                "step_name": "create_" + resource_type,
+                "reason": "auto_provision: 策略不存在则自动创建",
+            }
+            # 找到查询步骤在 steps_list 中的位置，在它之前插入创建步骤
+            query_idx = None
+            for i, s in enumerate(steps_list):
+                if query_url in s.get("api", ""):
+                    query_idx = i
+                    break
+
+            if query_idx is not None:
+                steps_list.insert(query_idx, create_step)
+            else:
+                steps_list.insert(0, create_step)
+
+        return intent
 

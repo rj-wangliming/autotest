@@ -111,21 +111,14 @@ def _load_global_params():
 
 
 def _build_plan_with_mode(use_case, params):
-    """主通道 B（AI 编排）；无 LLM 配置或编排失败则降级通道 A（规则）"""
+    """主通道 B（AI 编排）；无 LLM 配置直接报错，不再降级到通道 A"""
     cfg = _load_model_config()
     if cfg and cfg.get("base_url") and cfg.get("api_key") and cfg.get("model"):
-        try:
-            plan = orchestrator.build_plan_ai(use_case, params, cfg)
-            plan["_channel"] = "B"
-            return plan
-        except Exception as e:
-            plan = orchestrator.build_plan(use_case, params)
-            plan["_channel"] = "A(降级: AI编排失败 %s)" % e
-            return plan
-    print("[DEBUG] LLM 未配置, cfg=%s" % repr(cfg))
-    plan = orchestrator.build_plan(use_case, params)
-    plan["_channel"] = "A(未配置LLM)"
-    return plan
+        plan = orchestrator.build_plan_ai(use_case, params, cfg)
+        plan["_channel"] = "B"
+        return plan
+    print("[ERROR] LLM 未配置或配置不完整, cfg=%s" % repr(cfg))
+    raise RuntimeError("通道 B 需要 LLM 配置：请在「模型配置」页填写 provider/base_url/api_key/model")
 
 
 @app.route("/api/plan", methods=["POST"])

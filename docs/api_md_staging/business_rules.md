@@ -3,24 +3,77 @@ version: '1.0'
 # ============================================================
 # 业务规则库（跨接口通用规则，编排器加载后全用例生效）
 # 用途：资源依赖链(造数顺序)、操作前置状态、用例前置状态达成途径
+#       资源缺失自动创建（幂等复用）、强制新建（先删后建）
 # 编排器 orchestrator.validate_plan() 读取本文件的 front-matter
 # ============================================================
 
+# ============================================================
+# 自动造数规则：查询返回空时的自动处理策略
+# ============================================================
+auto_provision:
+  # 规则 1：幂等复用 — "缺少则创建同名"
+  # 当查询步骤返回空时，按 resource_type 从 global_params.yaml 检查同名配置
+  # 有则自动调创建接口；无则记录 warn，用例正常执行（后续步骤自然报错）
+  # 适用资源：VDI/TCI 课程策略、教室策略（网络/存储池/集群/镜像一定存在，不在此列）
+  idempotent_create:
+    - resource_type: vdi_strategy
+      query_api: POST /space/strategygroup/vdi/list
+      create_api: POST /space/strategygroup/vdi/create
+      param_key: strategy_name_vdi
+      param_required_fields: [name, strategyType, cpu, memory, systemSize, pattern, business, enableInternet, enablePersonalConfig, enableSoftwareDecode, enableShowLocalDisk, platformStrategyGroup]
+      note: VDI 课程策略不存在时自动创建（策略名来自 param_key）
+    - resource_type: tci_strategy
+      query_api: POST /space/strategygroup/tci/list
+      create_api: POST /space/strategygroup/tci/create
+      param_key: strategy_name_tci
+      param_required_fields: [name, strategyType, cpu, memory, systemSize, pattern, business, enableInternet, enablePersonalConfig, platformStrategyGroup]
+      note: TCI 课程策略不存在时自动创建（策略名来自 param_key）
+    - resource_type: classroom_strategy
+      query_api: POST /rcc/classroom/strategy/list
+      create_api: POST /rcc/classroom/strategy/create
+      param_key: classroom_strategy_name
+      param_required_fields: [classroomStrategyName, linkShutdown, startPolicy, defaultEnterImageSwitch, defaultDisplayDeskType, reservedStoragePolicy]
+      note: 教室策略不存在时自动创建（策略名来自 param_key）
+
+  # 规则 2：强制新建 — "先删同名再创建"
+  # 当用例声明 idempotent=recreate 且资源类型属于需要清理的类别时
+  # 前置先删除同名资源，再创建新资源
+  force_create:
+    - resource_type: classroom_strategy
+      query_api: POST /rcc/classroom/strategy/list
+      delete_api: POST /rcc/classroom/strategy/delete
+      match_field: classroomStrategyName
+      note: 教室策略强制新建：先删同名策略再创建
+    - resource_type: vdi_strategy
+      query_api: POST /space/strategygroup/vdi/list
+      delete_api: POST /space/strategygroup/vdi/delete
+      match_field: strategyName
+      note: VDI 课程策略强制新建：先删同名策略再创建
+    - resource_type: tci_strategy
+      query_api: POST /space/strategygroup/tci/list
+      delete_api: POST /space/strategygroup/tci/delete
+      match_field: strategyName
+      note: TCI 课程策略强制新建：先删同名策略再创建
+
+# ============================================================
 # 资源依赖链：资源类型 -> 按顺序执行的接口链（造数/数据就绪顺序）
+# ============================================================
 resource_chains:
   classroom:
     order:
       - POST /rcc/classroom/create
       - POST /rcc/classroom/seat/batchCreate
+      - POST /space/strategygroup/vdi/create
       - POST /rcc/classroom/image/student/create
       - POST /rcc/classroom/image/teacher/create
-    note: 教室 → 座位 → 分配学生机/教师机镜像；座位创建后无桌面，分配镜像后桌面才存在
+    note: 教室 → 座位 → VDI 课程策略（幂等创建）→ 分配学生机/教师机镜像；座位创建后无桌面，分配镜像后桌面才存在
   vdi_desktop:
     order:
       - POST /rcc/classroom/create
       - POST /rcc/classroom/seat/batchCreate
+      - POST /space/strategygroup/vdi/create
       - POST /rcc/classroom/image/student/create
-    note: 学生机 VDI 桌面由「座位 + 镜像分配」生成；desktop/list 查询的数据源即该链产物
+    note: 学生机 VDI 桌面由「座位 + 镜像分配」生成；desktop/list 查询的数据源即该链产物；镜像分配依赖 VDI 课程策略（不存在时由 create 步骤幂等创建，规则补链兜底）
   tci_desktop:
     order:
       - POST /rcc/classroom/create
@@ -44,6 +97,13 @@ resource_chains:
       - POST /space/strategygroup/vdi/create
       - POST /spacetci/lessonImage/student/create
     note: 学生机课程镜像分配依赖教室+策略+镜像模板+集群+网络+存储池+平台（请求 DTO 外键推导）
+  classroom_cleanup:
+    order:
+      - POST /rcc/classroom/cmrcef/lesson/end
+      - POST /rcc/classroom/desktop/powerOff
+      - POST /rcc/classroom/seat/delete
+      - POST /rcc/classroom/delete
+    note: 删除教室的清理链：下课 → 桌面关机 → 删除座位 → 删除教室（desktop/delete 接口当前环境不存在（404），删除教室时座位随教室级联清理）
 
 # 操作前置状态：资源+动作 模式 -> 目标状态 + 达成途径
 # （模式匹配：URL 同时含 resource 段与 action 段即命中，覆盖所有域的同类操作，无需逐接口列举）
@@ -220,6 +280,24 @@ case_prereq:
     achieve_via:
       - api: POST /rcc/classroom/image/student/create
         note: 前置要求已分配镜像；若只有教室/座位而无镜像，先分配学生机镜像
+
+# ============================================================
+# 编排参数引用规则：跨步骤参数继承
+# ============================================================
+# 编排期参数继承：当某个步骤需要依赖其他步骤的输入或全局参数时，
+# 必须从已存在的 param 或前序步骤产出中获取，禁止编造不存在的 param
+param_ref_rules:
+  - name: cloud_desk_type_from_student_mode
+    description: cloudDeskType/desktopType 等云桌面类型字段应等于 studentModeArr（如 VDI），从 param.student_mode_arr 取值
+    source_param: student_mode_arr
+    target_interfaces:
+      - /space/deskStrategy/getSupportUsbType  # cloudDeskType：查询 USB 设备类型
+      - /rcc/classroom/desktop/list            # desktopType：查询桌面列表过滤
+      - /rcc/classroom/desktop/tci/list        # desktopType：查询 TCI 桌面列表过滤
+    target_fields:
+      - cloudDeskType  # 云桌面类型枚举，决定查询范围
+      - desktopType    # 云桌面类型枚举，桌面查询过滤
+    note: 云桌面类型与创建教室的 studentModeArr 同义；若 param 中有 student_mode_arr，cloudDeskType/desktopType = student_mode_arr[0]
 ---
 # 业务规则库（Business Rules）
 
